@@ -1,0 +1,333 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme CrewBooklet -destination platform=macOS
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  Supabase: https://github.com/supabase/supabase-swift @ 2.29.3
+  swift-asn1: https://github.com/apple/swift-asn1.git @ 1.4.0
+  swift-http-types: https://github.com/apple/swift-http-types.git @ 1.4.0
+  swift-concurrency-extras: https://github.com/pointfreeco/swift-concurrency-extras @ 1.3.1
+  swift-clocks: https://github.com/pointfreeco/swift-clocks @ 1.0.6
+  xctest-dynamic-overlay: https://github.com/pointfreeco/xctest-dynamic-overlay @ 1.5.2
+  swift-crypto: https://github.com/apple/swift-crypto.git @ 3.12.3
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (22 targets)
+    Target 'CrewBooklet' in project 'CrewBooklet'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+    Target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'swift-crypto_Crypto' in project 'swift-crypto'
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'swift-crypto_Crypto' in project 'swift-crypto'
+    Target 'swift-crypto_Crypto' in project 'swift-crypto' (no dependencies)
+    Target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'IssueReporting' in project 'xctest-dynamic-overlay' (no dependencies)
+    Target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+    Target 'HTTPTypes' in project 'swift-http-types' (no dependencies)
+    Target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+    Target 'ConcurrencyExtras' in project 'swift-concurrency-extras' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+Build description signature: dfb50802c4af8122e3c58b876d5a1498
+Build description path: /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/XCBuildData/dfb50802c4af8122e3c58b876d5a1498.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk /Users/mortimercerny/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx15.5-24F74-8254517eb8b97d462ccbc072ba9094c9.sdkstatcache
+    cd /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -o /Users/mortimercerny/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx15.5-24F74-8254517eb8b97d462ccbc072ba9094c9.sdkstatcache
+
+WriteAuxiliaryFile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftFileList (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    write-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftFileList
+
+WriteAuxiliaryFile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftConstValuesFileList (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    write-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.LinkFileList (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    write-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.LinkFileList
+
+ProcessInfoPlistFile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/swift-crypto_Crypto.bundle/Contents/Info.plist /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/swift-crypto.build/Debug/swift-crypto_Crypto.build/empty-swift-crypto_Crypto.plist (in target 'swift-crypto_Crypto' from project 'swift-crypto')
+    cd /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/SourcePackages/checkouts/swift-crypto
+    builtin-infoPlistUtility /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/swift-crypto.build/Debug/swift-crypto_Crypto.build/empty-swift-crypto_Crypto.plist -producttype com.apple.product-type.bundle -expandbuildsettings -platform macosx -o /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/swift-crypto_Crypto.bundle/Contents/Info.plist
+
+SwiftDriver CrewBooklet normal arm64 com.apple.xcode.tools.swift.compiler (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name CrewBooklet -Onone -enforce-exclusivity\=checked @/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target arm64-apple-macos15.5 -g -module-cache-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Index.noindex/DataStore -swift-version 5 -I /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx15.5-24F74-8254517eb8b97d462ccbc072ba9094c9.sdkstatcache -output-file-map /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet_const_extract_protocols.json -Xcc -iquote -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-generated-files.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-own-target-headers.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet-5312dc6d999ba1a3b0006a121c143b2f-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-project-headers.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/include -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources-normal/arm64 -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources/arm64 -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet-Swift.h -working-directory /Users/mortimercerny/Documents/CrewBooklet -experimental-emit-module-separately -disable-cmo
+
+ProcessInfoPlistFile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Info.plist /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/empty-CrewBooklet.plist (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    builtin-infoPlistUtility /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/empty-CrewBooklet.plist -producttype com.apple.product-type.application -genpkginfo /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/assetcatalog_generated_info.plist -scanforprivacyfile /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Resources/swift-crypto_Crypto.bundle -o /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Info.plist
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ CrewBooklet (in target 'CrewBooklet' from project 'CrewBooklet')
+
+EmitSwiftModule normal arm64 (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ PersonDetailSheet.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/PersonDetailSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/PersonDetailSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ AddOrganizationSheet.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/AddOrganizationSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/AddOrganizationSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ OrganizationsListView.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/OrganizationsListView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/OrganizationsListView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ LoginView.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/LoginView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/LoginView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ PathBarView.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/PathBarView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/PathBarView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ ProjectsListView.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/ProjectsListView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/ProjectsListView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ ContentView.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/ContentView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/ContentView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+/Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/ContentView.swift:2626:22: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead.
+                    .onChange(of: details.iban ?? "") { newValue in
+                     ^
+
+SwiftDriverJobDiscovery normal arm64 Compiling ProjectsListView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling LoginView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling PathBarView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling OrganizationsListView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 Compiling\ SearchResultsView.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/SearchResultsView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/SearchResultsView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ MacOSProjectListRow.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/MacOSProjectListRow.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/MacOSProjectListRow.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ AddProjectSheet.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/AddProjectSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/AddProjectSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftCompile normal arm64 Compiling\ AddPersonSheet.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/AddPersonSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/Views/AddPersonSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for CrewBooklet (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriver\ Compilation\ Requirements CrewBooklet normal arm64 com.apple.xcode.tools.swift.compiler (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name CrewBooklet -Onone -enforce-exclusivity\=checked @/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target arm64-apple-macos15.5 -g -module-cache-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Index.noindex/DataStore -swift-version 5 -I /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx15.5-24F74-8254517eb8b97d462ccbc072ba9094c9.sdkstatcache -output-file-map /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet_const_extract_protocols.json -Xcc -iquote -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-generated-files.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-own-target-headers.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet-5312dc6d999ba1a3b0006a121c143b2f-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-project-headers.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/include -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources-normal/arm64 -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources/arm64 -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet-Swift.h -working-directory /Users/mortimercerny/Documents/CrewBooklet -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling MacOSProjectListRow.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SearchResultsView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling PersonDetailSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AddProjectSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AddOrganizationSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AddPersonSheet.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ContentView.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 Compiling\ CrewBookletApp.swift /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/CrewBookletApp.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftCompile normal arm64 /Users/mortimercerny/Documents/CrewBooklet/CrewBooklet/CrewBookletApp.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling CrewBookletApp.swift (in target 'CrewBooklet' from project 'CrewBooklet')
+
+SwiftDriver\ Compilation CrewBooklet normal arm64 com.apple.xcode.tools.swift.compiler (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name CrewBooklet -Onone -enforce-exclusivity\=checked @/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -target arm64-apple-macos15.5 -g -module-cache-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Index.noindex/DataStore -swift-version 5 -I /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/macosx15.5-24F74-8254517eb8b97d462ccbc072ba9094c9.sdkstatcache -output-file-map /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet_const_extract_protocols.json -Xcc -iquote -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-generated-files.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-own-target-headers.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet-5312dc6d999ba1a3b0006a121c143b2f-VFS/all-product-headers.yaml -Xcc -iquote -Xcc /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-project-headers.hmap -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/include -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources-normal/arm64 -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources/arm64 -Xcc -I/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet-Swift.h -working-directory /Users/mortimercerny/Documents/CrewBooklet -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib normal (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos15.5 -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -O0 -L/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -L/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -filelist /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.LinkFileList -install_name @rpath/CrewBooklet.debug.dylib -Xlinker -rpath -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -Xlinker -rpath -Xlinker @executable_path/../Frameworks -Xlinker -object_path_lto -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.swiftmodule -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Wl,-no_warn_duplicate_libraries -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -Xlinker -no_adhoc_codesign -o /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/Supabase.build/Objects-normal/arm64/Supabase.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/Functions.build/Objects-normal/arm64/Functions.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/PostgREST.build/Objects-normal/arm64/PostgREST.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/Auth.build/Objects-normal/arm64/Auth.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/Realtime.build/Objects-normal/arm64/Realtime.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/Storage.build/Objects-normal/arm64/Storage.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/swift-concurrency-extras.build/Debug/ConcurrencyExtras.build/Objects-normal/arm64/ConcurrencyExtras.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/swift-http-types.build/Debug/HTTPTypes.build/Objects-normal/arm64/HTTPTypes.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/swift-clocks.build/Debug/Clocks.build/Objects-normal/arm64/Clocks.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/xctest-dynamic-overlay.build/Debug/IssueReporting.build/Objects-normal/arm64/IssueReporting.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/xctest-dynamic-overlay.build/Debug/XCTestDynamicOverlay.build/Objects-normal/arm64/XCTestDynamicOverlay.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/Supabase.build/Debug/Helpers.build/Objects-normal/arm64/Helpers.swiftmodule -Xlinker -add_ast_path -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/swift-crypto.build/Debug/Crypto.build/Objects-normal/arm64/Crypto.swiftmodule
+
+ConstructStubExecutorLinkFileList /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-ExecutorLinkFileList-normal-arm64.txt (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    construct-stub-executor-link-file-list /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'CrewBooklet' from project 'CrewBooklet')
+
+Ld /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet normal (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos15.5 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -O0 -L/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -F/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/PackageFrameworks -Xlinker -rpath -Xlinker @executable_path/../Frameworks -rdynamic -Xlinker -no_deduplicate -Xlinker -debug_variant -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet-ExecutorLinkFileList-normal-arm64.txt /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib -Xlinker -no_adhoc_codesign -o /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet
+
+CopySwiftLibs /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    builtin-swiftStdLibTool --copy --verbose --sign 7F49027BBDD1690BEAE77E94813A301751A29697 --scan-executable /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib --scan-folder /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Frameworks --scan-folder /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/PlugIns --scan-folder /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Library/SystemExtensions --scan-folder /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Extensions --platform macosx --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name CrewBooklet --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk --xcode-version 16F6 --platform-family macOS --deployment-target 15.5 --bundle-identifier com.yourname.cvgenerator.CrewBook --output /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/Resources --target-triple arm64-apple-macos15.5 --binary-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet --dependency-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet_dependency_info.dat --stringsdata-file /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftFileList --metadata-file-list /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet.DependencyMetadataFileList --static-metadata-file-list /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet.DependencyStaticMetadataFileList --swift-const-vals-list /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/Objects-normal/arm64/CrewBooklet.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2025-07-03 21:29:09.655 appintentsmetadataprocessor[20738:3392125] Starting appintentsmetadataprocessor export
+2025-07-03 21:29:09.658 appintentsmetadataprocessor[20738:3392125] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CodeSign /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+    Signing Identity:     "Apple Development: mortimer.cerny@gmail.com (RX959Z6K9S)"
+    
+    /usr/bin/codesign --force --sign 7F49027BBDD1690BEAE77E94813A301751A29697 -o runtime --timestamp\=none --generate-entitlement-der /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/CrewBooklet.debug.dylib
+
+CodeSign /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/__preview.dylib (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+    Signing Identity:     "Apple Development: mortimer.cerny@gmail.com (RX959Z6K9S)"
+    
+    /usr/bin/codesign --force --sign 7F49027BBDD1690BEAE77E94813A301751A29697 -o runtime --timestamp\=none --generate-entitlement-der /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/__preview.dylib
+/Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app/Contents/MacOS/__preview.dylib: replacing existing signature
+
+CodeSign /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    
+    Signing Identity:     "Apple Development: mortimer.cerny@gmail.com (RX959Z6K9S)"
+    
+    /usr/bin/codesign --force --sign 7F49027BBDD1690BEAE77E94813A301751A29697 -o runtime --entitlements /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Intermediates.noindex/CrewBooklet.build/Debug/CrewBooklet.build/CrewBooklet.app.xcent --timestamp\=none --generate-entitlement-der /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app
+
+Validate /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    builtin-validationUtility /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+RegisterWithLaunchServices /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app (in target 'CrewBooklet' from project 'CrewBooklet')
+    cd /Users/mortimercerny/Documents/CrewBooklet
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /Users/mortimercerny/Library/Developer/Xcode/DerivedData/CrewBooklet-chcpavvdmyxkmkbxkkkwkmxzbfkr/Build/Products/Debug/CrewBooklet.app
+
+** BUILD SUCCEEDED **
+
