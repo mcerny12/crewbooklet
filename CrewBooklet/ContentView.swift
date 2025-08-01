@@ -660,7 +660,10 @@ struct ProjectInfoPane: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                 
-                TextField("Enter project notes", text: $project.notes, axis: .vertical)
+                TextField("Enter project notes", text: Binding(
+                    get: { project.notes ?? "" },
+                    set: { project.notes = $0.isEmpty ? nil : $0 }
+                ), axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .lineLimit(3...6)
             }
