@@ -117,6 +117,7 @@ struct ContentView: View {
         .sheet(isPresented: $showAddOrganizationSheet) {
             AddOrganizationSheet()
         }
+        .environmentObject(searchViewModel)
         .task {
             await peopleViewModel.loadPeople()
             await projectViewModel.loadProjects()
