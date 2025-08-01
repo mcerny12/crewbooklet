@@ -509,9 +509,16 @@ struct ProjectDetailView: View {
             VStack(spacing: 0) {
                 // Project Title Row (positioned exactly like in list view)
                 VStack(spacing: 4) {
-                    MacOSProjectRow(project: editableProject) {
-                        onBack()
-                    }
+                    MacOSProjectRow(
+                        project: editableProject,
+                        onBack: onBack,
+                        organizationName: {
+                            if let orgId = editableProject.clientOrganizationId {
+                                return organizationViewModel.organizations.first { $0.id == orgId }?.name
+                            }
+                            return nil
+                        }()
+                    )
                 }
                 .padding()
                 
@@ -619,8 +626,12 @@ struct ProjectInfoPane: View {
                     displayText: { $0.name },
                     searchText: { $0.name },
                     selection: Binding(
-                        get: { project.clientOrganizationId },
-                        set: { project.clientOrganizationId = $0 }
+                        get: { 
+                            organizationViewModel.organizations.first { $0.id == project.clientOrganizationId }
+                        },
+                        set: { organization in
+                            project.clientOrganizationId = organization?.id
+                        }
                     ),
                     allowCustomText: false,
                     customText: .constant("")
@@ -736,6 +747,7 @@ struct CrewListPane: View {
 struct MacOSProjectRow: View {
     let project: Project
     let onBack: () -> Void
+    let organizationName: String?
     
     var body: some View {
         HStack {
@@ -752,12 +764,10 @@ struct MacOSProjectRow: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 
-                if let organizationId = project.clientOrganizationId {
-                    if let organization = organizationViewModel.organizations.first(where: { $0.id == organizationId }) {
-                        Text("Organization: \(organization.name)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                if let organizationName = organizationName {
+                    Text("Organization: \(organizationName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             
