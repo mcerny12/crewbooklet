@@ -77,152 +77,235 @@ struct OrganizationDetailBottomPane: View {
     }
     
     private var informationTabContent: some View {
-        VStack(spacing: 8) {
-            // Basic Info Section
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Basic Information")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+        VStack(spacing: 6) {
+            // Row 1: Name, Contact Email, Contact Phone
+            HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Organization Name")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Name", text: $organization.name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                }
                 
-                VStack(spacing: 6) {
-                    // Organization Name
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Organization Name")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        TextField("Enter organization name", text: $organization.name)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    
-                    // Contact Info
-                    HStack(spacing: 6) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Contact Email")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("Enter email", text: Binding(
-                                get: { organization.contactEmail ?? "" },
-                                set: { organization.contactEmail = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Contact Phone")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("Enter phone", text: Binding(
-                                get: { organization.contactPhone ?? "" },
-                                set: { organization.contactPhone = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
-                    }
-                    
-                    // Business Type
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Business Type")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(organization.jobs.map { $0.displayName }.joined(separator: ", "))
-                            .font(.body)
-                            .foregroundStyle(organization.jobs.isEmpty ? .secondary : .primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 4)
-                    }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Contact Email")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Email", text: Binding(
+                        get: { organization.contactEmail ?? "" },
+                        set: { organization.contactEmail = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                }
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Contact Phone")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Phone", text: Binding(
+                        get: { organization.contactPhone ?? "" },
+                        set: { organization.contactPhone = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
                 }
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
             
-            // Address Section
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Address")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+            // Row 2: Business Type
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Business Type")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(organization.jobs.map { $0.displayName }.joined(separator: ", "))
+                    .font(.caption)
+                    .foregroundStyle(organization.jobs.isEmpty ? .secondary : .primary)
+                    .frame(height: 22)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 6)
+                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                    .lineLimit(1)
+            }
+            
+            // Main Address Section
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Main Address")
+                    .font(.caption)
+                    .fontWeight(.medium)
                 
-                VStack(spacing: 6) {
-                    VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text("Street")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
-                        TextField("Enter street", text: Binding(
+                        TextField("Street", text: Binding(
                             get: { organization.street ?? "" },
                             set: { organization.street = $0.isEmpty ? nil : $0 }
                         ))
                         .textFieldStyle(.roundedBorder)
+                        .font(.caption)
                     }
                     
-                    HStack(spacing: 6) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("ZIP Code")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("ZIP", text: Binding(
-                                get: { organization.zip ?? "" },
-                                set: { organization.zip = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("City")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("Enter city", text: Binding(
-                                get: { organization.city ?? "" },
-                                set: { organization.city = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Country")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("Country", text: Binding(
-                                get: { organization.country ?? "" },
-                                set: { organization.country = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Street 2")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Street 2", text: Binding(
+                            get: { organization.street2 ?? "" },
+                            set: { organization.street2 = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                }
+                
+                HStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("ZIP")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("ZIP", text: Binding(
+                            get: { organization.zip ?? "" },
+                            set: { organization.zip = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                    .frame(maxWidth: 80)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("City")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("City", text: Binding(
+                            get: { organization.city ?? "" },
+                            set: { organization.city = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Country")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Country", text: Binding(
+                            get: { organization.country ?? "" },
+                            set: { organization.country = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
                     }
                 }
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
             
-            // Notes Section
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Notes")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+            // Invoice Address Section
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Invoice Address")
+                    .font(.caption)
+                    .fontWeight(.medium)
                 
-                TextField("Enter notes", text: Binding(
+                HStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Invoice Name")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Invoice Name", text: Binding(
+                            get: { organization.nameInvoice ?? "" },
+                            set: { organization.nameInvoice = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Invoice Street")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Invoice Street", text: Binding(
+                            get: { organization.streetInvoice ?? "" },
+                            set: { organization.streetInvoice = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                }
+                
+                HStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Invoice ZIP")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("ZIP", text: Binding(
+                            get: { organization.zipInvoice ?? "" },
+                            set: { organization.zipInvoice = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                    .frame(maxWidth: 80)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Invoice City")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Invoice City", text: Binding(
+                            get: { organization.cityInvoice ?? "" },
+                            set: { organization.cityInvoice = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Invoice Country")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Country", text: Binding(
+                            get: { organization.countryInvoice ?? "" },
+                            set: { organization.countryInvoice = $0.isEmpty ? nil : $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                }
+            }
+            
+            // Notes
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Notes")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                TextField("Notes", text: Binding(
                     get: { organization.notes ?? "" },
                     set: { organization.notes = $0.isEmpty ? nil : $0 }
                 ), axis: .vertical)
                 .textFieldStyle(.roundedBorder)
-                .lineLimit(3...6)
+                .font(.caption)
+                .lineLimit(2...3)
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
             
-            // Save Button
-            Button("Save Changes") {
-                Task {
-                    await saveOrganization()
+            // Save Button and Error
+            HStack {
+                Spacer()
+                Button("Save") {
+                    Task { await saveOrganization() }
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(isLoading)
+                .font(.caption)
+                .controlSize(.small)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading)
             
             if let errorMessage = errorMessage {
                 Text(errorMessage)
                     .foregroundStyle(.red)
-                    .font(.caption)
+                    .font(.caption2)
             }
         }
+        .padding(4)
     }
     
     private var financialTabContent: some View {

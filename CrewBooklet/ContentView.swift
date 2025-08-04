@@ -79,7 +79,37 @@ struct ContentView: View {
         } detail: {
             VStack(spacing: 0) {
                 // Main content with system adaptive materials
-                detailView
+                ZStack {
+                    detailView
+                    
+                    // Bottom navigation panes (only in main content area)
+                    VStack {
+                        Spacer()
+                        ZStack {
+                            // Person detail pane
+                            if showPersonDetailPane, let person = editablePerson {
+                                PersonDetailBottomPane(
+                                    person: Binding(
+                                        get: { person },
+                                        set: { editablePerson = $0 }
+                                    ),
+                                    isPresented: $showPersonDetailPane
+                                )
+                            }
+                            
+                            // Organization detail pane
+                            if showOrganizationDetailPane, let organization = editableOrganization {
+                                OrganizationDetailBottomPane(
+                                    organization: Binding(
+                                        get: { organization },
+                                        set: { editableOrganization = $0 }
+                                    ),
+                                    isPresented: $showOrganizationDetailPane
+                                )
+                            }
+                        }
+                    }
+                }
                 
                 // Path Bar at the bottom of detail view only
                 PathBarView(
@@ -136,32 +166,7 @@ struct ContentView: View {
             AddOrganizationSheet()
         }
         .environmentObject(searchViewModel)
-        .overlay {
-            // Bottom navigation panes
-            ZStack {
-                // Person detail pane
-                if showPersonDetailPane, let person = editablePerson {
-                    PersonDetailBottomPane(
-                        person: Binding(
-                            get: { person },
-                            set: { editablePerson = $0 }
-                        ),
-                        isPresented: $showPersonDetailPane
-                    )
-                }
-                
-                // Organization detail pane
-                if showOrganizationDetailPane, let organization = editableOrganization {
-                    OrganizationDetailBottomPane(
-                        organization: Binding(
-                            get: { organization },
-                            set: { editableOrganization = $0 }
-                        ),
-                        isPresented: $showOrganizationDetailPane
-                    )
-                }
-            }
-        }
+
         .task {
             await peopleViewModel.loadPeople()
             await projectViewModel.loadProjects()

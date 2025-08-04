@@ -28,7 +28,6 @@ struct BottomNavigationPane<Content: View>: View {
             if isPresented {
                 // Dim overlay behind pane
                 Color.black.opacity(0.3)
-                    .ignoresSafeArea()
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             isPresented = false
@@ -71,7 +70,7 @@ struct BottomNavigationPane<Content: View>: View {
                             }
                         }
                 )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .transition(.move(edge: .bottom))
             }
         }
         .zIndex(999) // Ensure pane appears above other content

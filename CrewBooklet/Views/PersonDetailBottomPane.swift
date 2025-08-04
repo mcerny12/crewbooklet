@@ -68,120 +68,252 @@ struct PersonDetailBottomPane: View {
     }
     
     private var informationTabContent: some View {
-        VStack(spacing: 8) {
-            // Basic Info Section
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Basic Information")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+        VStack(spacing: 6) {
+            // Row 1: Name, Gender, Organization
+            HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Name")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Name", text: $person.name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                }
                 
-                VStack(spacing: 6) {
-                    // Name
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Name")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        TextField("Enter name", text: $person.name)
-                            .textFieldStyle(.roundedBorder)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Gender")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Picker("Gender", selection: Binding(
+                        get: { person.gender ?? .other },
+                        set: { person.gender = $0 }
+                    )) {
+                        ForEach(Gender.allCases, id: \.self) { gender in
+                            Text(gender.displayName).tag(gender)
+                        }
                     }
-                    
-                    // Email
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Email")
-                            .font(.caption)
+                    .pickerStyle(.menu)
+                    .font(.caption)
+                    .frame(height: 22)
+                }
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Organization")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    // Placeholder for organization picker
+                    Text("Select...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(height: 22)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 6)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                }
+            }
+            
+            // Row 2: Email, Website, Mobile Phone
+            HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Email")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Email", text: Binding(
+                        get: { person.email ?? "" },
+                        set: { person.email = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                }
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Website")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Website", text: Binding(
+                        get: { person.website ?? "" },
+                        set: { person.website = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                }
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Mobile Phone")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Mobile", text: Binding(
+                        get: { person.mobilePhone ?? "" },
+                        set: { person.mobilePhone = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                }
+            }
+            
+            // Row 3: Work Phone, Jobs, Languages
+            HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Work Phone")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField("Work Phone", text: Binding(
+                        get: { person.workPhone ?? "" },
+                        set: { person.workPhone = $0.isEmpty ? nil : $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                }
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Jobs")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(person.jobs.map { $0.displayName }.joined(separator: ", "))
+                        .font(.caption)
+                        .foregroundStyle(person.jobs.isEmpty ? .secondary : .primary)
+                        .frame(height: 22)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 6)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                        .lineLimit(1)
+                }
+                
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Languages")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(person.languages.map { $0.displayName }.joined(separator: ", "))
+                        .font(.caption)
+                        .foregroundStyle(person.languages.isEmpty ? .secondary : .primary)
+                        .frame(height: 22)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 6)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                        .lineLimit(1)
+                }
+            }
+            
+            // Address Section (2 columns)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Address")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                
+                HStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Street 1")
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
-                        TextField("Enter email", text: Binding(
-                            get: { person.email ?? "" },
-                            set: { person.email = $0.isEmpty ? nil : $0 }
+                        TextField("Street 1", text: Binding(
+                            get: { person.address?.street1 ?? "" },
+                            set: { 
+                                if person.address == nil { person.address = Address() }
+                                person.address?.street1 = $0.isEmpty ? nil : $0
+                            }
                         ))
                         .textFieldStyle(.roundedBorder)
+                        .font(.caption)
                     }
                     
-                    // Phone Numbers
-                    HStack(spacing: 6) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Mobile Phone")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("Enter mobile", text: Binding(
-                                get: { person.mobilePhone ?? "" },
-                                set: { person.mobilePhone = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Work Phone")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            TextField("Enter work phone", text: Binding(
-                                get: { person.workPhone ?? "" },
-                                set: { person.workPhone = $0.isEmpty ? nil : $0 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
-                        }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Street 2")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Street 2", text: Binding(
+                            get: { person.address?.street2 ?? "" },
+                            set: { 
+                                if person.address == nil { person.address = Address() }
+                                person.address?.street2 = $0.isEmpty ? nil : $0
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                }
+                
+                HStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("ZIP")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("ZIP", text: Binding(
+                            get: { person.address?.zip ?? "" },
+                            set: { 
+                                if person.address == nil { person.address = Address() }
+                                person.address?.zip = $0.isEmpty ? nil : $0
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
+                    }
+                    .frame(maxWidth: 80)
+                    
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("City")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("City", text: Binding(
+                            get: { person.address?.city ?? "" },
+                            set: { 
+                                if person.address == nil { person.address = Address() }
+                                person.address?.city = $0.isEmpty ? nil : $0
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
                     }
                     
-                    // Jobs and Languages
-                    HStack(spacing: 6) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Jobs")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(person.jobs.map { $0.displayName }.joined(separator: ", "))
-                                .font(.body)
-                                .foregroundStyle(person.jobs.isEmpty ? .secondary : .primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 4)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Languages")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(person.languages.map { $0.displayName }.joined(separator: ", "))
-                                .font(.body)
-                                .foregroundStyle(person.languages.isEmpty ? .secondary : .primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 4)
-                        }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Country")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        TextField("Country", text: Binding(
+                            get: { person.address?.country ?? "" },
+                            set: { 
+                                if person.address == nil { person.address = Address() }
+                                person.address?.country = $0.isEmpty ? nil : $0
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.caption)
                     }
                 }
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
             
-            // Notes Section
-            VStack(alignment: .leading, spacing: 4) {
+            // Notes
+            VStack(alignment: .leading, spacing: 1) {
                 Text("Notes")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
-                TextField("Enter notes", text: Binding(
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                TextField("Notes", text: Binding(
                     get: { person.notes ?? "" },
                     set: { person.notes = $0.isEmpty ? nil : $0 }
                 ), axis: .vertical)
                 .textFieldStyle(.roundedBorder)
-                .lineLimit(3...6)
+                .font(.caption)
+                .lineLimit(2...3)
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
             
-            // Save Button
-            Button("Save Changes") {
-                Task {
-                    await savePerson()
+            // Save Button and Error
+            HStack {
+                Spacer()
+                Button("Save") {
+                    Task { await savePerson() }
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(isLoading)
+                .font(.caption)
+                .controlSize(.small)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading)
             
             if let errorMessage = errorMessage {
                 Text(errorMessage)
                     .foregroundStyle(.red)
-                    .font(.caption)
+                    .font(.caption2)
             }
         }
+        .padding(4)
     }
     
     private var financialTabContent: some View {
