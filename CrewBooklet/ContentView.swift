@@ -27,11 +27,17 @@ struct ContentView: View {
     @Binding var visualDebugActive: Bool
     var currentUser: String
     
-    @State private var showOrganizationDetail = false
-    @State private var showProjectDetail = false
+    // Bottom pane states
+    @State private var showPersonDetailPane = false
+    @State private var showOrganizationDetailPane = false
+    @State private var selectedPerson: Person? = nil
     @State private var selectedOrganization: Organization? = nil
-    @State private var selectedProject: Project? = nil
+    @State private var editablePerson: Person? = nil
     @State private var editableOrganization: Organization? = nil
+    
+    // Project detail (remains as full view replacement)
+    @State private var showProjectDetail = false
+    @State private var selectedProject: Project? = nil
     @State private var editableProject: Project? = nil
     
     enum MainView: String, CaseIterable, Identifiable {
@@ -96,21 +102,28 @@ struct ContentView: View {
                 // CRITICAL FIX: Clear all detail view flags when switching navigation sections
                 // This ensures detail views don't persist across different sections
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    showOrganizationDetail = false
+                    showPersonDetailPane = false
+                    showOrganizationDetailPane = false
                     showProjectDetail = false
+                    editablePerson = nil
                     editableOrganization = nil
                     editableProject = nil
                 }
             }
         }
+        .onChange(of: showPersonDetailPane) { _, isShowing in
+            if !isShowing {
+                editablePerson = nil
+            }
+        }
+        .onChange(of: showOrganizationDetailPane) { _, isShowing in
+            if !isShowing {
+                editableOrganization = nil
+            }
+        }
         .onChange(of: showProjectDetail) { _, isShowing in
             if !isShowing {
                 editableProject = nil
-            }
-        }
-        .onChange(of: showOrganizationDetail) { _, isShowing in
-            if !isShowing {
-                editableOrganization = nil
             }
         }
         .sheet(isPresented: $showAddPersonSheet) {
@@ -123,6 +136,32 @@ struct ContentView: View {
             AddOrganizationSheet()
         }
         .environmentObject(searchViewModel)
+        .overlay {
+            // Bottom navigation panes
+            ZStack {
+                // Person detail pane
+                if showPersonDetailPane, let person = editablePerson {
+                    PersonDetailBottomPane(
+                        person: Binding(
+                            get: { person },
+                            set: { editablePerson = $0 }
+                        ),
+                        isPresented: $showPersonDetailPane
+                    )
+                }
+                
+                // Organization detail pane
+                if showOrganizationDetailPane, let organization = editableOrganization {
+                    OrganizationDetailBottomPane(
+                        organization: Binding(
+                            get: { organization },
+                            set: { editableOrganization = $0 }
+                        ),
+                        isPresented: $showOrganizationDetailPane
+                    )
+                }
+            }
+        }
         .task {
             await peopleViewModel.loadPeople()
             await projectViewModel.loadProjects()
@@ -270,7 +309,12 @@ struct ContentView: View {
                     LazyVStack(spacing: 4) {
                         ForEach(peopleViewModel.people) { person in
                             MacOSPersonRow(person: person) {
+                                selectedPerson = person
+                                editablePerson = person
                                 currentSelectedItem = .person(person)
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showPersonDetailPane = true
+                                }
                             }
                         }
                     }
@@ -291,27 +335,13 @@ struct ContentView: View {
                 onOrganizationSelected: { organization in
                     selectedOrganization = organization
                     editableOrganization = organization
-                    showOrganizationDetail = true
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showOrganizationDetailPane = true
+                    }
                 }
             )
         }
         .background(.background)
-        .sheet(isPresented: $showOrganizationDetail) {
-            if let organization = editableOrganization {
-                OrganizationDetailSheet(
-                    organization: Binding(
-                        get: { organization },
-                        set: { editableOrganization = $0 }
-                    ),
-                    isPresented: $showOrganizationDetail,
-                    onSave: {
-                        Task {
-                            await organizationViewModel.loadOrganizations()
-                        }
-                    }
-                )
-            }
-        }
     }
     
     // MARK: - Projects View
