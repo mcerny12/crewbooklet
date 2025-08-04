@@ -83,6 +83,11 @@ struct ContentView: View {
                 )
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                TitleBarSearchField()
+            }
+        }
         .onChange(of: selectedView) { _, newView in
             // Clear selected item when changing views
             if newView != selectedView {
@@ -162,9 +167,6 @@ struct ContentView: View {
     // MARK: - Dashboard View
     private var dashboardView: some View {
         VStack(spacing: 16) {
-            // Title Bar with Search
-            TitleBarSearchField()
-            
             // Dashboard Content
             ScrollView {
                 VStack(spacing: 20) {
@@ -173,9 +175,6 @@ struct ContentView: View {
                     
                     // Recent Projects
                     recentProjectsSection
-                    
-                    // Recent People
-                    recentPeopleSection
                 }
                 .padding()
             }
@@ -252,67 +251,30 @@ struct ContentView: View {
         .cornerRadius(12)
     }
     
-    // MARK: - Recent People Section
-    private var recentPeopleSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Recent People")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Button("View All") {
-                    selectedView = .people
-                }
-                .buttonStyle(.bordered)
-            }
-            
-            if peopleViewModel.people.isEmpty {
-                ContentUnavailableView(
-                    "No People",
-                    systemImage: "person.slash",
-                    description: Text("Add people to your crew to get started")
-                )
-            } else {
-                VStack(spacing: 8) {
-                    ForEach(peopleViewModel.people.prefix(5)) { person in
-                        PersonRow(person: person) {
-                            currentSelectedItem = .person(person)
-                        }
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(.regularMaterial)
-        .cornerRadius(12)
-    }
+
     
     // MARK: - People View
     private var peopleView: some View {
         VStack(spacing: 0) {
-            // Title Bar with Search
-            TitleBarSearchField()
-            
-            // People List
-            VStack {
-                Text("People List")
-                    .font(.title)
-                    .padding()
-                
-                if peopleViewModel.people.isEmpty {
-                    ContentUnavailableView(
-                        "No People",
-                        systemImage: "person.slash",
-                        description: Text("Add people to your crew")
-                    )
-                } else {
-                    List(peopleViewModel.people) { person in
-                        PersonRow(person: person) {
-                            currentSelectedItem = .person(person)
+            if peopleViewModel.isLoading {
+                ProgressView("Loading people...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if peopleViewModel.people.isEmpty {
+                ContentUnavailableView(
+                    "Keine Personen",
+                    systemImage: "person.slash",
+                    description: Text("Fügen Sie Ihre erste Person hinzu")
+                )
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 4) {
+                        ForEach(peopleViewModel.people) { person in
+                            MacOSPersonRow(person: person) {
+                                currentSelectedItem = .person(person)
+                            }
                         }
                     }
+                    .padding()
                 }
             }
         }
@@ -322,9 +284,6 @@ struct ContentView: View {
     // MARK: - Organizations View
     private var organizationsView: some View {
         VStack(spacing: 0) {
-            // Title Bar with Search
-            TitleBarSearchField()
-            
             // Organizations List
             OrganizationsListView(
                 organizationViewModel: organizationViewModel,
@@ -358,9 +317,6 @@ struct ContentView: View {
     // MARK: - Projects View
     private var projectsView: some View {
         VStack(spacing: 0) {
-            // Title Bar with Search
-            TitleBarSearchField()
-            
             // Projects List
             ProjectsListView(
                 projectViewModel: projectViewModel,
@@ -444,7 +400,74 @@ struct StatCard: View {
     }
 }
 
-// MARK: - Person Row Component
+// MARK: - MacOS Person Row Component (matching Organizations style)
+struct MacOSPersonRow: View {
+    let person: Person
+    let onTap: () -> Void
+    
+    private var displayRole: String {
+        if person.roles.isEmpty {
+            return "No role"
+        } else if person.roles.count == 1 {
+            return person.roles.first!.displayName
+        } else {
+            return "\(person.roles.first!.displayName) +\(person.roles.count - 1) more"
+        }
+    }
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                // Name, role all in one line (matches Organizations row pattern exactly)
+                HStack(spacing: 8) {
+                    Text(person.name)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    Text("•")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(displayRole)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                // Email and icons all in one line (matches Organizations row pattern exactly)
+                HStack(spacing: 8) {
+                    Text(person.email ?? "No email")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    
+                    HStack(spacing: 4) {
+                        if !(person.notes?.isEmpty ?? true) {
+                            Image(systemName: "note.text")
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                        }
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(person.name)
+    }
+}
+
+// MARK: - Person Row Component (legacy)
 struct PersonRow: View {
     let person: Person
     let onTap: () -> Void

@@ -51,10 +51,11 @@ struct MacOSProjectListRow: View {
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 12)
+            .padding(.vertical, 9)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(project.name)
     }
     
     private func statusColor(for status: ProjectStatus) -> Color {
