@@ -406,12 +406,12 @@ struct MacOSPersonRow: View {
     let onTap: () -> Void
     
     private var displayRole: String {
-        if person.roles.isEmpty {
+        if person.jobs.isEmpty {
             return "No role"
-        } else if person.roles.count == 1 {
-            return person.roles.first!.displayName
+        } else if person.jobs.count == 1 {
+            return person.jobs.first!.displayName
         } else {
-            return "\(person.roles.first!.displayName) +\(person.roles.count - 1) more"
+            return "\(person.jobs.first!.displayName) +\(person.jobs.count - 1) more"
         }
     }
     
