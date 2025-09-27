@@ -35,8 +35,8 @@ struct ContentView: View {
     @State private var editablePerson: Person? = nil
     @State private var editableOrganization: Organization? = nil
     
-    // Project detail (remains as full view replacement)
-    @State private var showProjectDetail = false
+    // Project detail states (now using bottom pane like People/Organizations)
+    @State private var showProjectDetailPane = false
     @State private var selectedProject: Project? = nil
     @State private var editableProject: Project? = nil
     
@@ -107,6 +107,17 @@ struct ContentView: View {
                                     isPresented: $showOrganizationDetailPane
                                 )
                             }
+                            
+                            // Project detail pane
+                            if showProjectDetailPane, let project = editableProject {
+                                ProjectDetailBottomPane(
+                                    project: Binding(
+                                        get: { project },
+                                        set: { editableProject = $0 }
+                                    ),
+                                    isPresented: $showProjectDetailPane
+                                )
+                            }
                         }
                     }
                 }
@@ -134,7 +145,7 @@ struct ContentView: View {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     showPersonDetailPane = false
                     showOrganizationDetailPane = false
-                    showProjectDetail = false
+                    showProjectDetailPane = false
                     editablePerson = nil
                     editableOrganization = nil
                     editableProject = nil
@@ -151,7 +162,7 @@ struct ContentView: View {
                 editableOrganization = nil
             }
         }
-        .onChange(of: showProjectDetail) { _, isShowing in
+        .onChange(of: showProjectDetailPane) { _, isShowing in
             if !isShowing {
                 editableProject = nil
             }
@@ -359,21 +370,14 @@ struct ContentView: View {
                 onProjectSelected: { project in
                     selectedProject = project
                     editableProject = project
-                    showProjectDetail = true
+                    currentSelectedItem = .project(project)
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showProjectDetailPane = true
+                    }
                 }
             )
         }
         .background(.background)
-        .sheet(isPresented: $showProjectDetail) {
-            if let project = editableProject {
-                ProjectDetailView(
-                    project: project,
-                    projectViewModel: projectViewModel
-                ) {
-                    showProjectDetail = false
-                }
-            }
-        }
     }
     
     // MARK: - Calendar View
@@ -539,309 +543,3 @@ struct PersonRow: View {
 }
 
 
-
-// MARK: - Project Detail View
-struct ProjectDetailView: View {
-    let project: Project
-    @ObservedObject var projectViewModel: ProjectViewModel
-    let onBack: () -> Void
-    @StateObject private var organizationViewModel = OrganizationViewModel()
-    @StateObject private var peopleViewModel = PeopleViewModel()
-    @State private var editableProject: Project
-    @State private var assignments: [(ProjectAssignment, Person)] = []
-    @State private var showAddCrewSheet = false
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    
-    private let supabaseService = SupabaseService.shared
-    
-    init(project: Project, projectViewModel: ProjectViewModel, onBack: @escaping () -> Void) {
-        self.project = project
-        self.projectViewModel = projectViewModel
-        self.onBack = onBack
-        self._editableProject = State(initialValue: project)
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Top Pane: Project Title + Information
-            VStack(spacing: 0) {
-                // Project Title Row (positioned exactly like in list view)
-                VStack(spacing: 4) {
-                    MacOSProjectRow(
-                        project: editableProject,
-                        onBack: onBack,
-                        organizationName: {
-                            if let orgId = editableProject.clientOrganizationId {
-                                return organizationViewModel.organizations.first { $0.id == orgId }?.name
-                            }
-                            return nil
-                        }()
-                    )
-                }
-                .padding()
-                
-                // Project Information Form
-                ProjectInfoPane(
-                    project: $editableProject,
-                    organizationViewModel: organizationViewModel,
-                    onSave: saveProject,
-                    isLoading: isLoading,
-                    errorMessage: errorMessage
-                )
-            }
-            .background(.regularMaterial)
-            
-            // Horizontal Divider
-            Divider()
-                .background(.separator)
-            
-            // Bottom Pane: Crew List
-            CrewListPane(
-                project: editableProject,
-                assignments: $assignments,
-                peopleViewModel: peopleViewModel,
-                showAddCrewSheet: $showAddCrewSheet,
-                onUpdate: loadAssignments
-            )
-            .background(.background)
-        }
-        .task {
-            await organizationViewModel.loadOrganizations()
-            await peopleViewModel.loadPeople()
-            await loadAssignments()
-        }
-        .sheet(isPresented: $showAddCrewSheet) {
-            AddCrewMemberSheet(
-                project: editableProject,
-                availablePeople: peopleViewModel.people.filter { person in
-                    !assignments.contains { $0.1.id == person.id }
-                }
-            ) {
-                Task { await loadAssignments() }
-            }
-        }
-    }
-
-    
-    private func loadAssignments() async {
-        do {
-            assignments = try await supabaseService.fetchProjectAssignmentsWithPeople(projectId: project.id)
-        } catch {
-            print("Error loading assignments: \(error)")
-        }
-    }
-    
-    private func saveProject() async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            try await supabaseService.updateProject(editableProject)
-            await MainActor.run {
-                isLoading = false
-            }
-            await projectViewModel.loadProjects()
-        } catch {
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "Failed to save project: \(error.localizedDescription)"
-            }
-        }
-    }
-}
-
-// MARK: - Project Info Pane
-struct ProjectInfoPane: View {
-    @Binding var project: Project
-    @ObservedObject var organizationViewModel: OrganizationViewModel
-    let onSave: () async -> Void
-    let isLoading: Bool
-    let errorMessage: String?
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Project Name
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Project Name")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                
-                TextField("Enter project name", text: $project.name)
-                    .textFieldStyle(.roundedBorder)
-            }
-            
-            // Organization
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Organization")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                
-                SearchableDropdown(
-                    title: "Select Organization",
-                    options: organizationViewModel.organizations,
-                    displayText: { $0.name },
-                    searchText: { $0.name },
-                    selection: Binding(
-                        get: { 
-                            organizationViewModel.organizations.first { $0.id == project.clientOrganizationId }
-                        },
-                        set: { organization in
-                            project.clientOrganizationId = organization?.id
-                        }
-                    ),
-                    allowCustomText: false,
-                    customText: .constant("")
-                )
-            }
-            
-            // Description
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Description")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                
-                TextField("Enter project description", text: Binding(
-                    get: { project.description ?? "" },
-                    set: { project.description = $0.isEmpty ? nil : $0 }
-                ), axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(3...6)
-            }
-            
-            // Notes
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Notes")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                
-                TextField("Enter project notes", text: Binding(
-                    get: { project.notes ?? "" },
-                    set: { project.notes = $0.isEmpty ? nil : $0 }
-                ), axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(3...6)
-            }
-            
-            // Error Message
-            if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .font(.caption)
-            }
-            
-            // Save Button
-            Button("Save Changes") {
-                Task {
-                    await onSave()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading)
-        }
-        .padding()
-    }
-}
-
-// MARK: - Crew List Pane
-struct CrewListPane: View {
-    let project: Project
-    @Binding var assignments: [(ProjectAssignment, Person)]
-    @ObservedObject var peopleViewModel: PeopleViewModel
-    @Binding var showAddCrewSheet: Bool
-    let onUpdate: () async -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Header
-            HStack {
-                Text("Crew Members")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                Spacer()
-                
-                Button("Add Member") {
-                    showAddCrewSheet = true
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding(.horizontal)
-            
-            // Crew List
-            if assignments.isEmpty {
-                ContentUnavailableView(
-                    "No Crew Members",
-                    systemImage: "person.slash",
-                    description: Text("Add crew members to this project")
-                )
-                .frame(maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 8) {
-                        ForEach(assignments, id: \.0.id) { assignment, person in
-                            CrewMemberRow(
-                                assignment: Binding(
-                                    get: { assignment },
-                                    set: { newAssignment in
-                                        if let index = assignments.firstIndex(where: { $0.0.id == assignment.id }) {
-                                            assignments[index] = (newAssignment, person)
-                                        }
-                                    }
-                                ),
-                                person: person,
-                                onRemove: {
-                                    // Remove assignment
-                                    assignments.removeAll { $0.0.id == assignment.id }
-                                }
-                            )
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-            }
-        }
-    }
-}
-
-// MARK: - MacOS Project Row
-struct MacOSProjectRow: View {
-    let project: Project
-    let onBack: () -> Void
-    let organizationName: String?
-    
-    var body: some View {
-        HStack {
-            Button("← Back") {
-                onBack()
-            }
-            .buttonStyle(.bordered)
-            
-            Spacer()
-            
-            VStack(alignment: .center, spacing: 4) {
-                Text(project.name)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                
-                if let organizationName = organizationName {
-                    Text("Organization: \(organizationName)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            // Placeholder for balance
-            Color.clear
-                .frame(width: 60)
-        }
-        .padding(.horizontal)
-    }
-} 
