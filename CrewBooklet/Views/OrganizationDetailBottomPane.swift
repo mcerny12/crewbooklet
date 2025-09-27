@@ -17,6 +17,7 @@ struct OrganizationDetailBottomPane: View {
     @State private var errorMessage: String?
     @State private var connectedPeople: [Person] = []
     @State private var connectedProjects: [Project] = []
+    @State private var saveTimer: Timer?
     
     enum DetailTab: String, CaseIterable {
         case information = "Information"
@@ -34,29 +35,44 @@ struct OrganizationDetailBottomPane: View {
         }
     }
     
+    // MARK: - Uniform Field Helper
+    @ViewBuilder
+    private func uniformField(_ label: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            TextField(label, text: text)
+                .font(.caption)
+                .textFieldStyle(.plain)
+                .frame(height: 24)
+                .padding(.horizontal, 8)
+                .background(Color(.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(.separator.opacity(0.3), lineWidth: 0.5))
+        }
+    }
+    
     var body: some View {
         BottomNavigationPane(isPresented: $isPresented) {
             VStack(spacing: 0) {
-                // Tab selection with minimal spacing
-                tabSelectionView
+                // Tab Picker
+                tabPicker
                 
-                // Content with minimal padding
-                ScrollView {
-                    VStack(spacing: 6) {
-                        switch selectedTab {
-                        case .information:
-                            informationTabContent
-                        case .financial:
-                            financialTabContent
-                        case .projects:
-                            projectsTabContent
-                        case .people:
-                            peopleTabContent
-                        }
+                // Tab Content
+                Group {
+                    switch selectedTab {
+                    case .information:
+                        informationTabContent
+                    case .financial:
+                        financialTabContent
+                    case .projects:
+                        projectsTabContent
+                    case .people:
+                        peopleTabContent
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .task {
@@ -64,371 +80,449 @@ struct OrganizationDetailBottomPane: View {
         }
     }
     
-    private var tabSelectionView: some View {
-        Picker("", selection: $selectedTab) {
+    private var tabPicker: some View {
+        Picker("Detail Tab", selection: $selectedTab) {
             ForEach(DetailTab.allCases, id: \.self) { tab in
                 Label(tab.rawValue, systemImage: tab.icon)
                     .tag(tab)
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
     
     private var informationTabContent: some View {
-        VStack(spacing: 6) {
-            // Row 1: Name, Contact Email, Contact Phone
-            HStack(spacing: 4) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Organization Name")
-                        .font(.caption2)
+        ScrollView {
+            VStack(spacing: 8) {
+                // Basic Information Grid
+                basicInformationGrid
+                
+                // Business Type Section
+                if !organization.jobs.isEmpty {
+                    businessTypeSection
+                }
+                
+                // Notes Section
+                notesSection
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+        .onChange(of: organization.name) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.contactEmail) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.contactPhone) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.street) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.street2) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.zip) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.city) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.country) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.notes) { _, _ in scheduleAutoSave() }
+    }
+    
+    private var basicInformationGrid: some View {
+        let columns = [
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8)
+        ]
+        
+        return LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+                // Organization Name
+                uniformField("Organization Name", text: $organization.name)
+                
+                // Contact Email
+                uniformField("Contact Email", text: Binding(
+                    get: { organization.contactEmail ?? "" },
+                    set: { organization.contactEmail = $0.isEmpty ? nil : $0 }
+                ))
+                
+                // Contact Phone
+                uniformField("Contact Phone", text: Binding(
+                    get: { organization.contactPhone ?? "" },
+                    set: { organization.contactPhone = $0.isEmpty ? nil : $0 }
+                ))
+                
+                // Website (not in model, skip for now)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Website")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                    TextField("Name", text: $organization.name)
-                        .textFieldStyle(.roundedBorder)
+                    Text("Not available")
                         .font(.caption)
+                        .frame(height: 24)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 8)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(.separator.opacity(0.3), lineWidth: 0.5))
                 }
                 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Contact Email")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    TextField("Email", text: Binding(
-                        get: { organization.contactEmail ?? "" },
-                        set: { organization.contactEmail = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .font(.caption)
-                }
+                // Main Address - Street
+                uniformField("Street", text: Binding(
+                    get: { organization.street ?? "" },
+                    set: { organization.street = $0.isEmpty ? nil : $0 }
+                ))
+                .gridCellColumns(2)
                 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Contact Phone")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    TextField("Phone", text: Binding(
-                        get: { organization.contactPhone ?? "" },
-                        set: { organization.contactPhone = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .font(.caption)
-                }
-            }
-            
-            // Row 2: Business Type
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Business Type")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(organization.jobs.map { $0.displayName }.joined(separator: ", "))
-                    .font(.caption)
-                    .foregroundStyle(organization.jobs.isEmpty ? .secondary : .primary)
-                    .frame(height: 22)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 6)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
-                    .lineLimit(1)
-            }
-            
-            // Main Address Section
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Main Address")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                // Main Address - Street 2
+                uniformField("Street 2", text: Binding(
+                    get: { organization.street2 ?? "" },
+                    set: { organization.street2 = $0.isEmpty ? nil : $0 }
+                ))
                 
-                HStack(spacing: 4) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Street")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Street", text: Binding(
-                            get: { organization.street ?? "" },
-                            set: { organization.street = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Street 2")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Street 2", text: Binding(
-                            get: { organization.street2 ?? "" },
-                            set: { organization.street2 = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                }
+                // Main Address - ZIP
+                uniformField("ZIP", text: Binding(
+                    get: { organization.zip ?? "" },
+                    set: { organization.zip = $0.isEmpty ? nil : $0 }
+                ))
                 
-                HStack(spacing: 4) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("ZIP")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("ZIP", text: Binding(
-                            get: { organization.zip ?? "" },
-                            set: { organization.zip = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                    .frame(maxWidth: 80)
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("City")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("City", text: Binding(
-                            get: { organization.city ?? "" },
-                            set: { organization.city = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Country")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Country", text: Binding(
-                            get: { organization.country ?? "" },
-                            set: { organization.country = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                }
-            }
-            
-            // Invoice Address Section
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Invoice Address")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                // Main Address - City
+                uniformField("City", text: Binding(
+                    get: { organization.city ?? "" },
+                    set: { organization.city = $0.isEmpty ? nil : $0 }
+                ))
                 
-                HStack(spacing: 4) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Invoice Name")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Invoice Name", text: Binding(
-                            get: { organization.nameInvoice ?? "" },
-                            set: { organization.nameInvoice = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Invoice Street")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Invoice Street", text: Binding(
-                            get: { organization.streetInvoice ?? "" },
-                            set: { organization.streetInvoice = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                }
-                
-                HStack(spacing: 4) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Invoice ZIP")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("ZIP", text: Binding(
-                            get: { organization.zipInvoice ?? "" },
-                            set: { organization.zipInvoice = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                    .frame(maxWidth: 80)
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Invoice City")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Invoice City", text: Binding(
-                            get: { organization.cityInvoice ?? "" },
-                            set: { organization.cityInvoice = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Invoice Country")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        TextField("Country", text: Binding(
-                            get: { organization.countryInvoice ?? "" },
-                            set: { organization.countryInvoice = $0.isEmpty ? nil : $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .font(.caption)
-                    }
-                }
-            }
-            
-            // Notes
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Notes")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                TextField("Notes", text: Binding(
-                    get: { organization.notes ?? "" },
-                    set: { organization.notes = $0.isEmpty ? nil : $0 }
-                ), axis: .vertical)
-                .textFieldStyle(.roundedBorder)
+                // Main Address - Country
+                uniformField("Country", text: Binding(
+                    get: { organization.country ?? "" },
+                    set: { organization.country = $0.isEmpty ? nil : $0 }
+                ))
+        }
+    }
+    
+    private var businessTypeSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Business Types")
                 .font(.caption)
-                .lineLimit(2...3)
-            }
-            
-            // Save Button and Error
-            HStack {
-                Spacer()
-                Button("Save") {
-                    Task { await saveOrganization() }
+                .foregroundStyle(.secondary)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 4) {
+                ForEach(organization.jobs, id: \.self) { jobType in
+                    Text(jobType.displayName)
+                        .font(.caption2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.secondary.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(isLoading)
-                .font(.caption)
-                .controlSize(.small)
-            }
-            
-            if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .font(.caption2)
             }
         }
-        .padding(4)
+    }
+    
+    private var notesSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Notes")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            TextEditor(text: Binding(
+                get: { organization.notes ?? "" },
+                set: { organization.notes = $0.isEmpty ? nil : $0 }
+            ))
+            .font(.caption)
+            .frame(height: 80)
+            .padding(8)
+            .background(Color(.controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(.separator.opacity(0.3), lineWidth: 0.5))
+        }
     }
     
     private var financialTabContent: some View {
-        VStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Financial Information")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+        ScrollView {
+            VStack(spacing: 12) {
+                // Main financial information
+                financialMainGrid
                 
-                // Financial details content here
-                Text("Financial details will be implemented here")
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(8)
+                // Invoice Address Section
+                invoiceAddressSection
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+        .onChange(of: organization.financialDetails?.vatNumber) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.financialDetails?.bankName) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.financialDetails?.iban) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.financialDetails?.bic) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.financialDetails?.accountNumber) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.financialDetails?.routingNumber) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.nameInvoice) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.streetInvoice) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.street2Invoice) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.zipInvoice) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.cityInvoice) { _, _ in scheduleAutoSave() }
+        .onChange(of: organization.countryInvoice) { _, _ in scheduleAutoSave() }
+    }
+    
+    private var financialMainGrid: some View {
+        let columns = [
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8),
+            GridItem(.flexible(), spacing: 8)
+        ]
+        
+        return LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+                // VAT Number
+                uniformField("VAT Number", text: Binding(
+                    get: { organization.financialDetails?.vatNumber ?? "" },
+                    set: { 
+                        if organization.financialDetails == nil { 
+                            organization.financialDetails = FinancialDetails() 
+                        }
+                        organization.financialDetails?.vatNumber = $0.isEmpty ? nil : $0 
+                    }
+                ))
+                
+                // Bank Name
+                uniformField("Bank Name", text: Binding(
+                    get: { organization.financialDetails?.bankName ?? "" },
+                    set: { 
+                        if organization.financialDetails == nil { 
+                            organization.financialDetails = FinancialDetails() 
+                        }
+                        organization.financialDetails?.bankName = $0.isEmpty ? nil : $0 
+                    }
+                ))
+                
+                // IBAN
+                uniformField("IBAN", text: Binding(
+                    get: { organization.financialDetails?.iban ?? "" },
+                    set: { 
+                        if organization.financialDetails == nil { 
+                            organization.financialDetails = FinancialDetails() 
+                        }
+                        organization.financialDetails?.iban = $0.isEmpty ? nil : $0 
+                    }
+                ))
+                
+                // BIC/SWIFT
+                uniformField("BIC/SWIFT", text: Binding(
+                    get: { organization.financialDetails?.bic ?? "" },
+                    set: { 
+                        if organization.financialDetails == nil { 
+                            organization.financialDetails = FinancialDetails() 
+                        }
+                        organization.financialDetails?.bic = $0.isEmpty ? nil : $0 
+                    }
+                ))
+                
+                // Account Number
+                uniformField("Account Number", text: Binding(
+                    get: { organization.financialDetails?.accountNumber ?? "" },
+                    set: { 
+                        if organization.financialDetails == nil { 
+                            organization.financialDetails = FinancialDetails() 
+                        }
+                        organization.financialDetails?.accountNumber = $0.isEmpty ? nil : $0 
+                    }
+                ))
+                
+                // Routing Number
+                uniformField("Routing Number", text: Binding(
+                    get: { organization.financialDetails?.routingNumber ?? "" },
+                    set: { 
+                        if organization.financialDetails == nil { 
+                            organization.financialDetails = FinancialDetails() 
+                        }
+                        organization.financialDetails?.routingNumber = $0.isEmpty ? nil : $0 
+                    }
+                ))
+        }
+    }
+    
+    private var invoiceAddressSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Invoice Address")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            let invoiceColumns = [
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8)
+            ]
+            
+            LazyVGrid(columns: invoiceColumns, alignment: .leading, spacing: 8) {
+                // Invoice Name
+                uniformField("Invoice Company Name", text: Binding(
+                    get: { organization.nameInvoice ?? "" },
+                    set: { organization.nameInvoice = $0.isEmpty ? nil : $0 }
+                ))
+                .gridCellColumns(3)
+                
+                // Invoice Street
+                uniformField("Invoice Street", text: Binding(
+                    get: { organization.streetInvoice ?? "" },
+                    set: { organization.streetInvoice = $0.isEmpty ? nil : $0 }
+                ))
+                .gridCellColumns(2)
+                
+                // Invoice Street 2
+                uniformField("Invoice Street 2", text: Binding(
+                    get: { organization.street2Invoice ?? "" },
+                    set: { organization.street2Invoice = $0.isEmpty ? nil : $0 }
+                ))
+                
+                // Invoice ZIP
+                uniformField("Invoice ZIP", text: Binding(
+                    get: { organization.zipInvoice ?? "" },
+                    set: { organization.zipInvoice = $0.isEmpty ? nil : $0 }
+                ))
+                
+                // Invoice City
+                uniformField("Invoice City", text: Binding(
+                    get: { organization.cityInvoice ?? "" },
+                    set: { organization.cityInvoice = $0.isEmpty ? nil : $0 }
+                ))
+                
+                // Invoice Country
+                uniformField("Invoice Country", text: Binding(
+                    get: { organization.countryInvoice ?? "" },
+                    set: { organization.countryInvoice = $0.isEmpty ? nil : $0 }
+                ))
+            }
         }
     }
     
     private var projectsTabContent: some View {
-        VStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Associated Projects")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 
                 if connectedProjects.isEmpty {
-                    Text("No associated projects")
+                    Text("No projects found")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(8)
+                        .padding(12)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 } else {
                     LazyVStack(spacing: 4) {
                         ForEach(connectedProjects) { project in
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(project.name)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                    Text(project.projectNumber)
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .fontWeight(.medium)
+                                    if let description = project.description {
+                                        Text(description)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
                                 }
                                 Spacer()
-                                Text(project.status.rawValue)
-                                    .font(.caption)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(.blue.opacity(0.2))
-                                    .foregroundStyle(.blue)
-                                    .cornerRadius(4)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
-                            .padding(6)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                            .padding(8)
+                            .background(Color(.controlBackgroundColor))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(.separator.opacity(0.3), lineWidth: 0.5))
                         }
                     }
                 }
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
     }
     
     private var peopleTabContent: some View {
-        VStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Linked Employees")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Connected People")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 
                 if connectedPeople.isEmpty {
-                    Text("No linked employees")
+                    Text("No people found")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(8)
+                        .padding(12)
+                        .background(Color(.controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 } else {
                     LazyVStack(spacing: 4) {
                         ForEach(connectedPeople) { person in
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(person.name)
-                                        .font(.body)
+                                        .font(.caption)
                                         .fontWeight(.medium)
                                     if let email = person.email {
                                         Text(email)
-                                            .font(.caption)
+                                            .font(.caption2)
                                             .foregroundStyle(.secondary)
                                     }
                                 }
                                 Spacer()
                                 if !person.jobs.isEmpty {
                                     Text(person.jobs.first?.displayName ?? "")
-                                        .font(.caption)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(.green.opacity(0.2))
-                                        .foregroundStyle(.green)
-                                        .cornerRadius(4)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
                                 }
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
-                            .padding(6)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                            .padding(8)
+                            .background(Color(.controlBackgroundColor))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(.separator.opacity(0.3), lineWidth: 0.5))
                         }
                     }
                 }
             }
-            .padding(8)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
     }
     
+    // MARK: - Data Loading
     private func loadConnectedData() async {
         do {
-            connectedPeople = try await supabaseService.fetchPeopleByOrganization(organization.id)
-            // Load connected projects when method is available
-            // connectedProjects = try await supabaseService.fetchProjectsByOrganization(organization.id)
+            // Load connected projects for this organization
+            connectedProjects = try await supabaseService.fetchProjectsForOrganization(organization.id)
+            
+            // Load connected people - people who have worked on projects for this organization
+            var allPeople: Set<Person> = []
+            for project in connectedProjects {
+                let peopleForProject = try await supabaseService.fetchPeopleForProject(project.id)
+                for (person, _) in peopleForProject {
+                    allPeople.insert(person)
+                }
+            }
+            
+            await MainActor.run {
+                connectedPeople = Array(allPeople)
+            }
         } catch {
-            errorMessage = "Failed to load connected data: \(error.localizedDescription)"
+            print("Error loading connected data: \(error)")
+            await MainActor.run {
+                connectedPeople = []
+                connectedProjects = []
+            }
+        }
+    }
+    
+    // MARK: - Auto Save
+    private func scheduleAutoSave() {
+        saveTimer?.invalidate()
+        saveTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+            Task {
+                await saveOrganization()
+            }
         }
     }
     
     private func saveOrganization() async {
+        guard !isLoading else { return }
+        
         isLoading = true
         errorMessage = nil
         
@@ -437,11 +531,10 @@ struct OrganizationDetailBottomPane: View {
             await MainActor.run {
                 isLoading = false
             }
-            // Could add a success message or callback here
         } catch {
             await MainActor.run {
                 isLoading = false
-                errorMessage = "Failed to save organization: \(error.localizedDescription)"
+                errorMessage = error.localizedDescription
             }
         }
     }
@@ -451,10 +544,5 @@ struct OrganizationDetailBottomPane: View {
     @Previewable @State var organization = Organization(name: "Example Corp", contactEmail: "contact@example.com")
     @Previewable @State var isPresented = true
     
-    return ZStack {
-        Color.gray.opacity(0.2)
-            .ignoresSafeArea()
-        
-        OrganizationDetailBottomPane(organization: $organization, isPresented: $isPresented)
-    }
+    OrganizationDetailBottomPane(organization: $organization, isPresented: $isPresented)
 }

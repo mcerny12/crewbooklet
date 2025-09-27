@@ -404,7 +404,7 @@ struct OrganizationDetailSheet: View {
         // Load connected people and projects from Supabase
         do {
             connectedPeople = try await supabaseService.fetchPeopleByOrganization(organization.id)
-            // TODO: Load connected projects when method is available
+            connectedProjects = try await supabaseService.fetchProjectsForOrganization(organization.id)
         } catch {
             errorMessage = "Failed to load connected data: \(error.localizedDescription)"
         }

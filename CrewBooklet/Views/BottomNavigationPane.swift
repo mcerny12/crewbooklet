@@ -49,22 +49,20 @@ struct BottomNavigationPane<Content: View>: View {
                 .gesture(
                     DragGesture()
                         .onChanged { value in
-                            let newHeight = currentHeight - value.translation.height
-                            let clampedHeight = max(minHeight, min(maxHeight, newHeight))
-                            dragOffset = clampedHeight - currentHeight
+                            dragOffset = -value.translation.height
                         }
                         .onEnded { value in
                             let newHeight = currentHeight - value.translation.height
                             let clampedHeight = max(minHeight, min(maxHeight, newHeight))
                             
-                            withAnimation(.easeOut(duration: 0.2)) {
+                            withAnimation(.snappy(duration: 0.15)) {
                                 currentHeight = clampedHeight
                                 dragOffset = 0
                             }
                             
                             // Auto-dismiss if dragged too low
                             if newHeight < minHeight - 50 {
-                                withAnimation(.easeInOut(duration: 0.3)) {
+                                withAnimation(.easeOut(duration: 0.2)) {
                                     isPresented = false
                                 }
                             }

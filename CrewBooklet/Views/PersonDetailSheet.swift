@@ -16,6 +16,8 @@ struct PersonDetailSheet: View {
     
     // Add tab selection state
     @State private var selectedTab: DetailTab = .info
+    @State private var organizationName: String? = nil
+    @StateObject private var supabaseService = SupabaseService.shared
     
     enum DetailTab {
         case info
@@ -45,6 +47,14 @@ struct PersonDetailSheet: View {
         VStack(spacing: 0) {
             tabSelectionView
             tabContentView
+        }
+        .task {
+            await loadOrganizationName()
+        }
+        .onChange(of: person.organizationId) { _, _ in
+            Task {
+                await loadOrganizationName()
+            }
         }
     }
 
@@ -234,10 +244,16 @@ struct PersonDetailSheet: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
-                            // TODO: Display organization name when organization data is loaded
-                            Text("Organization ID: \(person.organizationId?.uuidString ?? "None")")
-                                .font(.caption2)
-                                .foregroundColor(.blue)
+                            if let organizationName = organizationName {
+                                Text(organizationName)
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                            } else {
+                                Text("Loading organization...")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }
@@ -510,6 +526,33 @@ struct PersonDetailSheet: View {
             return attributes[.size] as? Int64 ?? 0
         } catch {
             return 0
+        }
+    }
+    
+    private func loadOrganizationName() async {
+        guard let orgId = person.organizationId else {
+            await MainActor.run {
+                organizationName = nil
+            }
+            return
+        }
+        
+        do {
+            let organizations = try await supabaseService.fetchOrganizations()
+            if let organization = organizations.first(where: { $0.id == orgId }) {
+                await MainActor.run {
+                    organizationName = organization.name
+                }
+            } else {
+                await MainActor.run {
+                    organizationName = "Organization not found"
+                }
+            }
+        } catch {
+            print("Error loading organization: \(error)")
+            await MainActor.run {
+                organizationName = "Error loading organization"
+            }
         }
     }
 }
