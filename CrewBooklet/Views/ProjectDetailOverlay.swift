@@ -63,22 +63,11 @@ struct ProjectDetailOverlay: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
-            .padding(.top, calculateTopPadding(geometry: geometry)) // Precise positioning calculation
-            .padding(.horizontal, 16) // Match LazyVStack padding exactly
-            .overlay(alignment: .topLeading) {
-                // DEBUG: Show positioning information
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Debug: topPadding = \(calculateTopPadding(geometry: geometry), specifier: "%.1f")pt")
-                    Text("Safe area top = \(geometry.safeAreaInsets.top, specifier: "%.1f")pt")
-                    Text("Frame size = \(geometry.size.width, specifier: "%.0f") x \(geometry.size.height, specifier: "%.0f")")
-                }
-                .font(.caption2)
-                .foregroundStyle(.red)
-                .background(.white.opacity(0.8))
-                .padding(4)
-                .cornerRadius(4)
-                .offset(x: 20, y: 20)
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .offset(
+                x: 16, // Match LazyVStack horizontal padding
+                y: calculateTopPadding(geometry: geometry) // Exact vertical position
+            )
         }
         }
     }
@@ -248,18 +237,14 @@ struct ProjectDetailOverlay: View {
         .padding(.vertical, 20)   // Context7: 20pt vertical content margins
     }
     
-    // MARK: - Positioning Calculations
+    // MARK: - Positioning Calculations  
     private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
-        // NOW positioned at main content ZStack level (same as bottom panes)
-        // This means we need to calculate from the actual detail view start
-        // NavigationSplitView toolbar height is typically 52pt on macOS
+        // Use ACTUAL safe area from debug: safeAreaInsets.top = 38pt
         // Plus LazyVStack padding of 16pt for first row position
+        let actualSafeAreaTop = geometry.safeAreaInsets.top // = 38pt on this system
+        let listPadding: CGFloat = 16 // LazyVStack .padding()
         
-        // Debug: check actual toolbar height
-        let toolbarHeight: CGFloat = 52 // Standard macOS NavigationSplitView toolbar
-        let listPadding: CGFloat = 16   // LazyVStack .padding() 
-        
-        return toolbarHeight + listPadding
+        return actualSafeAreaTop + listPadding // = 38 + 16 = 54pt
     }
     
     // MARK: - Helper Functions  
