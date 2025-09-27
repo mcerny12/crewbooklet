@@ -15,11 +15,12 @@ struct ProjectDetailOverlay: View {
     
     enum ProjectDetailTab: String, CaseIterable {
         case information = "Information"
-        case crew = "Crew"
+        case crew = "Crew" 
         case financial = "Financial"
     }
     
     var body: some View {
+        GeometryReader { geometry in
         ZStack {
             // Background overlay
             Rectangle()
@@ -62,16 +63,22 @@ struct ProjectDetailOverlay: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
-            .padding(.horizontal, 16) // Match ScrollView container padding
-            .padding(.top, calculateTopPadding()) // Precise positioning calculation
+            .padding(.top, calculateTopPadding(geometry: geometry)) // Precise positioning calculation
+            .padding(.horizontal, 16) // Match LazyVStack padding exactly
+        }
         }
     }
     
     // MARK: - Header View (matching list row position EXACTLY)
     private var headerView: some View {
         VStack(spacing: 0) {
-            // Title row matching MacOSProjectListRow PIXEL PERFECT
-            HStack(spacing: 12) {
+            // Title row matching MacOSProjectListRow PIXEL PERFECT - clickable to close
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isPresented = false
+                }
+            }) {
+                HStack(spacing: 12) {
                 // Project name and number (identical to MacOSProjectListRow)
                 HStack(spacing: 8) {
                     Text(project.name)
@@ -124,6 +131,8 @@ struct ProjectDetailOverlay: View {
                     .buttonStyle(.plain)
                 }
             }
+            }
+            .buttonStyle(.plain) // Make entire header clickable
             .padding(.horizontal, 12) // EXACT match to MacOSProjectListRow
             .padding(.vertical, 9)     // EXACT match to MacOSProjectListRow  
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8)) // EXACT match
@@ -226,12 +235,19 @@ struct ProjectDetailOverlay: View {
     }
     
     // MARK: - Positioning Calculations
-    private func calculateTopPadding() -> CGFloat {
-        // Based on Context7 macOS design system guidelines:
-        // Title bar height: ~28pt + safe area (~22pt) = 50pt
-        // List padding: 16pt (default SwiftUI padding)
-        // First row position offset needed for exact alignment
-        return 50.0 + 16.0 // Title bar + container padding
+    private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
+        // More precise calculation using actual safe area
+        // NavigationSplitView with toolbar uses safeAreaInsets.top
+        // Plus the LazyVStack padding of 16pt
+        let safeAreaTop = geometry.safeAreaInsets.top
+        let listPadding: CGFloat = 16
+        
+        // If safe area is 0, fall back to estimated title bar height
+        if safeAreaTop == 0 {
+            return 52 + listPadding // Estimated for macOS
+        }
+        
+        return safeAreaTop + listPadding
     }
     
     // MARK: - Helper Functions  
