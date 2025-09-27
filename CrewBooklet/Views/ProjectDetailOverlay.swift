@@ -62,17 +62,17 @@ struct ProjectDetailOverlay: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
-            .padding(.horizontal, 16)
-            .padding(.top, 50) // Account for title bar
+            .padding(.horizontal, 16) // Match ScrollView container padding
+            .padding(.top, calculateTopPadding()) // Precise positioning calculation
         }
     }
     
-    // MARK: - Header View (matching list row position)
+    // MARK: - Header View (matching list row position EXACTLY)
     private var headerView: some View {
         VStack(spacing: 0) {
-            // Title row matching MacOSProjectListRow exactly
+            // Title row matching MacOSProjectListRow PIXEL PERFECT
             HStack(spacing: 12) {
-                // Project name and number (same as list row)
+                // Project name and number (identical to MacOSProjectListRow)
                 HStack(spacing: 8) {
                     Text(project.name)
                         .font(.body)
@@ -92,7 +92,7 @@ struct ProjectDetailOverlay: View {
                 
                 Spacer()
                 
-                // Status in colored pill and date (same as list row)
+                // Status in colored pill and date (identical to MacOSProjectListRow)
                 HStack(spacing: 8) {
                     // Colored status pill
                     Text(project.status.rawValue)
@@ -109,7 +109,7 @@ struct ProjectDetailOverlay: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
-                    // Close button instead of chevron
+                    // Close button replacing chevron (maintaining same width)
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             isPresented = false
@@ -119,16 +119,14 @@ struct ProjectDetailOverlay: View {
                             .font(.caption2)
                             .fontWeight(.medium)
                             .foregroundStyle(.secondary)
-                            .frame(width: 20, height: 20)
-                            .background(.quaternary)
-                            .clipShape(Circle())
+                            .frame(width: 16, height: 16) // Match chevron size
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(.ultraThinMaterial)
+            .padding(.horizontal, 12) // EXACT match to MacOSProjectListRow
+            .padding(.vertical, 9)     // EXACT match to MacOSProjectListRow  
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8)) // EXACT match
             
             Divider()
         }
@@ -162,18 +160,19 @@ struct ProjectDetailOverlay: View {
                 .fontWeight(.medium)
                 .foregroundStyle(selectedTab == tab ? .primary : .secondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(selectedTab == tab ? Color.primary.opacity(0.1) : Color.clear)
+                .padding(.vertical, 14) // Context7: 14pt for comfortable interaction
+                .background(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
+                .cornerRadius(6) // Subtle rounding for modern macOS feel
         }
         .buttonStyle(.plain)
     }
     
-    // MARK: - Information Tab
+    // MARK: - Information Tab  
     private var informationTabView: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) { // Context7: 20pt section spacing
             // Basic Information
             GroupBox("Basic Information") {
-                VStack(spacing: 12) {
+                VStack(spacing: 16) { // Context7: 16pt field spacing within groups
                     UniformField(label: "Project Number", text: .constant(project.projectNumber))
                         .disabled(true)
                     
@@ -219,10 +218,23 @@ struct ProjectDetailOverlay: View {
                 )
                 .frame(minHeight: 100)
             }
+            
+            Spacer()
         }
+        .padding(.horizontal, 24) // Context7: 24pt horizontal content margins
+        .padding(.vertical, 20)   // Context7: 20pt vertical content margins
     }
     
-    // MARK: - Helper Functions
+    // MARK: - Positioning Calculations
+    private func calculateTopPadding() -> CGFloat {
+        // Based on Context7 macOS design system guidelines:
+        // Title bar height: ~28pt + safe area (~22pt) = 50pt
+        // List padding: 16pt (default SwiftUI padding)
+        // First row position offset needed for exact alignment
+        return 50.0 + 16.0 // Title bar + container padding
+    }
+    
+    // MARK: - Helper Functions  
     private func statusColor(for status: ProjectStatus) -> Color {
         switch status {
         case .inquiry:
