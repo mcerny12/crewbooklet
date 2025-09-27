@@ -63,7 +63,7 @@ struct ProjectDetailOverlay: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: geometry.size.width - 32, maxHeight: .infinity, alignment: .topLeading) // Context7: Proper width constraints
             .offset(
                 x: 16, // Context7: Match ProjectsListView .padding() horizontal exactly
                 y: calculateTopPadding(geometry: geometry) // Context7: Exact vertical position using GeometryReader
@@ -75,70 +75,60 @@ struct ProjectDetailOverlay: View {
     // MARK: - Header View (matching list row position EXACTLY)
     private var headerView: some View {
         VStack(spacing: 0) {
-            // Title row matching MacOSProjectListRow PIXEL PERFECT - clickable to close
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isPresented = false
+            // Title row EXACTLY matching MacOSProjectListRow - entire area clickable to return to list
+            HStack(spacing: 12) { // Context7: EXACT match to MacOSProjectListRow spacing
+                // Project name and number (IDENTICAL to MacOSProjectListRow)
+                HStack(spacing: 8) { // Context7: EXACT match to MacOSProjectListRow spacing
+                    Text(project.name)
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    Text("•")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text(project.projectNumber)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-            }) {
-                HStack(spacing: 12) { // Context7: Match exact spacing from MacOSProjectListRow
-                    // Project name and number (identical to MacOSProjectListRow)
-                    HStack(spacing: 8) { // Context7: Match exact spacing
-                        Text(project.name)
-                            .font(.body)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                        
-                        Text("•")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        Text(project.projectNumber)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
+                
+                Spacer()
+                
+                // Status in colored pill and date (IDENTICAL to MacOSProjectListRow)
+                HStack(spacing: 8) { // Context7: EXACT match to MacOSProjectListRow spacing
+                    // Colored status pill
+                    Text(project.status.rawValue)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(statusColor(for: project.status))
+                        .foregroundStyle(.white)
+                        .cornerRadius(10)
                     
-                    Spacer()
+                    // Created date
+                    Text(formatDate(project.createdAt))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     
-                    // Status in colored pill and date (identical to MacOSProjectListRow)
-                    HStack(spacing: 8) { // Context7: Match exact spacing
-                        // Colored status pill
-                        Text(project.status.rawValue)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(statusColor(for: project.status))
-                            .foregroundStyle(.white)
-                            .cornerRadius(10)
-                        
-                        // Created date
-                        Text(formatDate(project.createdAt))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        // Close button replacing chevron (maintaining same width)
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isPresented = false
-                            }
-                        }) {
-                            Image(systemName: "xmark")
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.secondary)
-                                .frame(width: 16, height: 16) // Context7: Match chevron size exactly
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    // Back arrow replacing chevron (same size)
+                    Image(systemName: "chevron.left")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .buttonStyle(.plain) // Make entire header clickable
             .padding(.horizontal, 12) // Context7: EXACT match to MacOSProjectListRow
             .padding(.vertical, 9)     // Context7: EXACT match to MacOSProjectListRow  
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8)) // Context7: EXACT match
+            .contentShape(Rectangle()) // Make entire area tappable
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isPresented = false
+                }
+            }
             
             Divider()
                 .padding(.top, 1) // Context7: Small separator spacing for visual hierarchy
@@ -240,13 +230,13 @@ struct ProjectDetailOverlay: View {
     
     // MARK: - Positioning Calculations  
     private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
-        // Context7: Precise positioning to match first list row
-        // SwiftUI best practice: Use geometry reader for accurate positioning
+        // Context7: EXACT positioning to match first list row
+        // Account for LazyVStack spacing (4pt) and first item position
         let safeAreaTop = geometry.safeAreaInsets.top
-        let contentPadding: CGFloat = 16 // ProjectsListView .padding()
+        let listPadding: CGFloat = 16 // ProjectsListView .padding()
         
-        // For exact pixel-perfect alignment with first list row
-        return safeAreaTop + contentPadding
+        // Return exact position where first list item appears
+        return safeAreaTop + listPadding
     }
     
     // MARK: - Helper Functions  
