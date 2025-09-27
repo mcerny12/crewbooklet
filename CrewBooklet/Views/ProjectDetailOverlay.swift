@@ -20,9 +20,11 @@ struct ProjectDetailOverlay: View {
     }
     
     var body: some View {
+        GeometryReader { geometry in
         ZStack {
             // Background overlay
-            Color.black.opacity(0.3)
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.3)) {
@@ -30,9 +32,9 @@ struct ProjectDetailOverlay: View {
                     }
                 }
             
-            // Main content - simple centered approach
+            // Main content
             VStack(spacing: 0) {
-                // Header matching project list row
+                // Header with project title in exact same position as list row
                 headerView
                 
                 // Tab selector
@@ -54,14 +56,19 @@ struct ProjectDetailOverlay: View {
                                 .frame(minHeight: 200)
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
                 }
                 .background(.background)
             }
-            .frame(maxWidth: 800, maxHeight: 600)
-            .background(.regularMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .offset(
+                x: 16, // Match LazyVStack horizontal padding
+                y: calculateTopPadding(geometry: geometry) // Exact vertical position
+            )
+        }
         }
     }
     
@@ -230,6 +237,15 @@ struct ProjectDetailOverlay: View {
         .padding(.vertical, 20)   // Context7: 20pt vertical content margins
     }
     
+    // MARK: - Positioning Calculations  
+    private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
+        // Use ACTUAL safe area from debug: safeAreaInsets.top = 38pt
+        // Plus LazyVStack padding of 16pt for first row position
+        let actualSafeAreaTop = geometry.safeAreaInsets.top // = 38pt on this system
+        let listPadding: CGFloat = 16 // LazyVStack .padding()
+        
+        return actualSafeAreaTop + listPadding // = 38 + 16 = 54pt
+    }
     
     // MARK: - Helper Functions  
     private func statusColor(for status: ProjectStatus) -> Color {
