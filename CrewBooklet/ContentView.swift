@@ -295,7 +295,10 @@ struct ContentView: View {
                         MacOSProjectListRow(project: project) {
                             selectedProject = project
                             editableProject = project
-                            showProjectDetail = true
+                            currentSelectedItem = .project(project)
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showProjectDetailPane = true
+                            }
                         }
                     }
                 }
