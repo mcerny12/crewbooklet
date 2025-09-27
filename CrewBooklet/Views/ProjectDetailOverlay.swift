@@ -65,6 +65,20 @@ struct ProjectDetailOverlay: View {
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
             .padding(.top, calculateTopPadding(geometry: geometry)) // Precise positioning calculation
             .padding(.horizontal, 16) // Match LazyVStack padding exactly
+            .overlay(alignment: .topLeading) {
+                // DEBUG: Show positioning information
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Debug: topPadding = \(calculateTopPadding(geometry: geometry), specifier: "%.1f")pt")
+                    Text("Safe area top = \(geometry.safeAreaInsets.top, specifier: "%.1f")pt")
+                    Text("Frame size = \(geometry.size.width, specifier: "%.0f") x \(geometry.size.height, specifier: "%.0f")")
+                }
+                .font(.caption2)
+                .foregroundStyle(.red)
+                .background(.white.opacity(0.8))
+                .padding(4)
+                .cornerRadius(4)
+                .offset(x: 20, y: 20)
+            }
         }
         }
     }
@@ -236,18 +250,16 @@ struct ProjectDetailOverlay: View {
     
     // MARK: - Positioning Calculations
     private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
-        // More precise calculation using actual safe area
-        // NavigationSplitView with toolbar uses safeAreaInsets.top
-        // Plus the LazyVStack padding of 16pt
-        let safeAreaTop = geometry.safeAreaInsets.top
-        let listPadding: CGFloat = 16
+        // NOW positioned at main content ZStack level (same as bottom panes)
+        // This means we need to calculate from the actual detail view start
+        // NavigationSplitView toolbar height is typically 52pt on macOS
+        // Plus LazyVStack padding of 16pt for first row position
         
-        // If safe area is 0, fall back to estimated title bar height
-        if safeAreaTop == 0 {
-            return 52 + listPadding // Estimated for macOS
-        }
+        // Debug: check actual toolbar height
+        let toolbarHeight: CGFloat = 52 // Standard macOS NavigationSplitView toolbar
+        let listPadding: CGFloat = 16   // LazyVStack .padding() 
         
-        return safeAreaTop + listPadding
+        return toolbarHeight + listPadding
     }
     
     // MARK: - Helper Functions  

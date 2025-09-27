@@ -82,6 +82,19 @@ struct ContentView: View {
                 ZStack {
                     detailView
                     
+                    // Full overlay for project detail (at main content level)
+                    if showProjectDetailOverlay, let project = editableProject {
+                        ProjectDetailOverlay(
+                            project: Binding(
+                                get: { project },
+                                set: { editableProject = $0 }
+                            ),
+                            isPresented: $showProjectDetailOverlay
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        .zIndex(2) // Above bottom panes
+                    }
+                    
                     // Bottom navigation panes (only in main content area)
                     VStack {
                         Spacer()
@@ -355,37 +368,22 @@ struct ContentView: View {
     
     // MARK: - Projects View
     private var projectsView: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                // Projects List
-                ProjectsListView(
-                    projectViewModel: projectViewModel,
-                    showAddProjectSheet: $showAddProjectSheet,
-                    onProjectSelected: { project in
-                        selectedProject = project
-                        editableProject = project
-                        currentSelectedItem = .project(project)
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showProjectDetailOverlay = true
-                        }
+        VStack(spacing: 0) {
+            // Projects List
+            ProjectsListView(
+                projectViewModel: projectViewModel,
+                showAddProjectSheet: $showAddProjectSheet,
+                onProjectSelected: { project in
+                    selectedProject = project
+                    editableProject = project
+                    currentSelectedItem = .project(project)
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showProjectDetailOverlay = true
                     }
-                )
-            }
-            .background(.background)
-            
-            // Full overlay for project detail
-            if showProjectDetailOverlay, let project = editableProject {
-                ProjectDetailOverlay(
-                    project: Binding(
-                        get: { project },
-                        set: { editableProject = $0 }
-                    ),
-                    isPresented: $showProjectDetailOverlay
-                )
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                .zIndex(1)
-            }
+                }
+            )
         }
+        .background(.background)
     }
     
     // MARK: - Calendar View
