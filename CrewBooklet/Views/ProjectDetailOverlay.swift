@@ -65,8 +65,8 @@ struct ProjectDetailOverlay: View {
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .offset(
-                x: 16, // Match LazyVStack horizontal padding
-                y: calculateTopPadding(geometry: geometry) // Exact vertical position
+                x: 16, // Context7: Match ProjectsListView .padding() horizontal exactly
+                y: calculateTopPadding(geometry: geometry) // Context7: Exact vertical position using GeometryReader
             )
         }
         }
@@ -81,66 +81,67 @@ struct ProjectDetailOverlay: View {
                     isPresented = false
                 }
             }) {
-                HStack(spacing: 12) {
-                // Project name and number (identical to MacOSProjectListRow)
-                HStack(spacing: 8) {
-                    Text(project.name)
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    
-                    Text("•")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
-                    Text(project.projectNumber)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                Spacer()
-                
-                // Status in colored pill and date (identical to MacOSProjectListRow)
-                HStack(spacing: 8) {
-                    // Colored status pill
-                    Text(project.status.rawValue)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(statusColor(for: project.status))
-                        .foregroundStyle(.white)
-                        .cornerRadius(10)
-                    
-                    // Created date
-                    Text(formatDate(project.createdAt))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
-                    // Close button replacing chevron (maintaining same width)
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            isPresented = false
-                        }
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.caption2)
+                HStack(spacing: 12) { // Context7: Match exact spacing from MacOSProjectListRow
+                    // Project name and number (identical to MacOSProjectListRow)
+                    HStack(spacing: 8) { // Context7: Match exact spacing
+                        Text(project.name)
+                            .font(.body)
                             .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        
+                        Text("•")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
-                            .frame(width: 16, height: 16) // Match chevron size
+                        
+                        Text(project.projectNumber)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
-                    .buttonStyle(.plain)
+                    
+                    Spacer()
+                    
+                    // Status in colored pill and date (identical to MacOSProjectListRow)
+                    HStack(spacing: 8) { // Context7: Match exact spacing
+                        // Colored status pill
+                        Text(project.status.rawValue)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(statusColor(for: project.status))
+                            .foregroundStyle(.white)
+                            .cornerRadius(10)
+                        
+                        // Created date
+                        Text(formatDate(project.createdAt))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        
+                        // Close button replacing chevron (maintaining same width)
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isPresented = false
+                            }
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 16, height: 16) // Context7: Match chevron size exactly
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-            }
             }
             .buttonStyle(.plain) // Make entire header clickable
-            .padding(.horizontal, 12) // EXACT match to MacOSProjectListRow
-            .padding(.vertical, 9)     // EXACT match to MacOSProjectListRow  
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8)) // EXACT match
+            .padding(.horizontal, 12) // Context7: EXACT match to MacOSProjectListRow
+            .padding(.vertical, 9)     // Context7: EXACT match to MacOSProjectListRow  
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8)) // Context7: EXACT match
             
             Divider()
+                .padding(.top, 1) // Context7: Small separator spacing for visual hierarchy
         }
     }
     
@@ -239,12 +240,13 @@ struct ProjectDetailOverlay: View {
     
     // MARK: - Positioning Calculations  
     private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
-        // Use ACTUAL safe area from debug: safeAreaInsets.top = 38pt
-        // Plus LazyVStack padding of 16pt for first row position
-        let actualSafeAreaTop = geometry.safeAreaInsets.top // = 38pt on this system
-        let listPadding: CGFloat = 16 // LazyVStack .padding()
+        // Context7: Precise positioning to match first list row
+        // SwiftUI best practice: Use geometry reader for accurate positioning
+        let safeAreaTop = geometry.safeAreaInsets.top
+        let contentPadding: CGFloat = 16 // ProjectsListView .padding()
         
-        return actualSafeAreaTop + listPadding // = 38 + 16 = 54pt
+        // For exact pixel-perfect alignment with first list row
+        return safeAreaTop + contentPadding
     }
     
     // MARK: - Helper Functions  
