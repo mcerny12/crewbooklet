@@ -91,7 +91,7 @@ struct ContentView: View {
                             ),
                             isPresented: $showProjectDetailOverlay
                         )
-                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        .transition(.opacity)
                         .zIndex(2) // Above bottom panes
                     }
                     

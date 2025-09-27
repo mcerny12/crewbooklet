@@ -32,10 +32,11 @@ struct ProjectDetailOverlay: View {
                     }
                 }
             
-            // Main content
+            // Main content with stable header positioning
             VStack(spacing: 0) {
-                // Header with project title in exact same position as list row
+                // Header fixed at exact list position - no animation movement
                 headerView
+                    .background(.background) // Ensure proper background
                 
                 // Tab selector
                 tabSelectorView
@@ -65,8 +66,8 @@ struct ProjectDetailOverlay: View {
             .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 8)
             .frame(maxWidth: geometry.size.width - 32, maxHeight: .infinity, alignment: .topLeading) // Context7: Proper width constraints
             .offset(
-                x: 16, // Context7: Match ProjectsListView .padding() horizontal exactly
-                y: calculateTopPadding(geometry: geometry) // Context7: Exact vertical position using GeometryReader
+                x: 16, // Context7: EXACT match to LazyVStack .padding() horizontal
+                y: calculateTopPadding(geometry: geometry) // Context7: EXACT vertical position
             )
         }
         }
@@ -230,13 +231,13 @@ struct ProjectDetailOverlay: View {
     
     // MARK: - Positioning Calculations  
     private func calculateTopPadding(geometry: GeometryProxy) -> CGFloat {
-        // Context7: EXACT positioning to match first list row
-        // Account for LazyVStack spacing (4pt) and first item position
+        // Context7: PIXEL-PERFECT positioning to match first list row
+        // Layout hierarchy: SafeArea -> ScrollView -> LazyVStack -> .padding() -> First MacOSProjectListRow
         let safeAreaTop = geometry.safeAreaInsets.top
-        let listPadding: CGFloat = 16 // ProjectsListView .padding()
+        let scrollViewContentPadding: CGFloat = 16 // LazyVStack .padding()
         
-        // Return exact position where first list item appears
-        return safeAreaTop + listPadding
+        // First list item appears immediately after padding, no additional spacing
+        return safeAreaTop + scrollViewContentPadding
     }
     
     // MARK: - Helper Functions  
