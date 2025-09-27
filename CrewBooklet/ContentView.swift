@@ -35,8 +35,8 @@ struct ContentView: View {
     @State private var editablePerson: Person? = nil
     @State private var editableOrganization: Organization? = nil
     
-    // Project detail states (now using bottom pane like People/Organizations)
-    @State private var showProjectDetailPane = false
+    // Project detail states (using full overlay)
+    @State private var showProjectDetailOverlay = false
     @State private var selectedProject: Project? = nil
     @State private var editableProject: Project? = nil
     
@@ -108,16 +108,6 @@ struct ContentView: View {
                                 )
                             }
                             
-                            // Project detail pane
-                            if showProjectDetailPane, let project = editableProject {
-                                ProjectDetailBottomPane(
-                                    project: Binding(
-                                        get: { project },
-                                        set: { editableProject = $0 }
-                                    ),
-                                    isPresented: $showProjectDetailPane
-                                )
-                            }
                         }
                     }
                 }
@@ -145,7 +135,7 @@ struct ContentView: View {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     showPersonDetailPane = false
                     showOrganizationDetailPane = false
-                    showProjectDetailPane = false
+                    showProjectDetailOverlay = false
                     editablePerson = nil
                     editableOrganization = nil
                     editableProject = nil
@@ -162,7 +152,7 @@ struct ContentView: View {
                 editableOrganization = nil
             }
         }
-        .onChange(of: showProjectDetailPane) { _, isShowing in
+        .onChange(of: showProjectDetailOverlay) { _, isShowing in
             if !isShowing {
                 editableProject = nil
             }
@@ -297,7 +287,7 @@ struct ContentView: View {
                             editableProject = project
                             currentSelectedItem = .project(project)
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                showProjectDetailPane = true
+                                showProjectDetailOverlay = true
                             }
                         }
                     }
@@ -365,22 +355,37 @@ struct ContentView: View {
     
     // MARK: - Projects View
     private var projectsView: some View {
-        VStack(spacing: 0) {
-            // Projects List
-            ProjectsListView(
-                projectViewModel: projectViewModel,
-                showAddProjectSheet: $showAddProjectSheet,
-                onProjectSelected: { project in
-                    selectedProject = project
-                    editableProject = project
-                    currentSelectedItem = .project(project)
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showProjectDetailPane = true
+        ZStack {
+            VStack(spacing: 0) {
+                // Projects List
+                ProjectsListView(
+                    projectViewModel: projectViewModel,
+                    showAddProjectSheet: $showAddProjectSheet,
+                    onProjectSelected: { project in
+                        selectedProject = project
+                        editableProject = project
+                        currentSelectedItem = .project(project)
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showProjectDetailOverlay = true
+                        }
                     }
-                }
-            )
+                )
+            }
+            .background(.background)
+            
+            // Full overlay for project detail
+            if showProjectDetailOverlay, let project = editableProject {
+                ProjectDetailOverlay(
+                    project: Binding(
+                        get: { project },
+                        set: { editableProject = $0 }
+                    ),
+                    isPresented: $showProjectDetailOverlay
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .zIndex(1)
+            }
         }
-        .background(.background)
     }
     
     // MARK: - Calendar View
