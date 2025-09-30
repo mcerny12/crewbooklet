@@ -66,6 +66,8 @@ struct MacOSProjectListRow: View {
             return .blue
         case .production:
             return .green
+        case .completed:
+            return .green
         case .cancelled:
             return .red
         case .hold:

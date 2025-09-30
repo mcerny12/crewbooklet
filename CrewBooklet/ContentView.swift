@@ -138,9 +138,9 @@ struct ContentView: View {
                 TitleBarSearchField()
             }
         }
-        .onChange(of: selectedView) { _, newView in
+        .onChange(of: selectedView) { oldView, newView in
             // Clear selected item when changing views
-            if newView != selectedView {
+            if oldView != newView {
                 currentSelectedItem = nil
                 
                 // CRITICAL FIX: Clear all detail view flags when switching navigation sections
@@ -171,13 +171,13 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showAddPersonSheet) {
-            AddPersonSheet()
+            AddPersonSheet(organizationViewModel: organizationViewModel)
         }
         .sheet(isPresented: $showAddProjectSheet) {
-            AddProjectSheet()
+            AddProjectSheet(organizationViewModel: organizationViewModel)
         }
         .sheet(isPresented: $showAddOrganizationSheet) {
-            AddOrganizationSheet()
+            AddOrganizationSheet(organizationViewModel: organizationViewModel)
         }
         .environmentObject(searchViewModel)
 
@@ -335,54 +335,85 @@ struct ContentView: View {
     
     // MARK: - People View
     private var peopleView: some View {
-        VStack(spacing: 0) {
-            if peopleViewModel.isLoading {
-                ProgressView("Loading people...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if peopleViewModel.people.isEmpty {
-                ContentUnavailableView(
-                    "Keine Personen",
-                    systemImage: "person.slash",
-                    description: Text("Fügen Sie Ihre erste Person hinzu")
-                )
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 4) {
-                        ForEach(peopleViewModel.people) { person in
-                            MacOSPersonRow(person: person) {
-                                selectedPerson = person
-                                editablePerson = person
-                                currentSelectedItem = .person(person)
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showPersonDetailPane = true
-                                }
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                if peopleViewModel.isLoading {
+                    ProgressView("Loading people...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if peopleViewModel.people.isEmpty {
+                    ContentUnavailableView(
+                        "Keine Personen",
+                        systemImage: "person.slash",
+                        description: Text("Fügen Sie Ihre erste Person hinzu")
+                    )
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 4) {
+                            ForEach(peopleViewModel.people) { person in
+                                MacOSPersonRow(
+                                    person: person,
+                                    onTap: {
+                                        selectedPerson = person
+                                        editablePerson = person
+                                        currentSelectedItem = .person(person)
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            showPersonDetailPane = true
+                                        }
+                                    },
+                                    onDelete: {
+                                        Task {
+                                            await peopleViewModel.deletePerson(person)
+                                        }
+                                    }
+                                )
                             }
                         }
+                        .padding()
+                        .padding(.bottom, 80) // Extra padding for floating button
                     }
-                    .padding()
                 }
             }
+            .background(.background)
+            
+            // Floating Action Button for New Person
+            FloatingActionButton(
+                icon: "plus",
+                label: "New Person",
+                action: { showAddPersonSheet = true }
+            )
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
         }
-        .background(.background)
     }
     
     // MARK: - Organizations View
     private var organizationsView: some View {
-        VStack(spacing: 0) {
-            // Organizations List
-            OrganizationsListView(
-                organizationViewModel: organizationViewModel,
-                showAddOrganizationSheet: $showAddOrganizationSheet,
-                onOrganizationSelected: { organization in
-                    selectedOrganization = organization
-                    editableOrganization = organization
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showOrganizationDetailPane = true
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                // Organizations List
+                OrganizationsListView(
+                    organizationViewModel: organizationViewModel,
+                    showAddOrganizationSheet: $showAddOrganizationSheet,
+                    onOrganizationSelected: { organization in
+                        selectedOrganization = organization
+                        editableOrganization = organization
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showOrganizationDetailPane = true
+                        }
                     }
-                }
+                )
+            }
+            .background(.background)
+            
+            // Floating Action Button for New Organization
+            FloatingActionButton(
+                icon: "plus",
+                label: "New Organization",
+                action: { showAddOrganizationSheet = true }
             )
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
         }
-        .background(.background)
     }
     
     // MARK: - Projects View
@@ -506,6 +537,14 @@ struct StatCard: View {
 struct MacOSPersonRow: View {
     let person: Person
     let onTap: () -> Void
+    let onDelete: (() -> Void)?
+    @StateObject private var userSession = UserSessionManager.shared
+    
+    init(person: Person, onTap: @escaping () -> Void, onDelete: (() -> Void)? = nil) {
+        self.person = person
+        self.onTap = onTap
+        self.onDelete = onDelete
+    }
     
     private var displayRole: String {
         if person.jobs.isEmpty {
@@ -552,6 +591,17 @@ struct MacOSPersonRow: View {
                             Image(systemName: "note.text")
                                 .font(.caption2)
                                 .foregroundStyle(.blue)
+                        }
+                        
+                        // Admin delete button
+                        if userSession.canDelete, let onDelete = onDelete {
+                            Button(action: onDelete) {
+                                Image(systemName: "trash")
+                                    .font(.caption2)
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Delete person")
                         }
                         
                         Image(systemName: "chevron.right")

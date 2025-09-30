@@ -10,10 +10,15 @@ import SwiftUI
 struct AddPersonSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = AddPersonViewModel()
-    @StateObject private var organizationViewModel = OrganizationViewModel()
+    @ObservedObject var organizationViewModel: OrganizationViewModel
     @State private var showOrganizationPicker = false
     @State private var selectedOrganization: Organization?
     var visualDebugActive: Bool = false
+    
+    init(organizationViewModel: OrganizationViewModel, visualDebugActive: Bool = false) {
+        self.organizationViewModel = organizationViewModel
+        self.visualDebugActive = visualDebugActive
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -114,6 +119,9 @@ struct AddPersonSheet: View {
                             TextField("ZIP", text: $viewModel.addressZip)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(maxWidth: 80)
+                                .onSubmit {
+                                    viewModel.handleZipCodeChange()
+                                }
                             
                             TextField("City", text: $viewModel.addressCity)
                                 .textFieldStyle(.roundedBorder)
@@ -301,7 +309,7 @@ struct OrganizationPickerSheet: View {
                 }
             }
         }
-        .frame(width: 400, height: 500)
+        .frame(width: 600, height: 600)
         .sheet(isPresented: $showAddOrganization) {
             QuickAddOrganizationSheet(
                 organizationName: $newOrganizationName,
@@ -317,5 +325,5 @@ struct OrganizationPickerSheet: View {
 }
 
 #Preview {
-    AddPersonSheet()
+    AddPersonSheet(organizationViewModel: OrganizationViewModel())
 } 

@@ -3,6 +3,8 @@ import SwiftUI
 struct MacOSOrganizationRow: View {
     let organization: Organization
     var onTap: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    @StateObject private var userSession = UserSessionManager.shared
     
     private var displayBusinessType: String {
         if organization.jobs.isEmpty {
@@ -49,6 +51,17 @@ struct MacOSOrganizationRow: View {
                             Image(systemName: "note.text")
                                 .font(.caption2)
                                 .foregroundStyle(.blue)
+                        }
+                        
+                        // Admin delete button
+                        if userSession.canDelete, let onDelete = onDelete {
+                            Button(action: onDelete) {
+                                Image(systemName: "trash")
+                                    .font(.caption2)
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Delete organization")
                         }
                         
                         Image(systemName: "chevron.right")
@@ -107,6 +120,7 @@ struct OrganizationsListView: View {
                             }
                         }
                         .padding()
+                        .padding(.bottom, 80) // Extra padding for floating button
                     }
                 }
             }

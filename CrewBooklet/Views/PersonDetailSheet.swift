@@ -106,19 +106,28 @@ struct PersonDetailSheet: View {
                     VStack(spacing: 12) {
                         TextField("Mobile Phone", text: Binding(
                             get: { person.mobilePhone ?? "" },
-                            set: { person.mobilePhone = $0.isEmpty ? nil : $0 }
+                            set: { 
+                                let formatted = PhoneNumberFormatter.formatPhoneNumber($0)
+                                person.mobilePhone = formatted.isEmpty ? nil : formatted 
+                            }
                         ))
                         .textFieldStyle(.roundedBorder)
                         
                         TextField("Work Phone", text: Binding(
                             get: { person.workPhone ?? "" },
-                            set: { person.workPhone = $0.isEmpty ? nil : $0 }
+                            set: { 
+                                let formatted = PhoneNumberFormatter.formatPhoneNumber($0)
+                                person.workPhone = formatted.isEmpty ? nil : formatted 
+                            }
                         ))
                         .textFieldStyle(.roundedBorder)
                         
                         TextField("Website", text: Binding(
                             get: { person.website ?? "" },
-                            set: { person.website = $0.isEmpty ? nil : $0 }
+                            set: { 
+                                let formatted = WebsiteFormatter.formatWebsite($0)
+                                person.website = formatted.isEmpty ? nil : formatted 
+                            }
                         ))
                         .textFieldStyle(.roundedBorder)
                     }
@@ -157,9 +166,21 @@ struct PersonDetailSheet: View {
                             
                             TextField("ZIP Code", text: Binding(
                                 get: { person.address?.zip ?? "" },
-                                set: { 
+                                set: { zipCode in
                                     if person.address == nil { person.address = Address() }
-                                    person.address?.zip = $0.isEmpty ? nil : $0
+                                    person.address?.zip = zipCode.isEmpty ? nil : zipCode
+                                    
+                                    // Auto-fill city and country if zip code is provided
+                                    if !zipCode.isEmpty {
+                                        if let (city, country) = ZipCodeLookup.lookupCityAndCountry(for: zipCode) {
+                                            if !city.isEmpty && (person.address?.city?.isEmpty ?? true) {
+                                                person.address?.city = city
+                                            }
+                                            if !country.isEmpty && (person.address?.country?.isEmpty ?? true) {
+                                                person.address?.country = country
+                                            }
+                                        }
+                                    }
                                 }
                             ))
                             .textFieldStyle(.roundedBorder)
@@ -377,10 +398,22 @@ struct PersonDetailSheet: View {
                         HStack(spacing: 8) {
                             TextField("ZIP Code", text: Binding(
                                 get: { person.financialDetails?.invoiceAddress?.zip ?? "" },
-                                set: { 
+                                set: { zipCode in
                                     if person.financialDetails == nil { person.financialDetails = FinancialDetails() }
                                     if person.financialDetails?.invoiceAddress == nil { person.financialDetails?.invoiceAddress = Address() }
-                                    person.financialDetails?.invoiceAddress?.zip = $0.isEmpty ? nil : $0
+                                    person.financialDetails?.invoiceAddress?.zip = zipCode.isEmpty ? nil : zipCode
+                                    
+                                    // Auto-fill city and country if zip code is provided
+                                    if !zipCode.isEmpty {
+                                        if let (city, country) = ZipCodeLookup.lookupCityAndCountry(for: zipCode) {
+                                            if !city.isEmpty && (person.financialDetails?.invoiceAddress?.city?.isEmpty ?? true) {
+                                                person.financialDetails?.invoiceAddress?.city = city
+                                            }
+                                            if !country.isEmpty && (person.financialDetails?.invoiceAddress?.country?.isEmpty ?? true) {
+                                                person.financialDetails?.invoiceAddress?.country = country
+                                            }
+                                        }
+                                    }
                                 }
                             ))
                             .textFieldStyle(.roundedBorder)

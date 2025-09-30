@@ -147,7 +147,10 @@ struct OrganizationDetailSheet: View {
                 .frame(height: 26)
                 TextField("Contact Phone", text: Binding(
                     get: { organization.contactPhone ?? "" },
-                    set: { organization.contactPhone = $0.isEmpty ? nil : $0 }
+                    set: { 
+                        let formatted = PhoneNumberFormatter.formatPhoneNumber($0)
+                        organization.contactPhone = formatted.isEmpty ? nil : formatted 
+                    }
                 ))
                 .textFieldStyle(.roundedBorder)
                 .controlSize(.small)
@@ -181,7 +184,21 @@ struct OrganizationDetailSheet: View {
             HStack(spacing: 8) {
                 TextField("ZIP", text: Binding(
                     get: { organization.zip ?? "" },
-                    set: { organization.zip = $0.isEmpty ? nil : $0 }
+                    set: { zipCode in
+                        organization.zip = zipCode.isEmpty ? nil : zipCode
+                        
+                        // Auto-fill city and country if zip code is provided
+                        if !zipCode.isEmpty {
+                            if let (city, country) = ZipCodeLookup.lookupCityAndCountry(for: zipCode) {
+                                if !city.isEmpty && (organization.city?.isEmpty ?? true) {
+                                    organization.city = city
+                                }
+                                if !country.isEmpty && (organization.country?.isEmpty ?? true) {
+                                    organization.country = country
+                                }
+                            }
+                        }
+                    }
                 ))
                 .textFieldStyle(.roundedBorder)
                 .controlSize(.small)
@@ -236,7 +253,21 @@ struct OrganizationDetailSheet: View {
             HStack(spacing: 8) {
                 TextField("ZIP", text: Binding(
                     get: { organization.zipInvoice ?? "" },
-                    set: { organization.zipInvoice = $0.isEmpty ? nil : $0 }
+                    set: { zipCode in
+                        organization.zipInvoice = zipCode.isEmpty ? nil : zipCode
+                        
+                        // Auto-fill city and country if zip code is provided
+                        if !zipCode.isEmpty {
+                            if let (city, country) = ZipCodeLookup.lookupCityAndCountry(for: zipCode) {
+                                if !city.isEmpty && (organization.cityInvoice?.isEmpty ?? true) {
+                                    organization.cityInvoice = city
+                                }
+                                if !country.isEmpty && (organization.countryInvoice?.isEmpty ?? true) {
+                                    organization.countryInvoice = country
+                                }
+                            }
+                        }
+                    }
                 ))
                 .textFieldStyle(.roundedBorder)
                 .controlSize(.small)

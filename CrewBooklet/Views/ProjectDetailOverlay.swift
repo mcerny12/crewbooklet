@@ -13,6 +13,11 @@ struct ProjectDetailOverlay: View {
     @Binding var isPresented: Bool
     @State private var selectedTab: ProjectDetailTab = .information
     
+    // Crew data loading
+    @State private var projectAssignments: [(ProjectAssignment, Person)] = []
+    @State private var isLoadingCrew = false
+    private let supabaseService = SupabaseService.shared
+    
     enum ProjectDetailTab: String, CaseIterable {
         case information = "Information"
         case crew = "Crew" 
@@ -55,6 +60,9 @@ struct ProjectDetailOverlay: View {
                 }
                 .background(.background)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .task {
+                    await loadProjectCrew()
+                }
                 .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                 .padding(.horizontal, 16)
                 .padding(.top, calculateProjectListTopOffset(geometry: geometry))
@@ -172,9 +180,9 @@ struct ProjectDetailOverlay: View {
                             )
                         )
                         
-                        InfoEditableField(
-                            label: "Client Organization",
-                            text: $editableClientOrg
+                        InfoField(
+                            label: "Client Organization", 
+                            value: "No client organization" // TODO: Load organization name from clientOrganizationId
                         )
                     }
                 }
@@ -375,167 +383,78 @@ struct ProjectDetailOverlay: View {
                 Divider()
                 
                 // Crew members and organizations
-                editableCrewMemberRow()
-                
-                Divider()
-                    .opacity(0.5)
-                
-                // Organization row
-                organizationRow()
+                if isLoadingCrew {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Loading crew...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 20)
+                } else if projectAssignments.isEmpty {
+                    VStack(spacing: 8) {
+                        Text("No crew members assigned")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button("Add First Crew Member") {
+                            // TODO: Add crew member action
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                    .padding(.vertical, 20)
+                } else {
+                    ForEach(Array(projectAssignments.enumerated()), id: \.offset) { index, assignmentData in
+                        let (assignment, person) = assignmentData
+                        
+                        CrewMemberRowView(
+                            assignment: assignment,
+                            person: person,
+                            onRemove: {
+                                Task {
+                                    await removeCrewMember(assignment)
+                                }
+                            }
+                        )
+                        
+                        if index < projectAssignments.count - 1 {
+                            Divider()
+                                .opacity(0.5)
+                        }
+                    }
+                }
             }
             .background(.regularMaterial)
             .cornerRadius(8)
         }
     }
     
-    @State private var editableClientOrg = "Shotview"
-    @State private var editableName = "Mortimer Cerny"
-    @State private var editableRole = "Producer" 
-    @State private var editableStatus = "Gebucht"
-    @State private var editableRate = "500,00 €"
-    @State private var editableEmail = "mortimer.cerny@gmail.com"
-    @State private var editablePhone = "+49 151 4037 0420"
-    @State private var editableProjectField = "Macht das Projekt"
     
-    private func editableCrewMemberRow() -> some View {
-        HStack(spacing: 12) {
-            // Name and role (editable)
-            VStack(alignment: .leading, spacing: 2) {
-                TextField("Name", text: $editableName)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .textFieldStyle(.plain)
-                
-                TextField("Role", text: $editableRole)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textFieldStyle(.plain)
+    // MARK: - Data Loading Functions
+    private func loadProjectCrew() async {
+        isLoadingCrew = true
+        do {
+            let assignments = try await supabaseService.fetchProjectAssignmentsWithPeople(projectId: project.id)
+            await MainActor.run {
+                self.projectAssignments = assignments
+                self.isLoadingCrew = false
             }
-            .frame(width: 120, alignment: .leading)
-            
-            // Status dropdown
-            Menu {
-                Button("Anfragen") { editableStatus = "Anfragen" }
-                Button("Gebucht") { editableStatus = "Gebucht" }
-                Button("Abgesagt") { editableStatus = "Abgesagt" }
-            } label: {
-                Text(editableStatus)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.green)
-                    .foregroundStyle(.white)
-                    .cornerRadius(8)
+        } catch {
+            await MainActor.run {
+                self.isLoadingCrew = false
+                print("Error loading project crew: \(error)")
             }
-            .frame(width: 80, alignment: .leading)
-            
-            // Rate (editable)
-            TextField("Rate", text: $editableRate)
-                .font(.caption)
-                .fontWeight(.medium)
-                .frame(width: 80, alignment: .trailing)
-                .textFieldStyle(.plain)
-            
-            // Contact info (editable)
-            VStack(alignment: .leading, spacing: 1) {
-                TextField("Email", text: $editableEmail)
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-                    .textFieldStyle(.plain)
-                
-                TextField("Phone", text: $editablePhone)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textFieldStyle(.plain)
-            }
-            .frame(width: 150, alignment: .leading)
-            
-            // Project field (editable)
-            TextField("Project notes", text: $editableProjectField)
-                .font(.caption)
-                .textFieldStyle(.roundedBorder)
-            
-            // Delete button
-            Button(action: {}) {
-                Image(systemName: "trash")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
     }
     
-    // Organization row for crew tab
-    private func organizationRow() -> some View {
-        HStack(spacing: 12) {
-            // Organization name and type
-            VStack(alignment: .leading, spacing: 2) {
-                TextField("Organization", text: .constant("Shotview"))
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .textFieldStyle(.plain)
-                
-                Text("Production Company")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 120, alignment: .leading)
-            
-            // Status
-            Menu {
-                Button("Active") { }
-                Button("Pending") { }
-                Button("Inactive") { }
-            } label: {
-                Text("Active")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.blue)
-                    .foregroundStyle(.white)
-                    .cornerRadius(8)
-            }
-            .frame(width: 80, alignment: .leading)
-            
-            // Rate/Contract
-            TextField("Contract", text: .constant("Fixed Rate"))
-                .font(.caption)
-                .frame(width: 80, alignment: .trailing)
-                .textFieldStyle(.plain)
-            
-            // Contact info
-            VStack(alignment: .leading, spacing: 1) {
-                TextField("Email", text: .constant("info@shotview.de"))
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-                    .textFieldStyle(.plain)
-                
-                TextField("Phone", text: .constant("+49 89 123456"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textFieldStyle(.plain)
-            }
-            .frame(width: 150, alignment: .leading)
-            
-            // Project notes
-            TextField("Organization notes", text: .constant("Main client"))
-                .font(.caption)
-                .textFieldStyle(.roundedBorder)
-            
-            // Delete button
-            Button(action: {}) {
-                Image(systemName: "trash")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.plain)
+    private func removeCrewMember(_ assignment: ProjectAssignment) async {
+        do {
+            try await supabaseService.removeProjectAssignment(id: assignment.id)
+            await loadProjectCrew() // Reload the crew list
+        } catch {
+            print("Error removing crew member: \(error)")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
     }
     
     private var crewContentView: some View {
@@ -588,6 +507,8 @@ struct ProjectDetailOverlay: View {
             return .blue
         case .production:
             return .green
+        case .completed:
+            return .green
         case .cancelled:
             return .red
         case .hold:
@@ -599,6 +520,127 @@ struct ProjectDetailOverlay: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd.MM.yy"
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - CrewMemberRowView Component
+struct CrewMemberRowView: View {
+    let assignment: ProjectAssignment
+    let person: Person
+    let onRemove: () -> Void
+    
+    private var statusColor: Color {
+        switch assignment.availability {
+        case .anfragen:
+            return .blue
+        case .angefragt:
+            return .orange
+        case .verfuegbar:
+            return .green
+        case .nichtVerfuegbar:
+            return .red
+        case .ersteOption:
+            return .purple
+        case .zweiteOption:
+            return .purple
+        case .gebucht:
+            return .green
+        case .abgesagt:
+            return .red
+        case .keineRueckmeldung:
+            return .gray
+        }
+    }
+    
+    private var statusText: String {
+        switch assignment.availability {
+        case .anfragen:
+            return "Anfragen"
+        case .angefragt:
+            return "Angefragt"
+        case .verfuegbar:
+            return "Verfügbar"
+        case .nichtVerfuegbar:
+            return "Nicht Verfügbar"
+        case .ersteOption:
+            return "1. Option"
+        case .zweiteOption:
+            return "2. Option"
+        case .gebucht:
+            return "Gebucht"
+        case .abgesagt:
+            return "Abgesagt"
+        case .keineRueckmeldung:
+            return "Keine Rückmeldung"
+        }
+    }
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Name and role
+            VStack(alignment: .leading, spacing: 2) {
+                Text(person.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                
+                Text(assignment.role ?? "No role")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(width: 120, alignment: .leading)
+            
+            // Status
+            Text(statusText)
+                .font(.caption)
+                .fontWeight(.medium)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(statusColor)
+                .foregroundStyle(.white)
+                .cornerRadius(8)
+                .frame(width: 80, alignment: .leading)
+            
+            // Rate
+            Text(assignment.dailyPay?.description ?? "No rate")
+                .font(.caption)
+                .fontWeight(.medium)
+                .frame(width: 80, alignment: .trailing)
+            
+            // Contact info
+            VStack(alignment: .leading, spacing: 1) {
+                Text(person.email ?? "No email")
+                    .font(.caption)
+                    .foregroundStyle(person.email != nil ? .blue : .secondary)
+                    .lineLimit(1)
+                
+                Text(person.mobilePhone ?? "No phone")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(width: 150, alignment: .leading)
+            
+            // Project notes
+            Text(assignment.notes ?? "No notes")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Delete button
+            Button(action: onRemove) {
+                Image(systemName: "trash")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
+            .help("Remove crew member")
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 }
 

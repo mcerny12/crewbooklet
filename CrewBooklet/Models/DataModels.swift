@@ -109,20 +109,83 @@ enum Language: String, CaseIterable, Codable {
 }
 
 enum JobType: String, CaseIterable, Codable {
+    // Production Department
     case executiveProducer = "Executive Producer"
+    case producer = "Producer"
+    case lineProducer = "Line Producer"
+    case productionCoordinator = "Production Coordinator"
+    case productionAssistant = "Production Assistant"
+    case productionManager = "Production Manager"
+    case locationManager = "Location Manager"
+    case locationScout = "Location Scout"
+    
+    // Direction Department
     case director = "Director"
     case firstAD = "1st AD"
     case secondAD = "2nd AD"
+    case thirdAD = "3rd AD"
+    case scriptSupervisor = "Script Supervisor"
+    
+    // Camera Department
     case photographer = "Photographer"
     case photographersAssistant = "Photographers Assistant"
     case digitalOperator = "Digital Operator"
     case firstAC = "1st AC"
     case secondAC = "2nd AC"
     case dit = "DIT"
+    case cameraOperator = "Camera Operator"
+    case steadicamOperator = "Steadicam Operator"
+    
+    // Sound Department
     case vtr = "VTR"
+    case soundMixer = "Sound Mixer"
+    case boomOperator = "Boom Operator"
+    case soundAssistant = "Sound Assistant"
+    
+    // Lighting Department
     case gaffer = "Gaffer"
     case electrician = "Electrician"
+    case bestBoy = "Best Boy"
+    case lightingTechnician = "Lighting Technician"
+    
+    // Grip Department
     case grip = "Grip"
+    case keyGrip = "Key Grip"
+    case dollyGrip = "Dolly Grip"
+    
+    // Art Department
+    case productionDesigner = "Production Designer"
+    case artDirector = "Art Director"
+    case setDecorator = "Set Decorator"
+    case propMaster = "Prop Master"
+    
+    // Hair & Makeup
+    case makeupArtist = "Makeup Artist"
+    case hairStylist = "Hair Stylist"
+    case specialEffectsMakeup = "Special Effects Makeup"
+    
+    // Wardrobe
+    case costumeDesigner = "Costume Designer"
+    case wardrobeStylist = "Wardrobe Stylist"
+    case wardrobeAssistant = "Wardrobe Assistant"
+    
+    // Post-Production
+    case editor = "Editor"
+    case assistantEditor = "Assistant Editor"
+    case colorist = "Colorist"
+    case vfxSupervisor = "VFX Supervisor"
+    case vfxArtist = "VFX Artist"
+    case motionGraphicsDesigner = "Motion Graphics Designer"
+    
+    // Other
+    case castingDirector = "Casting Director"
+    case choreographer = "Choreographer"
+    case stuntCoordinator = "Stunt Coordinator"
+    case animalHandler = "Animal Handler"
+    case medic = "Medic"
+    case security = "Security"
+    case driver = "Driver"
+    case catering = "Catering"
     
     var displayName: String {
         return self.rawValue
@@ -130,20 +193,49 @@ enum JobType: String, CaseIterable, Codable {
     
     var category: JobCategory {
         switch self {
-        case .executiveProducer:
+        // Production Department
+        case .executiveProducer, .producer, .lineProducer, .productionCoordinator, .productionAssistant, .productionManager, .locationManager, .locationScout:
             return .production
-        case .director:
+        
+        // Direction Department
+        case .director, .firstAD, .secondAD, .thirdAD, .scriptSupervisor:
             return .direction
-        case .firstAD, .secondAD:
-            return .direction
-        case .photographer, .photographersAssistant, .digitalOperator, .firstAC, .secondAC, .dit:
+        
+        // Camera Department
+        case .photographer, .photographersAssistant, .digitalOperator, .firstAC, .secondAC, .dit, .cameraOperator, .steadicamOperator:
             return .camera
-        case .vtr:
+        
+        // Sound Department
+        case .vtr, .soundMixer, .boomOperator, .soundAssistant:
             return .sound
-        case .gaffer, .electrician:
+        
+        // Lighting Department
+        case .gaffer, .electrician, .bestBoy, .lightingTechnician:
             return .lighting
-        case .grip:
+        
+        // Grip Department
+        case .grip, .keyGrip, .dollyGrip:
             return .grip
+        
+        // Art Department
+        case .productionDesigner, .artDirector, .setDecorator, .propMaster:
+            return .art
+        
+        // Hair & Makeup
+        case .makeupArtist, .hairStylist, .specialEffectsMakeup:
+            return .makeup
+        
+        // Wardrobe
+        case .costumeDesigner, .wardrobeStylist, .wardrobeAssistant:
+            return .wardrobe
+        
+        // Post-Production
+        case .editor, .assistantEditor, .colorist, .vfxSupervisor, .vfxArtist, .motionGraphicsDesigner:
+            return .postProduction
+        
+        // Other
+        case .castingDirector, .choreographer, .stuntCoordinator, .animalHandler, .medic, .security, .driver, .catering:
+            return .other
         }
     }
 }
@@ -155,6 +247,11 @@ enum JobCategory: String, CaseIterable {
     case sound = "Sound"
     case lighting = "Lighting"
     case grip = "Grip"
+    case art = "Art Department"
+    case makeup = "Hair & Makeup"
+    case wardrobe = "Wardrobe"
+    case postProduction = "Post-Production"
+    case other = "Other"
     
     var color: String {
         switch self {
@@ -164,6 +261,11 @@ enum JobCategory: String, CaseIterable {
         case .sound: return "purple"
         case .lighting: return "yellow"
         case .grip: return "orange"
+        case .art: return "brown"
+        case .makeup: return "pink"
+        case .wardrobe: return "indigo"
+        case .postProduction: return "cyan"
+        case .other: return "gray"
         }
     }
     
@@ -175,6 +277,11 @@ enum JobCategory: String, CaseIterable {
         case .sound: return "waveform"
         case .lighting: return "lightbulb"
         case .grip: return "wrench.and.screwdriver"
+        case .art: return "paintpalette"
+        case .makeup: return "paintbrush"
+        case .wardrobe: return "tshirt"
+        case .postProduction: return "desktopcomputer"
+        case .other: return "person"
         }
     }
 }
@@ -442,6 +549,7 @@ enum ProjectStatus: String, CaseIterable, Codable {
     case inquiry = "ANFRAGE"
     case budget = "BUDGET" 
     case production = "PRODUKTION"
+    case completed = "ABGESCHLOSSEN"
     case cancelled = "ABGESAGT"
     case hold = "HOLD"
     
@@ -450,6 +558,7 @@ enum ProjectStatus: String, CaseIterable, Codable {
         case .inquiry: return "blue"
         case .budget: return "orange"
         case .production: return "green"
+        case .completed: return "mint"
         case .cancelled: return "red"
         case .hold: return "purple"
         }
@@ -460,6 +569,7 @@ enum ProjectStatus: String, CaseIterable, Codable {
         case .inquiry: return "questionmark.circle"
         case .budget: return "dollarsign.circle"
         case .production: return "play.circle"
+        case .completed: return "checkmark.circle"
         case .cancelled: return "xmark.circle"
         case .hold: return "pause.circle"
         }
@@ -698,6 +808,47 @@ enum CrewDepartment: String, CaseIterable, Codable {
         case .other: return "gray"
         }
     }
+}
+
+// MARK: - User Role System
+enum UserRole: String, CaseIterable, Codable {
+    case admin = "admin"
+    case user = "user"
+    
+    var displayName: String {
+        switch self {
+        case .admin: return "Administrator"
+        case .user: return "User"
+        }
+    }
+    
+    var canDelete: Bool {
+        switch self {
+        case .admin: return true
+        case .user: return false
+        }
+    }
+    
+    var canEditAll: Bool {
+        switch self {
+        case .admin: return true
+        case .user: return false
+        }
+    }
+}
+
+struct UserSession {
+    let userId: UUID
+    let email: String
+    let role: UserRole
+    let isAuthenticated: Bool
+    
+    static let guest = UserSession(
+        userId: UUID(),
+        email: "",
+        role: .user,
+        isAuthenticated: false
+    )
 }
 
 // MARK: - Film Industry Countries

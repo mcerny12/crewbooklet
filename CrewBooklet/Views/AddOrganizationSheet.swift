@@ -9,8 +9,15 @@ import SwiftUI
 
 struct AddOrganizationSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = AddOrganizationViewModel()
+    @StateObject private var viewModel: AddOrganizationViewModel
+    @ObservedObject var organizationViewModel: OrganizationViewModel
     var visualDebugActive: Bool = false
+    
+    init(organizationViewModel: OrganizationViewModel, visualDebugActive: Bool = false) {
+        self.organizationViewModel = organizationViewModel
+        self.visualDebugActive = visualDebugActive
+        self._viewModel = StateObject(wrappedValue: AddOrganizationViewModel(organizationViewModel: organizationViewModel))
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -30,8 +37,12 @@ struct AddOrganizationSheet: View {
                 Spacer()
                 
                 Button("Save") {
-                    viewModel.saveOrganization()
-                    dismiss()
+                    Task {
+                        await viewModel.saveOrganization()
+                        if viewModel.errorMessage == nil {
+                            dismiss()
+                        }
+                    }
                 }
                 .disabled(!viewModel.isValid || viewModel.isLoading)
                 .buttonStyle(.borderedProminent)
@@ -77,6 +88,9 @@ struct AddOrganizationSheet: View {
                             TextField("ZIP", text: $viewModel.zip)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(maxWidth: 80)
+                                .onSubmit {
+                                    viewModel.handleZipCodeChange()
+                                }
                             
                             TextField("City", text: $viewModel.city)
                                 .textFieldStyle(.roundedBorder)
@@ -139,7 +153,13 @@ struct AddOrganizationSheet: View {
 class AddOrganizationViewModel: ObservableObject {
     @Published var name: String = ""
     @Published var contactEmail: String = ""
-    @Published var contactPhone: String = ""
+    @Published var contactPhone: String = "" {
+        didSet {
+            if contactPhone != oldValue {
+                contactPhone = PhoneNumberFormatter.formatPhoneNumber(contactPhone)
+            }
+        }
+    }
     @Published var street: String = ""
     @Published var street2: String = ""
     @Published var zip: String = ""
@@ -156,13 +176,45 @@ class AddOrganizationViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    private let organizationViewModel = OrganizationViewModel()
+    private let organizationViewModel: OrganizationViewModel
+    
+    init(organizationViewModel: OrganizationViewModel) {
+        self.organizationViewModel = organizationViewModel
+    }
     
     var isValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
-    func saveOrganization() {
+    func handleZipCodeChange() {
+        guard !zip.isEmpty else { return }
+        
+        // Auto-fill city and country based on zip code
+        if let (cityName, countryName) = ZipCodeLookup.lookupCityAndCountry(for: zip) {
+            if !cityName.isEmpty && city.isEmpty {
+                city = cityName
+            }
+            if !countryName.isEmpty && country.isEmpty {
+                country = countryName
+            }
+        }
+    }
+    
+    func handleInvoiceZipCodeChange() {
+        guard !zipInvoice.isEmpty else { return }
+        
+        // Auto-fill city and country based on zip code
+        if let (cityName, countryName) = ZipCodeLookup.lookupCityAndCountry(for: zipInvoice) {
+            if !cityName.isEmpty && cityInvoice.isEmpty {
+                cityInvoice = cityName
+            }
+            if !countryName.isEmpty && countryInvoice.isEmpty {
+                countryInvoice = countryName
+            }
+        }
+    }
+    
+    func saveOrganization() async {
         guard isValid else {
             errorMessage = "Please fill in the organization name"
             return
@@ -179,14 +231,17 @@ class AddOrganizationViewModel: ObservableObject {
             notes: notes.isEmpty ? "" : notes
         )
         
-        Task {
-            await organizationViewModel.addOrganization(newOrganization)
-            self.isLoading = false
+        await organizationViewModel.addOrganization(newOrganization)
+        isLoading = false
+        
+        if organizationViewModel.errorMessage != nil {
+            errorMessage = organizationViewModel.errorMessage
+        } else {
             print("✅ Organization saved successfully")
         }
     }
 }
 
 #Preview {
-    AddOrganizationSheet()
+    AddOrganizationSheet(organizationViewModel: OrganizationViewModel())
 } 

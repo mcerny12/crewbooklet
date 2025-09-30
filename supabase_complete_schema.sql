@@ -43,7 +43,7 @@ CREATE TABLE projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_number TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('ANFRAGE', 'BUDGET', 'PRODUKTION', 'ABGESAGT', 'HOLD')),
+    status TEXT NOT NULL CHECK (status IN ('ANFRAGE', 'BUDGET', 'PRODUKTION', 'ABGESCHLOSSEN', 'ABGESAGT', 'HOLD')),
     creation_date TIMESTAMPTZ DEFAULT NOW(),
     inquiry_country TEXT,
     shooting_location TEXT,

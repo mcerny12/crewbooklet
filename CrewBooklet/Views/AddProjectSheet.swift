@@ -10,7 +10,12 @@ import SwiftUI
 struct AddProjectSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = AddProjectViewModel()
+    @ObservedObject var organizationViewModel: OrganizationViewModel
     @State private var showOrganizationPicker = false
+    
+    init(organizationViewModel: OrganizationViewModel) {
+        self.organizationViewModel = organizationViewModel
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -182,15 +187,19 @@ struct AddProjectSheet: View {
             OrganizationPickerSheet(
                 selectedOrganization: Binding(
                     get: { viewModel.selectedOrganization },
-                    set: { viewModel.clientOrganizationId = $0?.id }
+                    set: { organization in
+                        viewModel.selectedOrganization = organization
+                        viewModel.clientOrganizationId = organization?.id 
+                    }
                 ),
-                organizations: viewModel.organizations,
-                organizationViewModel: OrganizationViewModel()
+                organizations: organizationViewModel.organizations,
+                organizationViewModel: organizationViewModel
             )
+            .frame(width: 600, height: 600)
         }
     }
 }
 
 #Preview {
-    AddProjectSheet()
+    AddProjectSheet(organizationViewModel: OrganizationViewModel())
 } 
