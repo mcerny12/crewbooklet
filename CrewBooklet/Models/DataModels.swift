@@ -420,7 +420,7 @@ struct Project: Identifiable, Codable, Hashable {
         case updatedAt = "updated_at"
     }
     
-    init(id: UUID = UUID(), name: String = "", status: ProjectStatus = .inquiry, description: String = "", notes: String = "", clientOrganizationId: UUID? = nil) {
+    init(id: UUID = UUID(), name: String = "", status: ProjectStatus = .inquiry, description: String? = nil, notes: String? = nil, clientOrganizationId: UUID? = nil) {
         self.id = id
         self.name = name
         self.status = status

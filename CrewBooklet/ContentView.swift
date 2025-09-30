@@ -224,20 +224,31 @@ struct ContentView: View {
     
     // MARK: - Dashboard View
     private var dashboardView: some View {
-        VStack(spacing: 16) {
-            // Dashboard Content
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Quick Stats
-                    quickStatsSection
-                    
-                    // Recent Projects
-                    recentProjectsSection
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 16) {
+                // Dashboard Content
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Quick Stats
+                        quickStatsSection
+                        
+                        // Recent Projects
+                        recentProjectsSection
+                    }
+                    .padding()
                 }
-                .padding()
             }
+            .background(.background)
+            
+            // Floating Action Button for New Project
+            FloatingActionButton(
+                icon: "plus",
+                label: "New Project",
+                action: { showAddProjectSheet = true }
+            )
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
         }
-        .background(.background)
     }
     
     // MARK: - Quick Stats Section
@@ -287,11 +298,19 @@ struct ContentView: View {
             }
             
             if projectViewModel.currentProjects.isEmpty {
-                ContentUnavailableView(
-                    "No Projects",
-                    systemImage: "folder",
-                    description: Text("Create your first project to get started")
-                )
+                VStack(spacing: 16) {
+                    ContentUnavailableView(
+                        "No Projects",
+                        systemImage: "folder",
+                        description: Text("Create your first project to get started")
+                    )
+                    
+                    Button("Create First Project") {
+                        showAddProjectSheet = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                }
             } else {
                 VStack(spacing: 8) {
                     ForEach(projectViewModel.currentProjects.prefix(5)) { project in
@@ -410,6 +429,44 @@ struct ContentView: View {
     private func performSearch() {
         // Implement search functionality
         print("Performing search for: \(searchViewModel.searchText)")
+    }
+}
+
+// MARK: - Floating Action Button Component
+struct FloatingActionButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                
+                if isHovered {
+                    Text(label)
+                        .font(.system(size: 14, weight: .medium))
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .leading)),
+                            removal: .opacity.combined(with: .move(edge: .trailing))
+                        ))
+                }
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, isHovered ? 16 : 12)
+            .padding(.vertical, 12)
+            .background(.blue.gradient, in: RoundedRectangle(cornerRadius: isHovered ? 25 : 22))
+            .shadow(color: .blue.opacity(0.3), radius: isHovered ? 12 : 8, x: 0, y: 4)
+            .scaleEffect(isHovered ? 1.05 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 

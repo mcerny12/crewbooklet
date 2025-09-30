@@ -19,7 +19,7 @@ struct ProjectsListView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
                 if projectViewModel.isLoading {
                     ProgressView("Loading projects...")
@@ -40,11 +40,21 @@ struct ProjectsListView: View {
                             }
                         }
                         .padding()
+                        .padding(.bottom, 80) // Extra padding for floating button
                     }
                 }
             }
+            .background(.background)
+            
+            // Floating Action Button for New Project
+            FloatingActionButton(
+                icon: "plus",
+                label: "New Project",
+                action: { showAddProjectSheet = true }
+            )
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
         }
-        .background(.background)
     }
 }
 

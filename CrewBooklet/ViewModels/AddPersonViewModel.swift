@@ -78,27 +78,68 @@ class AddProjectViewModel: ObservableObject {
     @Published var status: ProjectStatus = .inquiry
     @Published var inquiryCountry: String = ""
     @Published var shootingLocation: String = ""
-    @Published var budget: Decimal?
-    @Published var currency: String = "EUR"
-    @Published var startDate: Date = Date()
-    @Published var endDate: Date = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
+    @Published var clientOrganizationId: UUID? = nil
+    @Published var startDate: Date? = nil
+    @Published var endDate: Date? = nil
     @Published var notes: String = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+    @Published var organizations: [Organization] = []
     
     private let projectViewModel = ProjectViewModel()
+    private let supabaseService = SupabaseService.shared
     
     var isValid: Bool {
         !projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
-    func generateProjectNumber() {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        
-        // This is a simple auto-increment - in real implementation,
-        // you'd fetch existing projects to determine the next number
-        let nextNumber = 1 // Simplified for now
-        projectNumber = String(format: "%04d-%02d", currentYear, nextNumber)
+    var selectedOrganization: Organization? {
+        organizations.first { $0.id == clientOrganizationId }
+    }
+    
+    init() {
+        Task {
+            await loadOrganizations()
+            await generateProjectNumber()
+        }
+    }
+    
+    func loadOrganizations() async {
+        do {
+            organizations = try await supabaseService.fetchOrganizations()
+        } catch {
+            print("❌ Error loading organizations: \(error)")
+        }
+    }
+    
+    func generateProjectNumber() async {
+        do {
+            let existingProjects = try await supabaseService.fetchProjects()
+            let currentYear = Calendar.current.component(.year, from: Date())
+            let yearPrefix = "\(currentYear)-"
+            
+            // Find the highest project number for the current year
+            let currentYearProjects = existingProjects.filter { $0.projectNumber.hasPrefix(yearPrefix) }
+            
+            let highestNumber = currentYearProjects
+                .compactMap { project in
+                    let numberPart = project.projectNumber.replacingOccurrences(of: yearPrefix, with: "")
+                    return Int(numberPart)
+                }
+                .max() ?? 0
+            
+            let nextNumber = highestNumber + 1
+            await MainActor.run {
+                self.projectNumber = String(format: "%04d-%02d", currentYear, nextNumber)
+            }
+        } catch {
+            print("❌ Error generating project number: \(error)")
+            // Fallback to random number
+            let currentYear = Calendar.current.component(.year, from: Date())
+            await MainActor.run {
+                self.projectNumber = String(format: "%04d-%02d", currentYear, Int.random(in: 1...999))
+            }
+        }
     }
     
     func saveProject() {
@@ -110,17 +151,36 @@ class AddProjectViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        let projectToSave = Project(
+        // Create project with all available fields
+        var projectToSave = Project(
             name: projectName,
             status: status,
-            description: description.isEmpty ? "" : description,
-            notes: notes.isEmpty ? "" : notes
+            description: description.isEmpty ? nil : description,
+            notes: notes.isEmpty ? nil : notes,
+            clientOrganizationId: clientOrganizationId
         )
         
+        // Set the generated project number
+        projectToSave.projectNumber = projectNumber
+        projectToSave.inquiryCountry = inquiryCountry.isEmpty ? nil : inquiryCountry
+        projectToSave.shootingLocation = shootingLocation.isEmpty ? nil : shootingLocation
+        projectToSave.startDate = startDate
+        projectToSave.endDate = endDate
+        
         Task {
-            await projectViewModel.addProject(projectToSave)
-            self.isLoading = false
-            print("✅ Project saved successfully")
+            do {
+                try await supabaseService.addProject(projectToSave)
+                await MainActor.run {
+                    self.isLoading = false
+                    print("✅ Project saved successfully")
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Failed to save project: \(error.localizedDescription)"
+                    self.isLoading = false
+                    print("❌ Error saving project: \(error)")
+                }
+            }
         }
     }
 }
