@@ -14,7 +14,7 @@ struct AddOrganizationSheet: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Native macOS header with material background
+            // Sleek header
             HStack {
                 Button("Cancel") {
                     dismiss()
@@ -39,162 +39,63 @@ struct AddOrganizationSheet: View {
             .padding()
             .background(.regularMaterial)
             
-            // Form content using native Form component with two-column layout
+            // Sleek form content
             ScrollView {
-                VStack(spacing: 16) {
-                    GroupBox("Organization Details") {
-                        HStack(alignment: .top, spacing: 16) {
-                            // Left Column: Organization Information
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Organization Information")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                VStack(spacing: 8) {
-                                    TextField("Organization Name", text: $viewModel.name, prompt: Text("Required"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    TextField("Contact Email", text: $viewModel.contactEmail, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    TextField("Contact Phone", text: $viewModel.contactPhone, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    // Organization Types - Advanced Dropdown
-                                    AdvancedOrganizationTypesSelector(selectedTypes: $viewModel.selectedJobs)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // Right Column: Address
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Address")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                VStack(spacing: 8) {
-                                    TextField("Street 1", text: $viewModel.street, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    TextField("Street 2", text: $viewModel.street2, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    HStack {
-                                        TextField("ZIP", text: $viewModel.zip, prompt: Text("Optional"))
-                                            .textFieldStyle(.roundedBorder)
-                                            .frame(maxWidth: 80)
-                                        
-                                        TextField("City", text: $viewModel.city, prompt: Text("Optional"))
-                                            .textFieldStyle(.roundedBorder)
-                                    }
-                                    
-                                    TextField("Country", text: $viewModel.country, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                VStack(spacing: 6) {
+                    SleekFormRow("Organization Name", required: true) {
+                        TextField("Enter organization name", text: $viewModel.name)
+                            .textFieldStyle(.roundedBorder)
                     }
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                     
-                    // Add Invoice Address Section
-                    GroupBox("Invoice Address") {
-                        HStack(alignment: .top, spacing: 16) {
-                            // Left Column: Future fields placeholder
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Reserved for Future Fields")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                Rectangle()
-                                    .fill(.background.secondary)
-                                    .frame(height: 80)
-                                    .overlay(
-                                        Text("Future expansion area")
-                                            .font(.caption)
-                                            .foregroundStyle(.tertiary)
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // Right Column: Invoice Address
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Invoice Address")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                VStack(spacing: 8) {
-                                    TextField("Recipient/Company Name", text: $viewModel.nameInvoice, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    TextField("Street 1", text: $viewModel.streetInvoice, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    TextField("Street 2", text: $viewModel.street2Invoice, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                    
-                                    HStack {
-                                        TextField("ZIP", text: $viewModel.zipInvoice, prompt: Text("Optional"))
-                                            .textFieldStyle(.roundedBorder)
-                                            .frame(maxWidth: 80)
-                                        
-                                        TextField("City", text: $viewModel.cityInvoice, prompt: Text("Optional"))
-                                            .textFieldStyle(.roundedBorder)
-                                    }
-                                    
-                                    TextField("Country", text: $viewModel.countryInvoice, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                    SleekFormRow("Contact Email") {
+                        TextField("Enter contact email", text: $viewModel.contactEmail)
+                            .textFieldStyle(.roundedBorder)
                     }
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                     
-                    // Notes section with two columns
-                    GroupBox("Additional Information") {
-                        HStack(alignment: .top, spacing: 16) {
-                            // Left Column: Future fields placeholder
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Reserved for Future Fields")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                Rectangle()
-                                    .fill(.background.secondary)
-                                    .frame(height: 80)
-                                    .overlay(
-                                        Text("Future expansion area")
-                                            .font(.caption)
-                                            .foregroundStyle(.tertiary)
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                    SleekFormRow("Contact Phone") {
+                        TextField("Enter contact phone", text: $viewModel.contactPhone)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Organization Types") {
+                        CompactOrganizationTypesSelector(selectedTypes: $viewModel.selectedJobs)
+                    }
+                    
+                    // Address rows
+                    SleekFormRow("Street") {
+                        TextField("Street address", text: $viewModel.street)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Street 2") {
+                        TextField("Apartment, suite, etc.", text: $viewModel.street2)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("ZIP & City") {
+                        HStack(spacing: 8) {
+                            TextField("ZIP", text: $viewModel.zip)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(maxWidth: 80)
                             
-                            // Right Column: Notes
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Notes")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                TextField("Notes", text: $viewModel.notes, prompt: Text("Optional"), axis: .vertical)
-                                    .textFieldStyle(.roundedBorder)
-                                    .lineLimit(3...6)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            TextField("City", text: $viewModel.city)
+                                .textFieldStyle(.roundedBorder)
                         }
                     }
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    
+                    SleekFormRow("Country") {
+                        TextField("Country", text: $viewModel.country)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Notes") {
+                        TextField("Additional notes", text: $viewModel.notes, axis: .vertical)
+                            .textFieldStyle(.roundedBorder)
+                            .lineLimit(2...3)
+                    }
                 }
-                .padding()
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             .background(.background)
             
@@ -211,7 +112,7 @@ struct AddOrganizationSheet: View {
                 .background(.regularMaterial)
             }
         }
-        .frame(width: 700, height: 600) // Increased width for two columns
+        .frame(width: 650, height: 480)
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(radius: 3)
@@ -232,216 +133,6 @@ struct AddOrganizationSheet: View {
     }
 }
 
-// MARK: - Advanced Organization Types Selector
-struct AdvancedOrganizationTypesSelector: View {
-    @Binding var selectedTypes: [OrganizationJobType]
-    @State private var showingSecondDropdown = false
-    @State private var showingThirdDropdown = false
-    
-    private var availableTypesForDropdown: (first: [OrganizationJobType], second: [OrganizationJobType], third: [OrganizationJobType]) {
-        let allTypes = OrganizationJobType.allCases
-        
-        let firstAvailable = allTypes
-        let secondAvailable = allTypes.filter { !selectedTypes.contains($0) }
-        let thirdAvailable = allTypes.filter { !selectedTypes.contains($0) }
-        
-        return (firstAvailable, secondAvailable, thirdAvailable)
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Organization Types")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            VStack(spacing: 6) {
-                // First dropdown - always visible
-                if selectedTypes.isEmpty {
-                    // No selection - show dropdown with placeholder
-                    Menu {
-                        ForEach(OrganizationJobType.allCases, id: \.self) { type in
-                            Button(type.displayName) {
-                                selectedTypes.append(type)
-                                showingSecondDropdown = true
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text("Select organization type...")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(.separator, lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .frame(height: 26)
-                } else {
-                    // One or more selected - show first selected type (clickable but no arrow)
-                    Button(action: {
-                        // Allow editing the first selection
-                        selectedTypes.removeFirst()
-                        
-                        // Show menu for replacement
-                        // This will be handled by a sheet/menu action
-                    }) {
-                        HStack {
-                            Text(selectedTypes.first?.displayName ?? "")
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            // No arrow when selected
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(.separator, lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .frame(height: 26)
-                    
-                    // Second dropdown - appears when first is selected
-                    if selectedTypes.count >= 1 {
-                        if selectedTypes.count == 1 {
-                            // Show second dropdown
-                            Menu {
-                                ForEach(availableTypesForDropdown.second, id: \.self) { type in
-                                    Button(type.displayName) {
-                                        selectedTypes.append(type)
-                                        showingThirdDropdown = true
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text("Add second type...")
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Image(systemName: "chevron.down")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(.separator, lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .frame(height: 26)
-                        } else if selectedTypes.count >= 2 {
-                            // Show second selected type (clickable but no arrow)
-                            HStack {
-                                Button(action: {
-                                    // Allow removing the second selection
-                                    if selectedTypes.count >= 2 {
-                                        selectedTypes.remove(at: 1)
-                                    }
-                                }) {
-                                    HStack {
-                                        Text(selectedTypes[1].displayName)
-                                            .foregroundStyle(.primary)
-                                        Spacer()
-                                        Button(action: {
-                                            selectedTypes.remove(at: 1)
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 6)
-                                    .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .stroke(.separator, lineWidth: 1)
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                                .frame(height: 26)
-                            }
-                        }
-                    }
-                    
-                    // Third dropdown - appears when second is selected
-                    if selectedTypes.count >= 2 {
-                        if selectedTypes.count == 2 {
-                            // Show third dropdown
-                            Menu {
-                                ForEach(availableTypesForDropdown.third, id: \.self) { type in
-                                    Button(type.displayName) {
-                                        selectedTypes.append(type)
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text("Add third type...")
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Image(systemName: "chevron.down")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(.separator, lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .frame(height: 26)
-                        } else if selectedTypes.count >= 3 {
-                            // Show third selected type with remove option
-                            Button(action: {
-                                selectedTypes.remove(at: 2)
-                            }) {
-                                HStack {
-                                    Text(selectedTypes[2].displayName)
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(.background, in: RoundedRectangle(cornerRadius: 4))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(.separator, lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .frame(height: 26)
-                        }
-                    }
-                }
-            }
-            
-            // Show selection count
-            if !selectedTypes.isEmpty {
-                Text("\(selectedTypes.count) type(s) selected")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
 
 // MARK: - Add Organization View Model
 @MainActor

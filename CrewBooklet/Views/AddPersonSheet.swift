@@ -17,7 +17,7 @@ struct AddPersonSheet: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Native macOS header with material background
+            // Sleek header
             HStack {
                 Button("Cancel") {
                     dismiss()
@@ -46,89 +46,87 @@ struct AddPersonSheet: View {
             .padding()
             .background(.regularMaterial)
             
-            // Form content using native Form component
+            // Sleek form content matching list entry design
             ScrollView {
-                VStack {
-                    GroupBox("Person Details") {
-                        Form {
-                            TextField("Name", text: $viewModel.name, prompt: Text("Required"))
-                                .textFieldStyle(.roundedBorder)
-                            
-                            TextField("Email", text: $viewModel.email, prompt: Text("Required"))
-                                .textFieldStyle(.roundedBorder)
-                            
-                            // Gender selection
-                            HStack {
-                                Text("Gender:")
-                                    .foregroundStyle(.secondary)
-                                
-                                Spacer()
-                                
-                                Picker("Gender", selection: $viewModel.gender) {
-                                    Text("Not specified").tag(nil as Gender?)
-                                    ForEach(Gender.allCases, id: \.self) { gender in
-                                        Text(gender.displayName).tag(gender as Gender?)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                                .frame(maxWidth: 150)
-                            }
-                            
-                            TextField("Mobile Phone", text: $viewModel.mobilePhone, prompt: Text("Optional"))
-                                .textFieldStyle(.roundedBorder)
-                            
-                            TextField("Work Phone", text: $viewModel.workPhone, prompt: Text("Optional"))
-                                .textFieldStyle(.roundedBorder)
-                            
-                            TextField("Website", text: $viewModel.website, prompt: Text("Optional"))
-                                .textFieldStyle(.roundedBorder)
-                            
-                            MacOSJobSelector(selection: $viewModel.selectedJob, availableJobs: viewModel.availableJobs)
-                            
-                            // Address section
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Address")
-                                    .foregroundStyle(.secondary)
-                                
-                                TextField("Street 1", text: $viewModel.addressStreet1, prompt: Text("Optional"))
-                                    .textFieldStyle(.roundedBorder)
-                                
-                                TextField("Street 2", text: $viewModel.addressStreet2, prompt: Text("Optional"))
-                                    .textFieldStyle(.roundedBorder)
-                                
-                                HStack {
-                                    TextField("ZIP", text: $viewModel.addressZip, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                        .frame(maxWidth: 80)
-                                    
-                                    TextField("City", text: $viewModel.addressCity, prompt: Text("Optional"))
-                                        .textFieldStyle(.roundedBorder)
-                                }
-                                
-                                TextField("Country", text: $viewModel.addressCountry, prompt: Text("Optional"))
-                                    .textFieldStyle(.roundedBorder)
-                            }
-                            
-                            // Organization selection
-                            HStack {
-                                Text("Organization:")
-                                    .foregroundStyle(.secondary)
-                                
-                                Spacer()
-                                
-                                Button(selectedOrganization?.name ?? "Select Organization") {
-                                    showOrganizationPicker = true
-                                }
-                                .foregroundStyle(selectedOrganization == nil ? .secondary : .primary)
-                                .buttonStyle(.bordered)
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .formStyle(.grouped)
+                VStack(spacing: 6) {
+                    SleekFormRow("Name", required: true) {
+                        TextField("Enter full name", text: $viewModel.name)
+                            .textFieldStyle(.roundedBorder)
                     }
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    
+                    SleekFormRow("Email", required: true) {
+                        TextField("Enter email address", text: $viewModel.email)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Gender") {
+                        Picker("Gender", selection: $viewModel.gender) {
+                            Text("Not specified").tag(nil as Gender?)
+                            ForEach(Gender.allCases, id: \.self) { gender in
+                                Text(gender.displayName).tag(gender as Gender?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    
+                    SleekFormRow("Organization") {
+                        Button(selectedOrganization?.name ?? "Select Organization") {
+                            showOrganizationPicker = true
+                        }
+                        .foregroundStyle(selectedOrganization == nil ? .secondary : .primary)
+                        .buttonStyle(.bordered)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    
+                    SleekFormRow("Job") {
+                        MacOSJobSelector(selection: $viewModel.selectedJob, availableJobs: viewModel.availableJobs)
+                    }
+                    
+                    SleekFormRow("Mobile Phone") {
+                        TextField("Enter mobile number", text: $viewModel.mobilePhone)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Work Phone") {
+                        TextField("Enter work number", text: $viewModel.workPhone)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Website") {
+                        TextField("Enter website URL", text: $viewModel.website)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    // Address rows
+                    SleekFormRow("Street") {
+                        TextField("Street address", text: $viewModel.addressStreet1)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("Street 2") {
+                        TextField("Apartment, suite, etc.", text: $viewModel.addressStreet2)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    
+                    SleekFormRow("ZIP & City") {
+                        HStack(spacing: 8) {
+                            TextField("ZIP", text: $viewModel.addressZip)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(maxWidth: 80)
+                            
+                            TextField("City", text: $viewModel.addressCity)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    }
+                    
+                    SleekFormRow("Country") {
+                        TextField("Country", text: $viewModel.addressCountry)
+                            .textFieldStyle(.roundedBorder)
+                    }
                 }
-                .padding()
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             .background(.background)
             
@@ -145,7 +143,7 @@ struct AddPersonSheet: View {
                 .background(.regularMaterial)
             }
         }
-        .frame(width: 600, height: 650)
+        .frame(width: 650, height: 520)
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(radius: 3)
@@ -305,7 +303,7 @@ struct OrganizationPickerSheet: View {
         }
         .frame(width: 400, height: 500)
         .sheet(isPresented: $showAddOrganization) {
-            AddOrganizationFromPickerSheet(
+            QuickAddOrganizationSheet(
                 organizationName: $newOrganizationName,
                 organizationViewModel: organizationViewModel,
                 onSave: { newOrganization in
@@ -315,56 +313,6 @@ struct OrganizationPickerSheet: View {
                 }
             )
         }
-    }
-}
-
-// MARK: - Quick Add Organization Sheet
-struct AddOrganizationFromPickerSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var organizationName: String
-    @ObservedObject var organizationViewModel: OrganizationViewModel
-    let onSave: (Organization) -> Void
-    @State private var isLoading = false
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Text("Add New Organization")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            TextField("Organization Name", text: $organizationName)
-                .textFieldStyle(.roundedBorder)
-            
-            HStack {
-                Button("Cancel") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
-                
-                Spacer()
-                
-                Button("Add") {
-                    Task {
-                        await addOrganization()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(organizationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
-            }
-        }
-        .padding()
-        .frame(width: 300, height: 150)
-    }
-    
-    private func addOrganization() async {
-        isLoading = true
-        
-        let newOrganization = Organization(name: organizationName.trimmingCharacters(in: .whitespacesAndNewlines))
-        
-        await organizationViewModel.addOrganization(newOrganization)
-        
-        isLoading = false
-        onSave(newOrganization)
     }
 }
 
