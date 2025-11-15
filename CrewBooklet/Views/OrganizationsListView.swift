@@ -106,9 +106,9 @@ struct OrganizationsListView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if filteredOrganizations.isEmpty {
                     ContentUnavailableView(
-                        searchText.isEmpty ? "Keine Organisationen" : "Keine Suchergebnisse",
+                        searchText.isEmpty ? "No Organizations" : "No Search Results",
                         systemImage: searchText.isEmpty ? "building.2" : "magnifyingglass",
-                        description: Text(searchText.isEmpty ? "Fügen Sie Ihre erste Organisation hinzu" : "Versuchen Sie einen anderen Suchbegriff")
+                        description: Text(searchText.isEmpty ? "Add your first organization" : "Try a different search term")
                     )
                 } else {
                     ScrollView {

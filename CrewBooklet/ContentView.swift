@@ -63,11 +63,11 @@ struct ContentView: View {
         var localizedTitle: String {
             switch self {
             case .dashboard: return "Dashboard"
-            case .people: return "Personen"
-            case .organizations: return "Organisationen"
-            case .projects: return "Projekte"
-            case .calendar: return "Kalender"
-            case .advancedSearch: return "Erweiterte Suche"
+            case .people: return "People"
+            case .organizations: return "Organizations"
+            case .projects: return "Projects"
+            case .calendar: return "Calendar"
+            case .advancedSearch: return "Advanced Search"
             }
         }
     }
@@ -342,9 +342,9 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if peopleViewModel.people.isEmpty {
                     ContentUnavailableView(
-                        "Keine Personen",
+                        "No People",
                         systemImage: "person.slash",
-                        description: Text("Fügen Sie Ihre erste Person hinzu")
+                        description: Text("Add your first person")
                     )
                 } else {
                     ScrollView {

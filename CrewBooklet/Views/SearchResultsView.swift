@@ -9,7 +9,7 @@ struct SearchResultsView: View {
         VStack(spacing: 2) { // Reduced spacing between sections
             // People section
             if !searchResults.people.isEmpty {
-                SearchSection(title: "Personen") {
+                SearchSection(title: "People") {
                     ForEach(searchResults.people) { result in
                         SearchResultRow(
                             title: result.displayName,
@@ -30,7 +30,7 @@ struct SearchResultsView: View {
                         .padding(.horizontal, 4) // Reduced padding
                 }
                 
-                SearchSection(title: "Organisationen") {
+                SearchSection(title: "Organizations") {
                     ForEach(searchResults.organizations) { result in
                         SearchResultRow(
                             title: result.displayName,
@@ -51,7 +51,7 @@ struct SearchResultsView: View {
                         .padding(.horizontal, 4) // Reduced padding
                 }
                 
-                SearchSection(title: "Projekte") {
+                SearchSection(title: "Projects") {
                     ForEach(searchResults.projects) { result in
                         SearchResultRow(
                             title: result.displayName,

@@ -555,23 +555,23 @@ struct CrewMemberRowView: View {
     private var statusText: String {
         switch assignment.availability {
         case .anfragen:
-            return "Anfragen"
+            return "To Inquire"
         case .angefragt:
-            return "Angefragt"
+            return "Inquired"
         case .verfuegbar:
-            return "Verfügbar"
+            return "Available"
         case .nichtVerfuegbar:
-            return "Nicht Verfügbar"
+            return "Not Available"
         case .ersteOption:
-            return "1. Option"
+            return "1st Option"
         case .zweiteOption:
-            return "2. Option"
+            return "2nd Option"
         case .gebucht:
-            return "Gebucht"
+            return "Booked"
         case .abgesagt:
-            return "Abgesagt"
+            return "Cancelled"
         case .keineRueckmeldung:
-            return "Keine Rückmeldung"
+            return "No Response"
         }
     }
     

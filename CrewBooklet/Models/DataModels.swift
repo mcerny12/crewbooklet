@@ -406,25 +406,25 @@ struct Organization: Identifiable, Codable, Hashable {
 
 // MARK: - Organization Job Types
 enum OrganizationJobType: String, CaseIterable, Codable {
-    case agency = "Agentur"
-    case filmProduction = "Filmproduktion"
-    case equipmentRental = "Technikverleih"
-    case postProduction = "Postproduktion"
-    case castingAgency = "Casting-Agentur"
-    case locationService = "Location-Service"
-    case cateringService = "Catering-Service"
-    case transportService = "Transport-Service"
-    case broadcaster = "Sender/TV-Station"
-    case streamingPlatform = "Streaming-Plattform"
-    case distributionCompany = "Verleih"
-    case talentAgency = "Talent-Agentur"
-    case musicLabel = "Musiklabel"
-    case soundStudio = "Tonstudio"
-    case editingSuite = "Schnittplatz"
-    case colorGrading = "Color-Grading"
-    case vfxStudio = "VFX-Studio"
-    case animationStudio = "Animations-Studio"
-    case other = "Sonstiges"
+    case agency = "Agency"
+    case filmProduction = "Film Production"
+    case equipmentRental = "Equipment Rental"
+    case postProduction = "Post-Production"
+    case castingAgency = "Casting Agency"
+    case locationService = "Location Service"
+    case cateringService = "Catering Service"
+    case transportService = "Transport Service"
+    case broadcaster = "Broadcaster/TV Station"
+    case streamingPlatform = "Streaming Platform"
+    case distributionCompany = "Distribution Company"
+    case talentAgency = "Talent Agency"
+    case musicLabel = "Music Label"
+    case soundStudio = "Sound Studio"
+    case editingSuite = "Editing Suite"
+    case colorGrading = "Color Grading"
+    case vfxStudio = "VFX Studio"
+    case animationStudio = "Animation Studio"
+    case other = "Other"
     
     var displayName: String {
         return self.rawValue
@@ -712,15 +712,15 @@ struct SocialMediaAccount: Identifiable, Codable {
 
 // MARK: - Assignment Status
 enum AssignmentStatus: String, CaseIterable, Codable {
-    case anfragen = "Anfragen"              // Inquiry (to be sent)
-    case angefragt = "Angefragt"           // Inquired (sent)
-    case verfuegbar = "Verfügbar"          // Available
-    case nichtVerfuegbar = "Nicht Verfügbar" // Not Available
-    case ersteOption = "1. Option"          // First Option
-    case zweiteOption = "2. Option"         // Second Option
-    case gebucht = "Gebucht"               // Booked
-    case abgesagt = "Abgesagt"             // Cancelled
-    case keineRueckmeldung = "Keine Rückmeldung" // No Response
+    case anfragen = "To Inquire"              // Inquiry (to be sent)
+    case angefragt = "Inquired"           // Inquired (sent)
+    case verfuegbar = "Available"          // Available
+    case nichtVerfuegbar = "Not Available" // Not Available
+    case ersteOption = "1st Option"          // First Option
+    case zweiteOption = "2nd Option"         // Second Option
+    case gebucht = "Booked"               // Booked
+    case abgesagt = "Cancelled"             // Cancelled
+    case keineRueckmeldung = "No Response" // No Response
     
     var color: String {
         switch self {
@@ -854,11 +854,11 @@ struct UserSession {
 // MARK: - Film Industry Countries
 struct FilmCountries {
     static let countries = [
-        "Deutschland", "Österreich", "Schweiz", "USA", "Kanada", "Vereinigtes Königreich", 
-        "Frankreich", "Italien", "Spanien", "Niederlande", "Belgien", "Schweden", "Norwegen",
-        "Dänemark", "Polen", "Tschechien", "Ungarn", "Australien", "Neuseeland", "Japan",
-        "Südkorea", "Singapur", "Hongkong", "VAE", "Südafrika", "Marokko", "Türkei",
-        "Griechenland", "Portugal", "Irland", "Kroatien", "Slowenien", "Rumänien", "Bulgarien"
+        "Germany", "Austria", "Switzerland", "USA", "Canada", "United Kingdom",
+        "France", "Italy", "Spain", "Netherlands", "Belgium", "Sweden", "Norway",
+        "Denmark", "Poland", "Czech Republic", "Hungary", "Australia", "New Zealand", "Japan",
+        "South Korea", "Singapore", "Hong Kong", "UAE", "South Africa", "Morocco", "Turkey",
+        "Greece", "Portugal", "Ireland", "Croatia", "Slovenia", "Romania", "Bulgaria"
     ]
     
     static let sortedCountries = countries.sorted()

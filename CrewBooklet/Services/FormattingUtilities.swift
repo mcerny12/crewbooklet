@@ -240,21 +240,21 @@ struct ZipCodeLookup {
             "20354": "Hamburg",
             "22087": "Hamburg",
             
-            // Munich (München)
-            "80331": "München",
-            "80333": "München",
-            "80335": "München",
-            "80337": "München",  // The specific zip code you mentioned
-            "80339": "München",
-            "80469": "München",
-            "81675": "München",
-            "81679": "München",
+            // Munich
+            "80331": "Munich",
+            "80333": "Munich",
+            "80335": "Munich",
+            "80337": "Munich",  // The specific zip code you mentioned
+            "80339": "Munich",
+            "80469": "Munich",
+            "81675": "Munich",
+            "81679": "Munich",
             
-            // Cologne (Köln)
-            "50667": "Köln",
-            "50668": "Köln",
-            "50670": "Köln",
-            "50672": "Köln",
+            // Cologne
+            "50667": "Cologne",
+            "50668": "Cologne",
+            "50670": "Cologne",
+            "50672": "Cologne",
             
             // Frankfurt am Main
             "60311": "Frankfurt am Main",
@@ -281,21 +281,21 @@ struct ZipCodeLookup {
             "30159": "Hannover",
             "04109": "Leipzig",
             "01067": "Dresden",
-            "90403": "Nürnberg",
+            "90403": "Nuremberg",
             "68159": "Mannheim"
         ]
         
         if let city = germanZipCodes[zipCode] {
-            return (city: city, country: "Deutschland")
+            return (city: city, country: "Germany")
         }
-        
+
         // Fallback for unknown German zip codes
-        return (city: "", country: "Deutschland")
+        return (city: "", country: "Germany")
     }
     
     private static func lookupAustrianZipCode(_ zipCode: String) -> (city: String, country: String)? {
         let austrianZipCodes: [String: String] = [
-            "1010": "Wien",
+            "1010": "Vienna",
             "4020": "Linz",
             "5020": "Salzburg",
             "6020": "Innsbruck",
@@ -304,27 +304,27 @@ struct ZipCodeLookup {
         ]
         
         if let city = austrianZipCodes[zipCode] {
-            return (city: city, country: "Österreich")
+            return (city: city, country: "Austria")
         }
-        
-        return (city: "", country: "Österreich")
+
+        return (city: "", country: "Austria")
     }
     
     private static func lookupSwissZipCode(_ zipCode: String) -> (city: String, country: String)? {
         let swissZipCodes: [String: String] = [
-            "8001": "Zürich",
+            "8001": "Zurich",
             "3001": "Bern",
             "4001": "Basel",
-            "1201": "Genève",
+            "1201": "Geneva",
             "1003": "Lausanne",
             "6900": "Lugano"
         ]
         
         if let city = swissZipCodes[zipCode] {
-            return (city: city, country: "Schweiz")
+            return (city: city, country: "Switzerland")
         }
-        
-        return (city: "", country: "Schweiz")
+
+        return (city: "", country: "Switzerland")
     }
     
     private static func lookupUSZipCode(_ zipCode: String) -> (city: String, country: String)? {

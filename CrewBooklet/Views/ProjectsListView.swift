@@ -26,9 +26,9 @@ struct ProjectsListView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if filteredProjects.isEmpty {
                     ContentUnavailableView(
-                        searchText.isEmpty ? "Keine Projekte" : "Keine Suchergebnisse",
+                        searchText.isEmpty ? "No Projects" : "No Search Results",
                         systemImage: searchText.isEmpty ? "folder.badge.plus" : "magnifyingglass",
-                        description: Text(searchText.isEmpty ? "Fügen Sie Ihr erstes Projekt hinzu" : "Versuchen Sie einen anderen Suchbegriff")
+                        description: Text(searchText.isEmpty ? "Add your first project" : "Try a different search term")
                     )
                 } else {
                     ScrollView {
