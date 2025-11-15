@@ -494,27 +494,27 @@ struct Project: Identifiable, Codable, Hashable {
     let id: UUID
     let createdAt: Date
     let updatedAt: Date
-    
+
     // BASIC INFO
     var name: String
     var projectNumber: String // Auto-generated unique identifier
     var status: ProjectStatus // ANFRAGE, BUDGET, PRODUKTION, ABGESAGT, HOLD
-    
+
     // LOCATION INFO
     var inquiryCountry: String? // Country where inquiry originated
     var shootingLocation: String? // Country where shooting takes place
-    
+
     // ORGANIZATION CONNECTION
     var clientOrganizationId: UUID? // Connection to Organization
-    
+
     // ADDITIONAL
     var description: String?
     var notes: String?
-    
+
     // DATES
     var startDate: Date?
     var endDate: Date?
-    
+
     enum CodingKeys: String, CodingKey {
         case id, name, status, description, notes
         case projectNumber = "project_number"
@@ -525,6 +525,47 @@ struct Project: Identifiable, Codable, Hashable {
         case endDate = "end_date"
         case createdAt = "creation_date"  // Fixed: Database uses 'creation_date', not 'created_at'
         case updatedAt = "updated_at"
+    }
+
+    // Custom decoder to handle both date formats (DATE and TIMESTAMP)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        projectNumber = try container.decode(String.self, forKey: .projectNumber)
+        status = try container.decode(ProjectStatus.self, forKey: .status)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        inquiryCountry = try container.decodeIfPresent(String.self, forKey: .inquiryCountry)
+        shootingLocation = try container.decodeIfPresent(String.self, forKey: .shootingLocation)
+        clientOrganizationId = try container.decodeIfPresent(UUID.self, forKey: .clientOrganizationId)
+
+        // Decode standard timestamps
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+
+        // Decode optional dates with flexible format support
+        startDate = try Self.decodeFlexibleDate(from: container, forKey: .startDate)
+        endDate = try Self.decodeFlexibleDate(from: container, forKey: .endDate)
+    }
+
+    // Helper to decode dates in both "YYYY-MM-DD" and ISO 8601 formats
+    private static func decodeFlexibleDate(from container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> Date? {
+        // Try to decode as Date first (for ISO 8601 timestamps)
+        if let date = try? container.decodeIfPresent(Date.self, forKey: key) {
+            return date
+        }
+
+        // Try to decode as String (for DATE format "YYYY-MM-DD")
+        if let dateString = try? container.decodeIfPresent(String.self, forKey: key) {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            dateFormatter.timeZone = TimeZone(identifier: "UTC")
+            return dateFormatter.date(from: dateString)
+        }
+
+        return nil
     }
     
     init(id: UUID = UUID(), name: String = "", status: ProjectStatus = .inquiry, description: String? = nil, notes: String? = nil, clientOrganizationId: UUID? = nil) {
