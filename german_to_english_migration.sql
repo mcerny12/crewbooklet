@@ -318,25 +318,47 @@ DELETE FROM project_assignments
 WHERE person_id NOT IN (SELECT id FROM people)
    OR project_id NOT IN (SELECT id FROM projects);
 
--- Remove any null or empty job entries
+-- Remove any null or empty job entries in people (JSONB)
 UPDATE people
 SET jobs = '[]'::jsonb
 WHERE jobs IS NULL OR jobs = 'null'::jsonb;
 
--- Remove any null or empty language entries
+-- Remove any null or empty language entries in people (JSONB)
 UPDATE people
 SET languages = '[]'::jsonb
 WHERE languages IS NULL OR languages = 'null'::jsonb;
 
--- Update any projects with NULL assigned_people to empty array
-UPDATE projects
-SET assigned_people = '[]'::jsonb
-WHERE assigned_people IS NULL OR assigned_people = 'null'::jsonb;
+-- Clean up projects - handle both JSONB and UUID array types
+-- First check if assigned_people exists and what type it is
+DO $$
+DECLARE
+    assigned_people_type TEXT;
+    organization_ids_type TEXT;
+BEGIN
+    -- Get the data type of assigned_people
+    SELECT data_type INTO assigned_people_type
+    FROM information_schema.columns
+    WHERE table_name = 'projects' AND column_name = 'assigned_people';
 
--- Update any projects with NULL organization_ids to empty array
-UPDATE projects
-SET organization_ids = '[]'::jsonb
-WHERE organization_ids IS NULL OR organization_ids = 'null'::jsonb;
+    -- Get the data type of organization_ids
+    SELECT data_type INTO organization_ids_type
+    FROM information_schema.columns
+    WHERE table_name = 'projects' AND column_name = 'organization_ids';
+
+    -- Update assigned_people based on its type
+    IF assigned_people_type = 'jsonb' THEN
+        EXECUTE 'UPDATE projects SET assigned_people = ''[]''::jsonb WHERE assigned_people IS NULL OR assigned_people = ''null''::jsonb';
+    ELSIF assigned_people_type = 'ARRAY' THEN
+        EXECUTE 'UPDATE projects SET assigned_people = ''{}''::"uuid"[] WHERE assigned_people IS NULL';
+    END IF;
+
+    -- Update organization_ids based on its type
+    IF organization_ids_type = 'jsonb' THEN
+        EXECUTE 'UPDATE projects SET organization_ids = ''[]''::jsonb WHERE organization_ids IS NULL OR organization_ids = ''null''::jsonb';
+    ELSIF organization_ids_type = 'ARRAY' THEN
+        EXECUTE 'UPDATE projects SET organization_ids = ''{}''::"uuid"[] WHERE organization_ids IS NULL';
+    END IF;
+END $$;
 
 -- =====================================================
 -- STEP 9: VERIFICATION QUERIES
