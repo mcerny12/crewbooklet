@@ -15,11 +15,10 @@ struct CrewBookletApp: App {
     @State private var currentUser: String? = nil
 
     init() {
-        // Clear projects cache on app startup to ensure fresh data after enum changes
+        // Clear all cache on app startup to ensure fresh data after enum changes
         Task { @MainActor in
-            print("🗑️ Clearing projects cache on app startup...")
-            DataCache.shared.projects.removeAll()
-            DataCache.shared.lastFetch.removeValue(forKey: "projects")
+            print("🗑️ Clearing all cache on app startup...")
+            DataCache.shared.clearAllCache()
         }
     }
 

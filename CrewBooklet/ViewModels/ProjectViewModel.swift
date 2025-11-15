@@ -64,11 +64,7 @@ class ProjectViewModel: ObservableObject {
         print("🔄 Force refreshing projects (clearing cache)...")
 
         do {
-            // Clear cache first
-            await DataCache.shared.projects.removeAll()
-            await DataCache.shared.lastFetch.removeValue(forKey: "projects")
-
-            // Force fresh fetch
+            // Force fresh fetch (bypasses cache)
             projects = try await supabaseService.fetchProjects(forceRefresh: true)
             filterProjects()
             errorMessage = nil

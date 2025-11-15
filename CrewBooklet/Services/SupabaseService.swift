@@ -284,11 +284,10 @@ class SupabaseService: ObservableObject {
             print("❌ Error fetching projects: \(error)")
             print("📋 Error details: \(error.localizedDescription)")
 
-            // If it's a decoding error, clear cache and return empty array
+            // If it's a decoding error, clear all cache
             if error.localizedDescription.contains("decode") || error.localizedDescription.contains("type") {
-                print("🗑️ Clearing projects cache due to decoding error...")
-                await cache.projects.removeAll()
-                await cache.lastFetch.removeValue(forKey: "projects")
+                print("🗑️ Clearing all cache due to decoding error...")
+                await cache.clearAllCache()
             }
 
             throw error
