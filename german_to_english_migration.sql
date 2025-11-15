@@ -51,42 +51,47 @@ CHECK (availability IN (
 -- STEP 3: UPDATE ORGANIZATION JOB TYPES IN PEOPLE.JOBS (JSONB)
 -- =====================================================
 -- Update jobs array in people table (stored as JSONB array)
-UPDATE people SET jobs = jsonb_agg(
-    CASE elem::text
-        WHEN '"Agentur"' THEN '"Agency"'
-        WHEN '"Filmproduktion"' THEN '"Film Production"'
-        WHEN '"Technikverleih"' THEN '"Equipment Rental"'
-        WHEN '"Postproduktion"' THEN '"Post-Production"'
-        WHEN '"Casting-Agentur"' THEN '"Casting Agency"'
-        WHEN '"Location-Service"' THEN '"Location Service"'
-        WHEN '"Catering-Service"' THEN '"Catering Service"'
-        WHEN '"Transport-Service"' THEN '"Transport Service"'
-        WHEN '"Sender/TV-Station"' THEN '"Broadcaster/TV Station"'
-        WHEN '"Streaming-Plattform"' THEN '"Streaming Platform"'
-        WHEN '"Verleih"' THEN '"Distribution Company"'
-        WHEN '"Talent-Agentur"' THEN '"Talent Agency"'
-        WHEN '"Musiklabel"' THEN '"Music Label"'
-        WHEN '"Tonstudio"' THEN '"Sound Studio"'
-        WHEN '"Schnittplatz"' THEN '"Editing Suite"'
-        WHEN '"Color-Grading"' THEN '"Color Grading"'
-        WHEN '"VFX-Studio"' THEN '"VFX Studio"'
-        WHEN '"Animations-Studio"' THEN '"Animation Studio"'
-        WHEN '"Sonstiges"' THEN '"Other"'
-        ELSE elem::text
-    END::jsonb
-)
+UPDATE people SET jobs = translated_jobs.new_jobs
 FROM (
-    SELECT id, jsonb_array_elements(jobs) as elem
-    FROM people
-    WHERE jobs IS NOT NULL AND jsonb_array_length(jobs) > 0
-) AS subquery
-WHERE people.id = subquery.id
-GROUP BY people.id;
+    SELECT
+        id,
+        jsonb_agg(
+            CASE elem::text
+                WHEN '"Agentur"' THEN '"Agency"'
+                WHEN '"Filmproduktion"' THEN '"Film Production"'
+                WHEN '"Technikverleih"' THEN '"Equipment Rental"'
+                WHEN '"Postproduktion"' THEN '"Post-Production"'
+                WHEN '"Casting-Agentur"' THEN '"Casting Agency"'
+                WHEN '"Location-Service"' THEN '"Location Service"'
+                WHEN '"Catering-Service"' THEN '"Catering Service"'
+                WHEN '"Transport-Service"' THEN '"Transport Service"'
+                WHEN '"Sender/TV-Station"' THEN '"Broadcaster/TV Station"'
+                WHEN '"Streaming-Plattform"' THEN '"Streaming Platform"'
+                WHEN '"Verleih"' THEN '"Distribution Company"'
+                WHEN '"Talent-Agentur"' THEN '"Talent Agency"'
+                WHEN '"Musiklabel"' THEN '"Music Label"'
+                WHEN '"Tonstudio"' THEN '"Sound Studio"'
+                WHEN '"Schnittplatz"' THEN '"Editing Suite"'
+                WHEN '"Color-Grading"' THEN '"Color Grading"'
+                WHEN '"VFX-Studio"' THEN '"VFX Studio"'
+                WHEN '"Animations-Studio"' THEN '"Animation Studio"'
+                WHEN '"Sonstiges"' THEN '"Other"'
+                ELSE elem::text
+            END::jsonb
+        ) as new_jobs
+    FROM (
+        SELECT id, jsonb_array_elements(jobs) as elem
+        FROM people
+        WHERE jobs IS NOT NULL AND jsonb_array_length(jobs) > 0
+    ) AS elements
+    GROUP BY id
+) AS translated_jobs
+WHERE people.id = translated_jobs.id;
 
 -- =====================================================
 -- STEP 4: UPDATE ORGANIZATION JOB TYPES (if stored in organizations table)
 -- =====================================================
--- Check if organizations table has jobs field
+-- Check if organizations table has jobs field and update if it exists
 DO $$
 BEGIN
     IF EXISTS (
@@ -94,37 +99,42 @@ BEGIN
         WHERE table_name = 'organizations' AND column_name = 'jobs'
     ) THEN
         EXECUTE '
-        UPDATE organizations SET jobs = jsonb_agg(
-            CASE elem::text
-                WHEN ''"Agentur"'' THEN ''"Agency"''
-                WHEN ''"Filmproduktion"'' THEN ''"Film Production"''
-                WHEN ''"Technikverleih"'' THEN ''"Equipment Rental"''
-                WHEN ''"Postproduktion"'' THEN ''"Post-Production"''
-                WHEN ''"Casting-Agentur"'' THEN ''"Casting Agency"''
-                WHEN ''"Location-Service"'' THEN ''"Location Service"''
-                WHEN ''"Catering-Service"'' THEN ''"Catering Service"''
-                WHEN ''"Transport-Service"'' THEN ''"Transport Service"''
-                WHEN ''"Sender/TV-Station"'' THEN ''"Broadcaster/TV Station"''
-                WHEN ''"Streaming-Plattform"'' THEN ''"Streaming Platform"''
-                WHEN ''"Verleih"'' THEN ''"Distribution Company"''
-                WHEN ''"Talent-Agentur"'' THEN ''"Talent Agency"''
-                WHEN ''"Musiklabel"'' THEN ''"Music Label"''
-                WHEN ''"Tonstudio"'' THEN ''"Sound Studio"''
-                WHEN ''"Schnittplatz"'' THEN ''"Editing Suite"''
-                WHEN ''"Color-Grading"'' THEN ''"Color Grading"''
-                WHEN ''"VFX-Studio"'' THEN ''"VFX Studio"''
-                WHEN ''"Animations-Studio"'' THEN ''"Animation Studio"''
-                WHEN ''"Sonstiges"'' THEN ''"Other"''
-                ELSE elem::text
-            END::jsonb
-        )
+        UPDATE organizations SET jobs = translated_jobs.new_jobs
         FROM (
-            SELECT id, jsonb_array_elements(jobs) as elem
-            FROM organizations
-            WHERE jobs IS NOT NULL AND jsonb_array_length(jobs) > 0
-        ) AS subquery
-        WHERE organizations.id = subquery.id
-        GROUP BY organizations.id;
+            SELECT
+                id,
+                jsonb_agg(
+                    CASE elem::text
+                        WHEN ''"Agentur"'' THEN ''"Agency"''
+                        WHEN ''"Filmproduktion"'' THEN ''"Film Production"''
+                        WHEN ''"Technikverleih"'' THEN ''"Equipment Rental"''
+                        WHEN ''"Postproduktion"'' THEN ''"Post-Production"''
+                        WHEN ''"Casting-Agentur"'' THEN ''"Casting Agency"''
+                        WHEN ''"Location-Service"'' THEN ''"Location Service"''
+                        WHEN ''"Catering-Service"'' THEN ''"Catering Service"''
+                        WHEN ''"Transport-Service"'' THEN ''"Transport Service"''
+                        WHEN ''"Sender/TV-Station"'' THEN ''"Broadcaster/TV Station"''
+                        WHEN ''"Streaming-Plattform"'' THEN ''"Streaming Platform"''
+                        WHEN ''"Verleih"'' THEN ''"Distribution Company"''
+                        WHEN ''"Talent-Agentur"'' THEN ''"Talent Agency"''
+                        WHEN ''"Musiklabel"'' THEN ''"Music Label"''
+                        WHEN ''"Tonstudio"'' THEN ''"Sound Studio"''
+                        WHEN ''"Schnittplatz"'' THEN ''"Editing Suite"''
+                        WHEN ''"Color-Grading"'' THEN ''"Color Grading"''
+                        WHEN ''"VFX-Studio"'' THEN ''"VFX Studio"''
+                        WHEN ''"Animations-Studio"'' THEN ''"Animation Studio"''
+                        WHEN ''"Sonstiges"'' THEN ''"Other"''
+                        ELSE elem::text
+                    END::jsonb
+                ) as new_jobs
+            FROM (
+                SELECT id, jsonb_array_elements(jobs) as elem
+                FROM organizations
+                WHERE jobs IS NOT NULL AND jsonb_array_length(jobs) > 0
+            ) AS elements
+            GROUP BY id
+        ) AS translated_jobs
+        WHERE organizations.id = translated_jobs.id;
         ';
     END IF;
 END $$;
