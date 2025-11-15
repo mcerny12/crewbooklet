@@ -56,3 +56,5 @@ class UserSessionManager: ObservableObject {
         currentUser.role == .admin
     }
 }
+
+

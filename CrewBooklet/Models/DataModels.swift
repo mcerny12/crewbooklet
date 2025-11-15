@@ -523,7 +523,7 @@ struct Project: Identifiable, Codable, Hashable {
         case clientOrganizationId = "client_organization_id"
         case startDate = "start_date"
         case endDate = "end_date"
-        case createdAt = "created_at"
+        case createdAt = "creation_date"  // Fixed: Database uses 'creation_date', not 'created_at'
         case updatedAt = "updated_at"
     }
     

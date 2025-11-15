@@ -269,7 +269,7 @@ class SupabaseService: ObservableObject {
         print("🌐 Fetching fresh projects from Supabase...")
         let response: [Project] = try await client
             .from("projects")
-            .select("*, organizations(*)")
+            .select("*")
             .order("creation_date", ascending: false)
             .execute()
             .value
@@ -343,7 +343,7 @@ class SupabaseService: ObservableObject {
         do {
             let response: [Project] = try await client
                 .from("projects")
-                .select("*, organizations(*)")
+                .select("*")
                 .order("creation_date", ascending: false)
                 .execute()
                 .value
