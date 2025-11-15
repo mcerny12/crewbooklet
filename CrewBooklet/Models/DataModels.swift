@@ -546,11 +546,11 @@ struct Project: Identifiable, Codable, Hashable {
 
 // MARK: - Project Status Enum
 enum ProjectStatus: String, CaseIterable, Codable {
-    case inquiry = "ANFRAGE"
-    case budget = "BUDGET" 
-    case production = "PRODUKTION"
-    case completed = "ABGESCHLOSSEN"
-    case cancelled = "ABGESAGT"
+    case inquiry = "INQUIRY"
+    case budget = "BUDGET"
+    case production = "PRODUCTION"
+    case completed = "COMPLETED"
+    case cancelled = "CANCELLED"
     case hold = "HOLD"
     
     var color: String {

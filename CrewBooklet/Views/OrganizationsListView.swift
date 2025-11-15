@@ -114,9 +114,9 @@ struct OrganizationsListView: View {
                     ScrollView {
                         LazyVStack(spacing: 4) {
                             ForEach(filteredOrganizations) { org in
-                                MacOSOrganizationRow(organization: org) {
+                                MacOSOrganizationRow(organization: org, onTap: {
                                     onOrganizationSelected(org)
-                                }
+                                })
                             }
                         }
                         .padding()

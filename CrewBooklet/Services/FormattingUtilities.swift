@@ -208,15 +208,13 @@ struct ZipCodeLookup {
         
         if cleaned.count == 4 {
             // Could be Austrian or Swiss - check ranges
-            if let firstDigit = Int(String(cleaned.prefix(1))) {
-                // Austrian zip codes: 1000-9999
-                // Swiss zip codes: 1000-9999
-                // Try both and return the first match
-                if let result = lookupAustrianZipCode(cleaned) {
-                    return result
-                }
-                return lookupSwissZipCode(cleaned)
+            // Austrian zip codes: 1000-9999
+            // Swiss zip codes: 1000-9999
+            // Try both and return the first match
+            if let result = lookupAustrianZipCode(cleaned) {
+                return result
             }
+            return lookupSwissZipCode(cleaned)
         }
         
         return nil
