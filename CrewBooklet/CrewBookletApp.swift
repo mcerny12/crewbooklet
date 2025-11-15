@@ -13,7 +13,16 @@ struct CrewBookletApp: App {
     @AppStorage("savedUsername") private var savedUsername: String = ""
     @State private var isAuthenticated: Bool = false
     @State private var currentUser: String? = nil
-    
+
+    init() {
+        // Clear projects cache on app startup to ensure fresh data after enum changes
+        Task { @MainActor in
+            print("🗑️ Clearing projects cache on app startup...")
+            DataCache.shared.projects.removeAll()
+            DataCache.shared.lastFetch.removeValue(forKey: "projects")
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             if isAuthenticated, let user = currentUser {

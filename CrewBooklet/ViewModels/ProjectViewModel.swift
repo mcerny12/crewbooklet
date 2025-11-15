@@ -44,7 +44,7 @@ class ProjectViewModel: ObservableObject {
     func loadProjects() async {
         isLoading = true
         print("🔄 Loading projects from Supabase...")
-        
+
         do {
             projects = try await supabaseService.fetchProjects() // Uses cache-aware version
             filterProjects()
@@ -53,6 +53,30 @@ class ProjectViewModel: ObservableObject {
         } catch {
             errorMessage = "Failed to load projects: \(error.localizedDescription)"
             print("❌ Error loading projects: \(error)")
+            print("💡 Full error: \(error)")
+        }
+        isLoading = false
+    }
+
+    /// Force refresh projects, bypassing cache
+    func forceRefresh() async {
+        isLoading = true
+        print("🔄 Force refreshing projects (clearing cache)...")
+
+        do {
+            // Clear cache first
+            await DataCache.shared.projects.removeAll()
+            await DataCache.shared.lastFetch.removeValue(forKey: "projects")
+
+            // Force fresh fetch
+            projects = try await supabaseService.fetchProjects(forceRefresh: true)
+            filterProjects()
+            errorMessage = nil
+            print("✅ Force refreshed \(projects.count) projects")
+        } catch {
+            errorMessage = "Failed to refresh projects: \(error.localizedDescription)"
+            print("❌ Error refreshing projects: \(error)")
+            print("💡 Full error: \(error)")
         }
         isLoading = false
     }

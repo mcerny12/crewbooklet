@@ -244,41 +244,55 @@ class SupabaseService: ObservableObject {
     /// Fetch projects with intelligent caching
     func fetchProjects(forceRefresh: Bool = false) async throws -> [Project] {
         print("🔄 Fetching projects (cache-aware)...")
-        
+
         let cache = await DataCache.shared
-        
+
         // Return cached data immediately if available and not forced refresh
         let hasCachedData = await cache.hasCachedData(for: "projects")
         if !forceRefresh && hasCachedData {
             let cachedProjects = await cache.projects
             print("⚡ Returning cached projects (\(cachedProjects.count) items)")
-            
+
             // Refresh in background if cache is stale
             let isCacheValid = await cache.isCacheValid(for: "projects")
             if !isCacheValid {
                 print("🔄 Cache stale, refreshing in background...")
-                Task { 
-                    await refreshProjectsInBackground() 
+                Task {
+                    await refreshProjectsInBackground()
                 }
             }
-            
+
             return cachedProjects
         }
-        
+
         // Fetch fresh data
         print("🌐 Fetching fresh projects from Supabase...")
-        let response: [Project] = try await client
-            .from("projects")
-            .select("*")
-            .order("creation_date", ascending: false)
-            .execute()
-            .value
-        
-        // Update cache
-        await cache.updateProjects(response)
-        
-        print("✅ Successfully fetched \(response.count) projects")
-        return response
+        do {
+            let response: [Project] = try await client
+                .from("projects")
+                .select("*")
+                .order("creation_date", ascending: false)
+                .execute()
+                .value
+
+            // Update cache
+            await cache.updateProjects(response)
+
+            print("✅ Successfully fetched \(response.count) projects")
+            return response
+        } catch {
+            print("❌ Error fetching projects: \(error)")
+            print("📋 Error details: \(error.localizedDescription)")
+
+            // If it's a decoding error, clear cache and return empty array
+            if error.localizedDescription.contains("decode") || error.localizedDescription.contains("type") {
+                print("🗑️ Clearing projects cache due to decoding error...")
+                await cache.projects.removeAll()
+                await cache.lastFetch.removeValue(forKey: "projects")
+            }
+
+            throw error
+        }
     }
     
     /// Fetch organizations with intelligent caching
