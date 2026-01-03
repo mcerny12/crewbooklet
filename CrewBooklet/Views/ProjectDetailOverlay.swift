@@ -166,12 +166,12 @@ struct ProjectDetailOverlay: View {
                     Text("Basic Information")
                         .font(.headline)
                         .fontWeight(.semibold)
-                    
+
                     VStack(spacing: 12) {
                         InfoField(label: "Project Number", value: project.projectNumber)
-                        
+
                         InfoEditableField(
-                            label: "Project Name", 
+                            label: "Project Name",
                             text: Binding(
                                 get: { project.name },
                                 set: { value in
@@ -181,20 +181,25 @@ struct ProjectDetailOverlay: View {
                                 }
                             )
                         )
-                        
+                        .onChange(of: project.name) { _, newValue in
+                            Task {
+                                await saveProject()
+                            }
+                        }
+
                         InfoField(
-                            label: "Client Organization", 
+                            label: "Client Organization",
                             value: "No client organization" // TODO: Load organization name from clientOrganizationId
                         )
                     }
                 }
-                
-                // Status Information  
+
+                // Status Information
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Status Information")
                         .font(.headline)
                         .fontWeight(.semibold)
-                    
+
                     VStack(spacing: 12) {
                         InfoDropdownField(
                             label: "Status",
@@ -209,9 +214,14 @@ struct ProjectDetailOverlay: View {
                             options: ProjectStatus.allCases,
                             displayText: { $0.rawValue.uppercased() }
                         )
-                        
+                        .onChange(of: project.status) { _, newValue in
+                            Task {
+                                await saveProject()
+                            }
+                        }
+
                         InfoField(label: "Created", value: "30.06.25")
-                        
+
                         InfoDateField(
                             label: "Start",
                             date: Binding(
@@ -223,9 +233,14 @@ struct ProjectDetailOverlay: View {
                                 }
                             )
                         )
-                        
+                        .onChange(of: project.startDate) { _, newValue in
+                            Task {
+                                await saveProject()
+                            }
+                        }
+
                         InfoDateField(
-                            label: "End", 
+                            label: "End",
                             date: Binding(
                                 get: { project.endDate ?? Date() },
                                 set: { value in
@@ -235,11 +250,16 @@ struct ProjectDetailOverlay: View {
                                 }
                             )
                         )
+                        .onChange(of: project.endDate) { _, newValue in
+                            Task {
+                                await saveProject()
+                            }
+                        }
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
-            
+
             // Right Column - Description & Crew
             VStack(alignment: .leading, spacing: 20) {
                 // Description - Full width for information tab
@@ -247,7 +267,7 @@ struct ProjectDetailOverlay: View {
                     Text("Description")
                         .font(.headline)
                         .fontWeight(.semibold)
-                    
+
                     TextEditor(text: Binding(
                         get: { project.description ?? "" },
                         set: { value in
@@ -263,6 +283,11 @@ struct ProjectDetailOverlay: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(.quaternary, lineWidth: 1)
                     )
+                    .onChange(of: project.description) { _, newValue in
+                        Task {
+                            await saveProject()
+                        }
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -449,7 +474,16 @@ struct ProjectDetailOverlay: View {
             }
         }
     }
-    
+
+    private func saveProject() async {
+        do {
+            try await supabaseService.updateProject(project)
+            print("✅ Project updated successfully")
+        } catch {
+            print("❌ Failed to update project: \(error)")
+        }
+    }
+
     private func removeCrewMember(_ assignment: ProjectAssignment) async {
         do {
             try await supabaseService.removeProjectAssignment(id: assignment.id)
