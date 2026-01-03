@@ -61,6 +61,11 @@ struct OrganizationDetailSheet: View {
             tabSelectionView
             tabContentView
         }
+        .onChange(of: organization) { _, newValue in
+            Task {
+                await saveOrganization()
+            }
+        }
     }
 
     // MARK: - Tab Content

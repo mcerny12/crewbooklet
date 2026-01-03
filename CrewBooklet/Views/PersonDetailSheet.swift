@@ -56,6 +56,9 @@ struct PersonDetailSheet: View {
                 await loadOrganizationName()
             }
         }
+        .onChange(of: person) { _, newValue in
+            viewModel.savePerson(newValue)
+        }
     }
 
     // MARK: - Tab Content
