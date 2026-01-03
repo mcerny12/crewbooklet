@@ -12,37 +12,43 @@ struct Person: Identifiable, Codable, Hashable {
     let id: UUID
     let createdAt: Date
     let updatedAt: Date
-    
+
+    // USER OWNERSHIP
+    var userId: UUID? // Owner of this record
+
     // BASIC INFO
     var name: String
     var gender: Gender?
-    
+    var dateOfBirth: Date?
+
     // CONTACT INFORMATION
     var email: String?
     var mobilePhone: String?
     var workPhone: String?
     var website: String?
-    
+
     // ADDRESS (Structured Components)
     var address: Address?
-    
+
     // PROFESSIONAL INFO
     var jobs: [JobType]
     var languages: [Language]
-    
+
     // ORGANIZATION CONNECTION
     var organizationId: UUID? // Connection to Organization
-    
+
     // ADDITIONAL
     var notes: String?
-    
+
     var financialDetails: FinancialDetails?
-    
+
     // DOCUMENTS
     var documents: [Document]?
-    
+
     enum CodingKeys: String, CodingKey {
         case id, name, gender, email, notes
+        case userId = "user_id"
+        case dateOfBirth = "date_of_birth"
         case mobilePhone = "mobile_phone"
         case workPhone = "work_phone"
         case website
@@ -55,10 +61,12 @@ struct Person: Identifiable, Codable, Hashable {
         case documents
     }
     
-    init(id: UUID = UUID(), name: String = "", email: String = "", jobs: [JobType] = [], notes: String = "", organizationId: UUID? = nil) {
+    init(id: UUID = UUID(), name: String = "", email: String = "", jobs: [JobType] = [], notes: String = "", organizationId: UUID? = nil, userId: UUID? = nil) {
         self.id = id
+        self.userId = userId
         self.name = name
         self.gender = nil
+        self.dateOfBirth = nil
         self.email = email
         self.mobilePhone = nil
         self.workPhone = nil
@@ -328,21 +336,25 @@ struct Organization: Identifiable, Codable, Hashable {
     let id: UUID
     let createdAt: Date
     let updatedAt: Date
-    
+
+    // USER OWNERSHIP
+    var userId: UUID? // Owner of this record
+
     // BASIC INFO
     var name: String
-    
+
     // CONTACT INFORMATION
     var contactEmail: String?
     var contactPhone: String?
-    
+    var website: String?
+
     // ADDRESS (Structured Components)
     var street: String?
     var street2: String?
     var zip: String?
     var city: String?
     var country: String?
-    
+
     // INVOICE ADDRESS (Separate from main address)
     var nameInvoice: String?
     var streetInvoice: String?
@@ -350,23 +362,25 @@ struct Organization: Identifiable, Codable, Hashable {
     var zipInvoice: String?
     var cityInvoice: String?
     var countryInvoice: String?
-    
+
     // PROFESSIONAL INFO
     var jobs: [OrganizationJobType]
-    
+
     // ADDITIONAL
     var notes: String?
-    
+
     // FINANCIAL DETAILS
     var financialDetails: FinancialDetails?
-    
+
     // DOCUMENTS
     var documents: [Document]?
-    
+
     enum CodingKeys: String, CodingKey {
         case id, name, notes
+        case userId = "user_id"
         case contactEmail = "contact_email"
         case contactPhone = "contact_phone"
+        case website
         case street, street2, zip, city, country
         case nameInvoice = "name_invoice"
         case streetInvoice = "street_invoice"
@@ -380,11 +394,13 @@ struct Organization: Identifiable, Codable, Hashable {
         case documents
     }
     
-    init(id: UUID = UUID(), name: String = "", contactEmail: String = "", contactPhone: String = "", jobs: [OrganizationJobType] = [], notes: String = "") {
+    init(id: UUID = UUID(), name: String = "", contactEmail: String = "", contactPhone: String = "", jobs: [OrganizationJobType] = [], notes: String = "", userId: UUID? = nil) {
         self.id = id
+        self.userId = userId
         self.name = name
         self.contactEmail = contactEmail
         self.contactPhone = contactPhone
+        self.website = nil
         self.street = nil
         self.street2 = nil
         self.zip = nil
@@ -408,6 +424,7 @@ struct Organization: Identifiable, Codable, Hashable {
 enum OrganizationJobType: String, CaseIterable, Codable {
     case agency = "Agency"
     case filmProduction = "Film Production"
+    case photoProduction = "Photo Production"
     case equipmentRental = "Equipment Rental"
     case postProduction = "Post-Production"
     case castingAgency = "Casting Agency"
@@ -434,7 +451,7 @@ enum OrganizationJobType: String, CaseIterable, Codable {
         switch self {
         case .agency, .castingAgency, .talentAgency:
             return .agency
-        case .filmProduction:
+        case .filmProduction, .photoProduction:
             return .production
         case .equipmentRental:
             return .equipment
@@ -495,6 +512,9 @@ struct Project: Identifiable, Codable, Hashable {
     let createdAt: Date
     let updatedAt: Date
 
+    // USER OWNERSHIP
+    var userId: UUID? // Owner of this record
+
     // BASIC INFO
     var name: String
     var projectNumber: String // Auto-generated unique identifier
@@ -517,6 +537,7 @@ struct Project: Identifiable, Codable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, status, description, notes
+        case userId = "user_id"
         case projectNumber = "project_number"
         case inquiryCountry = "inquiry_country"
         case shootingLocation = "shooting_location"
@@ -532,6 +553,7 @@ struct Project: Identifiable, Codable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         id = try container.decode(UUID.self, forKey: .id)
+        userId = try container.decodeIfPresent(UUID.self, forKey: .userId)
         name = try container.decode(String.self, forKey: .name)
         projectNumber = try container.decode(String.self, forKey: .projectNumber)
         status = try container.decode(ProjectStatus.self, forKey: .status)
@@ -568,8 +590,9 @@ struct Project: Identifiable, Codable, Hashable {
         return nil
     }
     
-    init(id: UUID = UUID(), name: String = "", status: ProjectStatus = .inquiry, description: String? = nil, notes: String? = nil, clientOrganizationId: UUID? = nil) {
+    init(id: UUID = UUID(), name: String = "", status: ProjectStatus = .inquiry, description: String? = nil, notes: String? = nil, clientOrganizationId: UUID? = nil, userId: UUID? = nil) {
         self.id = id
+        self.userId = userId
         self.name = name
         self.status = status
         self.description = description
@@ -622,6 +645,7 @@ struct ProjectAssignment: Identifiable, Codable {
     let id: UUID
     let projectId: UUID
     let personId: UUID
+    var userId: UUID? // Owner of this record
     var role: String? // Specific position/role on THIS project (can be different from person's general jobs)
     var department: CrewDepartment?
     var availability: AssignmentStatus
@@ -630,20 +654,22 @@ struct ProjectAssignment: Identifiable, Codable {
     var notes: String?
     let createdAt: Date
     let updatedAt: Date
-    
+
     enum CodingKeys: String, CodingKey {
         case id, role, department, availability, notes, currency
         case projectId = "project_id"
         case personId = "person_id"
+        case userId = "user_id"
         case dailyPay = "daily_pay"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
     
-    init(id: UUID = UUID(), projectId: UUID, personId: UUID, role: String? = nil, department: CrewDepartment = .other, availability: AssignmentStatus = .anfragen, dailyPay: Decimal? = nil, currency: String = "EUR", notes: String? = nil) {
+    init(id: UUID = UUID(), projectId: UUID, personId: UUID, role: String? = nil, department: CrewDepartment = .other, availability: AssignmentStatus = .anfragen, dailyPay: Decimal? = nil, currency: String = "EUR", notes: String? = nil, userId: UUID? = nil) {
         self.id = id
         self.projectId = projectId
         self.personId = personId
+        self.userId = userId
         self.role = role
         self.department = department
         self.availability = availability

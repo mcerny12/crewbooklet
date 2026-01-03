@@ -151,12 +151,12 @@ class DataCache: ObservableObject {
 
 class SupabaseService: ObservableObject {
     static let shared = SupabaseService()
-    
+
     private let client: SupabaseClient
-    
+
     // 🔧 FIX: Store subscription tasks for proper cleanup
     private var subscriptionTasks: [String: [Task<Void, Never>]] = [:]
-    
+
     // MARK: - Enhanced JSON Encoding/Decoding for Complex Types
     private let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
@@ -164,25 +164,31 @@ class SupabaseService: ObservableObject {
         encoder.keyEncodingStrategy = .convertToSnakeCase
         return encoder
     }()
-    
+
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }()
-    
+
     private init() {
         let config = SupabaseConfig.shared
         self.client = SupabaseClient(
             supabaseURL: config.supabaseURL,
             supabaseKey: config.supabaseKey
         )
-        
+
         if config.enableDebugLogging {
             print("🚀 SupabaseService initialized with smart caching (Development Mode)")
             print("📡 Connected to: \(config.supabaseURL.host ?? "unknown")")
         }
+    }
+
+    // MARK: - User ID Helper
+    @MainActor
+    private func getCurrentUserId() -> UUID? {
+        return UserSessionManager.shared.userId
     }
     
     // 🔧 FIX: Add cleanup method
@@ -391,19 +397,25 @@ class SupabaseService: ObservableObject {
     func addPerson(_ person: Person) async throws {
         try await ErrorRecoveryService.shared.executeWithRetry(operation: "addPerson") {
             print("➕ Adding person: \(person.name) with enhanced data...")
-            
+
+            // Set user_id before inserting
+            var personWithUser = person
+            if let userId = await self.getCurrentUserId() {
+                personWithUser.userId = userId
+            }
+
             // Add to database
             try await self.client
                 .from("people")
-                .insert(person)
+                .insert(personWithUser)
                 .execute()
-            
+
             // Update cache immediately
             let cache = await DataCache.shared
             var updatedPeople = await cache.people
-            updatedPeople.insert(person, at: 0) // Add at beginning
+            updatedPeople.insert(personWithUser, at: 0) // Add at beginning
             await cache.updatePeople(updatedPeople)
-            
+
             print("✅ Successfully added person: \(person.name)")
         }
     }
@@ -449,19 +461,25 @@ class SupabaseService: ObservableObject {
     
     func addProject(_ project: Project) async throws {
         print("➕ Adding project: \(project.name)")
-        
+
+        // Set user_id before inserting
+        var projectWithUser = project
+        if let userId = await getCurrentUserId() {
+            projectWithUser.userId = userId
+        }
+
         // Add to database
         try await client
             .from("projects")
-            .insert(project)
+            .insert(projectWithUser)
             .execute()
-        
+
         // Update cache immediately
         let cache = await DataCache.shared
         var updatedProjects = await cache.projects
-        updatedProjects.insert(project, at: 0) // Add at beginning
+        updatedProjects.insert(projectWithUser, at: 0) // Add at beginning
         await cache.updateProjects(updatedProjects)
-        
+
         print("✅ Successfully added project: \(project.name)")
     }
     
@@ -506,19 +524,25 @@ class SupabaseService: ObservableObject {
     
     func addOrganization(_ organization: Organization) async throws {
         print("➕ Adding organization: \(organization.name)")
-        
+
+        // Set user_id before inserting
+        var organizationWithUser = organization
+        if let userId = await getCurrentUserId() {
+            organizationWithUser.userId = userId
+        }
+
         // Add to database
         try await client
             .from("organizations")
-            .insert(organization)
+            .insert(organizationWithUser)
             .execute()
-        
+
         // Update cache immediately
         let cache = await DataCache.shared
         var updatedOrganizations = await cache.organizations
-        updatedOrganizations.insert(organization, at: 0)
+        updatedOrganizations.insert(organizationWithUser, at: 0)
         await cache.updateOrganizations(updatedOrganizations)
-        
+
         print("✅ Successfully added organization: \(organization.name)")
     }
     
@@ -635,19 +659,23 @@ class SupabaseService: ObservableObject {
     // MARK: - Project Assignment Operations (Enhanced)
     func assignPersonToProject(personId: UUID, projectId: UUID, role: String = "", department: CrewDepartment = .other) async throws {
         print("🔗 Assigning person \(personId) to project \(projectId)")
-        
+
+        // Get current user ID
+        let userId = await getCurrentUserId()
+
         let assignment = ProjectAssignment(
             projectId: projectId,
             personId: personId,
             role: role,
-            department: department
+            department: department,
+            userId: userId
         )
-        
+
         try await client
             .from("project_assignments")
             .insert(assignment)
             .execute()
-        
+
         print("✅ Successfully assigned person to project")
     }
     
@@ -699,12 +727,18 @@ class SupabaseService: ObservableObject {
     
     func addProjectAssignment(_ assignment: ProjectAssignment) async throws {
         print("➕ Adding assignment to project: \(assignment.projectId)")
-        
+
+        // Set user_id before inserting
+        var assignmentWithUser = assignment
+        if let userId = await getCurrentUserId() {
+            assignmentWithUser.userId = userId
+        }
+
         try await client
             .from("project_assignments")
-            .insert(assignment)
+            .insert(assignmentWithUser)
             .execute()
-        
+
         print("✅ Successfully added assignment to project")
     }
     
