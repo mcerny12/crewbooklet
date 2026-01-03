@@ -129,8 +129,13 @@ struct AddPersonSheet: View {
                     }
                     
                     SleekFormRow("Country") {
-                        TextField("Country", text: $viewModel.addressCountry)
-                            .textFieldStyle(.roundedBorder)
+                        Picker("Country", selection: $viewModel.addressCountry) {
+                            Text("Select country").tag("")
+                            ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                                Text(country).tag(country)
+                            }
+                        }
+                        .labelsHidden()
                     }
                 }
                 .padding(.horizontal, 12)

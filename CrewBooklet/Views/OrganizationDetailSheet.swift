@@ -211,11 +211,16 @@ struct OrganizationDetailSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .controlSize(.small)
                 .frame(height: 26)
-                TextField("Country", text: Binding(
+                Picker("Country", selection: Binding(
                     get: { organization.country ?? "" },
                     set: { organization.country = $0.isEmpty ? nil : $0 }
-                ))
-                .textFieldStyle(.roundedBorder)
+                )) {
+                    Text("Select country").tag("")
+                    ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                        Text(country).tag(country)
+                    }
+                }
+                .labelsHidden()
                 .controlSize(.small)
                 .frame(height: 26)
                 .frame(maxWidth: 120)
@@ -280,11 +285,16 @@ struct OrganizationDetailSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .controlSize(.small)
                 .frame(height: 26)
-                TextField("Country", text: Binding(
+                Picker("Country", selection: Binding(
                     get: { organization.countryInvoice ?? "" },
                     set: { organization.countryInvoice = $0.isEmpty ? nil : $0 }
-                ))
-                .textFieldStyle(.roundedBorder)
+                )) {
+                    Text("Select country").tag("")
+                    ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                        Text(country).tag(country)
+                    }
+                }
+                .labelsHidden()
                 .controlSize(.small)
                 .frame(height: 26)
                 .frame(maxWidth: 120)

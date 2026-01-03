@@ -11,11 +11,11 @@ import SwiftUI
 struct BottomNavigationPane<Content: View>: View {
     let content: Content
     @Binding var isPresented: Bool
-    @State private var currentHeight: CGFloat = 400
+    @State private var currentHeight: CGFloat = 440  // Increased by 10% from 400
     @State private var dragOffset: CGFloat = 0
-    
-    private let minHeight: CGFloat = 300
-    private let maxHeight: CGFloat = 700
+
+    private let minHeight: CGFloat = 330  // Increased by 10% from 300
+    private let maxHeight: CGFloat = 770  // Increased by 10% from 700
     private let cornerRadius: CGFloat = 12
     
     init(isPresented: Binding<Bool>, @ViewBuilder content: () -> Content) {
@@ -26,65 +26,22 @@ struct BottomNavigationPane<Content: View>: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             if isPresented {
-                // Dim overlay behind pane
-                Color.black.opacity(0.3)
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            isPresented = false
-                        }
-                    }
-                
-                // Bottom pane with material background
+                // Bottom pane with clean styling
                 VStack(spacing: 0) {
-                    // Drag handle
-                    dragHandle
-                    
-                    // Content
+                    // Content (drag handle removed)
                     content
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(height: currentHeight + dragOffset)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
-                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: -2)
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            dragOffset = -value.translation.height
-                        }
-                        .onEnded { value in
-                            let newHeight = currentHeight - value.translation.height
-                            let clampedHeight = max(minHeight, min(maxHeight, newHeight))
-                            
-                            withAnimation(.snappy(duration: 0.15)) {
-                                currentHeight = clampedHeight
-                                dragOffset = 0
-                            }
-                            
-                            // Auto-dismiss if dragged too low
-                            if newHeight < minHeight - 50 {
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    isPresented = false
-                                }
-                            }
-                        }
+                .frame(height: currentHeight)
+                .background(.background, in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(.separator.opacity(0.5), lineWidth: 1)
                 )
                 .transition(.move(edge: .bottom))
             }
         }
         .zIndex(999) // Ensure pane appears above other content
-    }
-    
-    private var dragHandle: some View {
-        VStack(spacing: 0) {
-            // Visual drag indicator
-            RoundedRectangle(cornerRadius: 2)
-                .fill(.secondary)
-                .frame(width: 36, height: 4)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
-        }
-        .frame(maxWidth: .infinity)
-        .contentShape(Rectangle())
     }
 }
 

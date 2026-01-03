@@ -113,10 +113,12 @@ class PeopleViewModel: ObservableObject {
     }
     
     private func filterPeople() {
+        let sortedPeople = people.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
         if searchText.isEmpty {
-            filteredPeople = people
+            filteredPeople = sortedPeople
         } else {
-            filteredPeople = people.filter { person in
+            filteredPeople = sortedPeople.filter { person in
                 person.name.localizedCaseInsensitiveContains(searchText) ||
                 (person.email?.localizedCaseInsensitiveContains(searchText) ?? false) ||
                 person.jobs.contains { job in

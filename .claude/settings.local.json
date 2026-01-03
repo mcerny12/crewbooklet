@@ -5,7 +5,9 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nSave current state before cleanup: remove German text and CV generator traces\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nTranslate all German text to English and verify CrewBooklet branding\n\n- Translate navigation labels (People, Organizations, Projects, Calendar, Advanced Search)\n- Translate empty state messages across all list views\n- Translate OrganizationJobType enum values (18 business types)\n- Translate AssignmentStatus enum values (9 status types)\n- Translate country names (35 countries) in DataModels and FormattingUtilities\n- Translate city names (German: Munich, Cologne, Nuremberg; Austrian: Vienna; Swiss: Zurich, Geneva)\n- Update all UI text from German to English\n- Verify all branding is consistently \"CrewBooklet\"\n- Confirm no CV/Resume generator traces remain in codebase\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

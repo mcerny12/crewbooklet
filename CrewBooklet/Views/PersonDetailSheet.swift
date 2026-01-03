@@ -186,14 +186,18 @@ struct PersonDetailSheet: View {
                             .textFieldStyle(.roundedBorder)
                         }
                         
-                        TextField("Country", text: Binding(
+                        Picker("Country", selection: Binding(
                             get: { person.address?.country ?? "" },
-                            set: { 
+                            set: {
                                 if person.address == nil { person.address = Address() }
                                 person.address?.country = $0.isEmpty ? nil : $0
                             }
-                        ))
-                        .textFieldStyle(.roundedBorder)
+                        )) {
+                            Text("Select country").tag("")
+                            ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                                Text(country).tag(country)
+                            }
+                        }
                     }
                 }
                 
@@ -352,14 +356,18 @@ struct PersonDetailSheet: View {
                 // Tax Information Section
                 PersonDetailSection(title: "Tax Information") {
                     VStack(spacing: 12) {
-                        TextField("Country", text: Binding(
+                        Picker("Country", selection: Binding(
                             get: { person.financialDetails?.country ?? "" },
-                            set: { 
+                            set: {
                                 if person.financialDetails == nil { person.financialDetails = FinancialDetails() }
                                 person.financialDetails?.country = $0.isEmpty ? nil : $0
                             }
-                        ))
-                        .textFieldStyle(.roundedBorder)
+                        )) {
+                            Text("Select country").tag("")
+                            ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                                Text(country).tag(country)
+                            }
+                        }
                         
                         TextField("VAT Number", text: Binding(
                             get: { person.financialDetails?.vatNumber ?? "" },
@@ -418,15 +426,19 @@ struct PersonDetailSheet: View {
                             ))
                             .textFieldStyle(.roundedBorder)
                             
-                            TextField("Country", text: Binding(
+                            Picker("Country", selection: Binding(
                                 get: { person.financialDetails?.invoiceAddress?.country ?? "" },
-                                set: { 
+                                set: {
                                     if person.financialDetails == nil { person.financialDetails = FinancialDetails() }
                                     if person.financialDetails?.invoiceAddress == nil { person.financialDetails?.invoiceAddress = Address() }
                                     person.financialDetails?.invoiceAddress?.country = $0.isEmpty ? nil : $0
                                 }
-                            ))
-                            .textFieldStyle(.roundedBorder)
+                            )) {
+                                Text("Select country").tag("")
+                                ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                                    Text(country).tag(country)
+                                }
+                            }
                         }
                     }
                 }

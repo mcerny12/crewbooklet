@@ -9,20 +9,21 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedView: MainView? = .dashboard
-    
+
     // ViewModels for data management
     @StateObject private var peopleViewModel = PeopleViewModel()
     @StateObject private var projectViewModel = ProjectViewModel()
     @StateObject private var organizationViewModel = OrganizationViewModel()
     @StateObject private var searchViewModel = SearchViewModel()
 
-    
+
     // Sheet presentation states
     @State private var showAddPersonSheet = false
     @State private var showAddProjectSheet = false
     @State private var showAddOrganizationSheet = false
-    
+
     @State private var searchFieldFrame: CGRect = .zero
+    @State private var showSearchResults = false
     @State private var currentSelectedItem: SelectedItem? = nil
     @Binding var visualDebugActive: Bool
     var currentUser: String
@@ -77,81 +78,150 @@ struct ContentView: View {
             // Native macOS Sidebar with system materials
             sidebarView
         } detail: {
-            VStack(spacing: 0) {
-                // Main content with system adaptive materials
-                ZStack {
-                    detailView
-                    
-                    // Full overlay for project detail (at main content level)
-                    if showProjectDetailOverlay, let project = editableProject {
-                        ProjectDetailOverlay(
-                            project: Binding(
-                                get: { project },
-                                set: { editableProject = $0 }
-                            ),
-                            isPresented: $showProjectDetailOverlay
-                        )
-                        .transition(.opacity)
-                        .zIndex(2) // Above bottom panes
-                    }
-                    
-                    // Bottom navigation panes (only in main content area)
-                    VStack {
-                        Spacer()
-                        ZStack {
-                            // Person detail pane
-                            if showPersonDetailPane, let person = editablePerson {
-                                PersonDetailBottomPane(
-                                    person: Binding(
-                                        get: { person },
-                                        set: { editablePerson = $0 }
-                                    ),
-                                    isPresented: $showPersonDetailPane
-                                )
+            ZStack {
+                VStack(spacing: 0) {
+                    // Main content with system adaptive materials
+                    ZStack {
+                        detailView
+
+                        // Full overlay for project detail (at main content level)
+                        if showProjectDetailOverlay, let project = editableProject {
+                            ProjectDetailOverlay(
+                                project: Binding(
+                                    get: { project },
+                                    set: { editableProject = $0 }
+                                ),
+                                isPresented: $showProjectDetailOverlay
+                            )
+                            .transition(.opacity)
+                            .zIndex(2) // Above bottom panes
+                        }
+
+                        // Bottom navigation panes (only in main content area)
+                        VStack {
+                            Spacer()
+                            ZStack {
+                                // Person detail pane
+                                if showPersonDetailPane, let person = editablePerson {
+                                    PersonDetailBottomPane(
+                                        person: Binding(
+                                            get: { person },
+                                            set: { editablePerson = $0 }
+                                        ),
+                                        isPresented: $showPersonDetailPane,
+                                        onProjectSelected: { project in
+                                            editableProject = project
+                                            currentSelectedItem = .project(project)
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                showProjectDetailOverlay = true
+                                            }
+                                        },
+                                        onOrganizationSelected: { organization in
+                                            // Switch to organizations view
+                                            selectedView = .organizations
+                                            // Close person detail pane
+                                            showPersonDetailPane = false
+                                            // Set and open organization detail
+                                            editableOrganization = organization
+                                            currentSelectedItem = .organization(organization)
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                showOrganizationDetailPane = true
+                                            }
+                                        }
+                                    )
+                                }
+
+                                // Organization detail pane
+                                if showOrganizationDetailPane, let organization = editableOrganization {
+                                    OrganizationDetailBottomPane(
+                                        organization: Binding(
+                                            get: { organization },
+                                            set: { editableOrganization = $0 }
+                                        ),
+                                        isPresented: $showOrganizationDetailPane,
+                                        onPersonSelected: { person in
+                                            selectedView = .people
+                                            // Close organization detail pane
+                                            showOrganizationDetailPane = false
+                                            // Set and open person detail
+                                            editablePerson = person
+                                            currentSelectedItem = .person(person)
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                showPersonDetailPane = true
+                                            }
+                                        },
+                                        onProjectSelected: { project in
+                                            selectedView = .projects
+                                            // Close organization detail pane
+                                            showOrganizationDetailPane = false
+                                            // Set and open project detail
+                                            editableProject = project
+                                            currentSelectedItem = .project(project)
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                showProjectDetailOverlay = true
+                                            }
+                                        }
+                                    )
+                                }
+
                             }
-                            
-                            // Organization detail pane
-                            if showOrganizationDetailPane, let organization = editableOrganization {
-                                OrganizationDetailBottomPane(
-                                    organization: Binding(
-                                        get: { organization },
-                                        set: { editableOrganization = $0 }
-                                    ),
-                                    isPresented: $showOrganizationDetailPane
-                                )
-                            }
-                            
                         }
                     }
+
+                    // Path Bar at the bottom of detail view only
+                    PathBarView(
+                        selectedView: selectedView,
+                        selectedItem: currentSelectedItem,
+                        currentUser: currentUser
+                    )
                 }
-                
-                // Path Bar at the bottom of detail view only
-                PathBarView(
-                    selectedView: selectedView, 
-                    selectedItem: currentSelectedItem,
-                    currentUser: currentUser
-                )
+
+                // Search results overlay - positioned below search field
+                if searchViewModel.showResults && !searchViewModel.searchResults.isEmpty {
+                    searchResultsOverlay
+                }
             }
         }
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
-                TitleBarSearchField()
+                TitleBarSearchField(
+                    onFrameChange: { frame in
+                        searchFieldFrame = frame
+                    },
+                    visualDebugActive: visualDebugActive,
+                    onAdvancedSearch: {
+                        selectedView = .advancedSearch
+                    }
+                )
             }
         }
         .onChange(of: selectedView) { oldView, newView in
             // Clear selected item when changing views
             if oldView != newView {
                 currentSelectedItem = nil
-                
-                // CRITICAL FIX: Clear all detail view flags when switching navigation sections
-                // This ensures detail views don't persist across different sections
+
+                // CRITICAL FIX: Clear detail view flags when switching navigation sections
+                // BUT preserve detail panes if we're navigating TO that specific view
+                // (This allows cross-navigation between views while maintaining detail state)
                 withAnimation(.easeInOut(duration: 0.3)) {
-                    showPersonDetailPane = false
-                    showOrganizationDetailPane = false
-                    showProjectDetailOverlay = false
-                    editablePerson = nil
-                    editableOrganization = nil
-                    editableProject = nil
+                    // Only clear person detail if NOT navigating to people view
+                    if newView != .people {
+                        showPersonDetailPane = false
+                        editablePerson = nil
+                    }
+
+                    // Only clear project detail if NOT navigating to projects view
+                    if newView != .projects {
+                        showProjectDetailOverlay = false
+                        editableProject = nil
+                    }
+
+                    // Only clear organization detail if NOT navigating to organizations view
+                    if newView != .organizations {
+                        showOrganizationDetailPane = false
+                        editableOrganization = nil
+                    }
                 }
             }
         }
@@ -195,7 +265,6 @@ struct ContentView: View {
                 Label(view.localizedTitle, systemImage: view.icon)
             }
         }
-        .navigationTitle("CrewBooklet")
         .listStyle(.sidebar)
     }
     
@@ -231,15 +300,21 @@ struct ContentView: View {
                     VStack(spacing: 20) {
                         // Quick Stats
                         quickStatsSection
-                        
-                        // Recent Projects
-                        recentProjectsSection
+
+                        // Calendar and Recent Projects side by side
+                        HStack(alignment: .top, spacing: 16) {
+                            // Project Calendar Widget
+                            projectCalendarWidget
+
+                            // Recent Projects
+                            recentProjectsSection
+                        }
                     }
                     .padding()
                 }
             }
             .background(.background)
-            
+
             // Floating Action Button for New Project
             FloatingActionButton(
                 icon: "plus",
@@ -281,6 +356,97 @@ struct ContentView: View {
         }
     }
     
+    // MARK: - Birthday Calendar Widget
+    private var projectCalendarWidget: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Birthdays")
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            // Simple month view
+            VStack(spacing: 8) {
+                // Month header
+                HStack {
+                    Text(currentMonthYear())
+                        .font(.headline)
+                    Spacer()
+                }
+
+                // Weekday headers
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+                    ForEach(Array(["S", "M", "T", "W", "T", "F", "S"].enumerated()), id: \.offset) { index, day in
+                        Text(day)
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+
+                // Calendar days
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
+                    ForEach(Array(calendarDays().enumerated()), id: \.offset) { index, day in
+                        if day == 0 {
+                            Text("")
+                                .frame(height: 24)
+                        } else {
+                            let hasBirthday = hasBirthdayOnDay(day)
+                            VStack(spacing: 0) {
+                                Text("\(day)")
+                                    .font(.caption)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: hasBirthday ? 18 : 24)
+                                    .background(isToday(day) ? Color.accentColor.opacity(0.2) : Color.clear)
+                                    .foregroundStyle(isToday(day) ? .primary : .secondary)
+
+                                if hasBirthday {
+                                    Text("🎂")
+                                        .font(.system(size: 8))
+                                }
+                            }
+                            .frame(height: 24)
+                            .cornerRadius(4)
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            // Show upcoming birthdays
+            if upcomingBirthdays().isEmpty {
+                Text("No birthdays this month")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(upcomingBirthdays().prefix(3), id: \.person.id) { birthday in
+                        HStack(spacing: 4) {
+                            Text("🎂")
+                                .font(.caption2)
+                            Text(birthday.person.name)
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                            Text("•")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                            Text(formatBirthdayDate(birthday.date))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(width: 280)
+        .padding()
+        .background(.background)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.separator.opacity(0.5), lineWidth: 1)
+        )
+    }
+
     // MARK: - Recent Projects Section
     private var recentProjectsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -288,15 +454,15 @@ struct ContentView: View {
                 Text("Recent Projects")
                     .font(.title2)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button("View All") {
                     selectedView = .projects
                 }
                 .buttonStyle(.bordered)
             }
-            
+
             if projectViewModel.currentProjects.isEmpty {
                 VStack(spacing: 16) {
                     ContentUnavailableView(
@@ -304,7 +470,7 @@ struct ContentView: View {
                         systemImage: "folder",
                         description: Text("Create your first project to get started")
                     )
-                    
+
                     Button("Create First Project") {
                         showAddProjectSheet = true
                     }
@@ -326,9 +492,13 @@ struct ContentView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
         .padding()
-        .background(.regularMaterial)
-        .cornerRadius(12)
+        .background(.background)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.separator.opacity(0.5), lineWidth: 1)
+        )
     }
     
 
@@ -349,15 +519,26 @@ struct ContentView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 4) {
-                            ForEach(peopleViewModel.people) { person in
+                            ForEach(peopleViewModel.filteredPeople) { person in
                                 MacOSPersonRow(
                                     person: person,
                                     onTap: {
-                                        selectedPerson = person
-                                        editablePerson = person
-                                        currentSelectedItem = .person(person)
-                                        withAnimation(.easeInOut(duration: 0.3)) {
-                                            showPersonDetailPane = true
+                                        // If clicking the same person, close the detail view
+                                        if selectedPerson?.id == person.id && showPersonDetailPane {
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                showPersonDetailPane = false
+                                            }
+                                            selectedPerson = nil
+                                            editablePerson = nil
+                                            currentSelectedItem = nil
+                                        } else {
+                                            // Otherwise, open detail view for new person
+                                            selectedPerson = person
+                                            editablePerson = person
+                                            currentSelectedItem = .person(person)
+                                            withAnimation(.easeInOut(duration: 0.3)) {
+                                                showPersonDetailPane = true
+                                            }
                                         }
                                     },
                                     onDelete: {
@@ -395,10 +576,22 @@ struct ContentView: View {
                     organizationViewModel: organizationViewModel,
                     showAddOrganizationSheet: $showAddOrganizationSheet,
                     onOrganizationSelected: { organization in
-                        selectedOrganization = organization
-                        editableOrganization = organization
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showOrganizationDetailPane = true
+                        // If clicking the same organization, close the detail view
+                        if selectedOrganization?.id == organization.id && showOrganizationDetailPane {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showOrganizationDetailPane = false
+                            }
+                            selectedOrganization = nil
+                            editableOrganization = nil
+                            currentSelectedItem = nil
+                        } else {
+                            // Otherwise, open detail view for new organization
+                            selectedOrganization = organization
+                            editableOrganization = organization
+                            currentSelectedItem = .organization(organization)
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showOrganizationDetailPane = true
+                            }
                         }
                     }
                 )
@@ -455,11 +648,135 @@ struct ContentView: View {
     private var advancedSearchView: some View {
         AdvancedSearchView()
     }
-    
+
+    // MARK: - Search Results Overlay
+    private var searchResultsOverlay: some View {
+        VStack(spacing: 0) {
+            // Position at the very top, right below toolbar
+            HStack {
+                Spacer()
+
+                SearchResultsView(
+                    searchResults: searchViewModel.searchResults,
+                    onSelectResult: {
+                        searchViewModel.selectResult()
+                    },
+                    visualDebugActive: visualDebugActive
+                )
+                .frame(width: 320)
+                .padding(.top, 8) // Small gap from toolbar
+
+                Spacer()
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+        .zIndex(100)
+        .allowsHitTesting(true)
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    searchViewModel.showResults = false
+                }
+        )
+    }
+
     // MARK: - Helper Methods
     private func performSearch() {
         // Implement search functionality
         print("Performing search for: \(searchViewModel.searchText)")
+    }
+
+    // Calendar helper methods
+    private func currentMonthYear() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: Date())
+    }
+
+    private func calendarDays() -> [Int] {
+        let calendar = Calendar.current
+        let now = Date()
+
+        guard let range = calendar.range(of: .day, in: .month, for: now),
+              let firstDay = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) else {
+            return []
+        }
+
+        let firstWeekday = calendar.component(.weekday, from: firstDay)
+        let paddingDays = Array(repeating: 0, count: firstWeekday - 1)
+        let monthDays = Array(range)
+
+        return paddingDays + monthDays
+    }
+
+    private func isToday(_ day: Int) -> Bool {
+        let calendar = Calendar.current
+        let today = calendar.component(.day, from: Date())
+        return day == today
+    }
+
+    // Birthday helper methods
+    private func hasBirthdayOnDay(_ day: Int) -> Bool {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentMonth = calendar.component(.month, from: now)
+
+        return peopleViewModel.people.contains { person in
+            guard let dob = person.dateOfBirth else { return false }
+            let birthMonth = calendar.component(.month, from: dob)
+            let birthDay = calendar.component(.day, from: dob)
+            return birthMonth == currentMonth && birthDay == day
+        }
+    }
+
+    private func upcomingBirthdays() -> [(person: Person, date: Date)] {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentMonth = calendar.component(.month, from: now)
+        let currentYear = calendar.component(.year, from: now)
+
+        var birthdays: [(person: Person, date: Date)] = []
+
+        for person in peopleViewModel.people {
+            guard let dob = person.dateOfBirth else { continue }
+            let birthMonth = calendar.component(.month, from: dob)
+            let birthDay = calendar.component(.day, from: dob)
+
+            if birthMonth == currentMonth {
+                // Create this year's birthday date
+                var components = DateComponents()
+                components.year = currentYear
+                components.month = birthMonth
+                components.day = birthDay
+
+                if let birthdayThisYear = calendar.date(from: components) {
+                    birthdays.append((person: person, date: birthdayThisYear))
+                }
+            }
+        }
+
+        // Sort by date
+        return birthdays.sorted { $0.date < $1.date }
+    }
+
+    private func formatBirthdayDate(_ date: Date) -> String {
+        let calendar = Calendar.current
+        let day = calendar.component(.day, from: date)
+        let today = calendar.component(.day, from: Date())
+
+        if day == today {
+            return "Today"
+        } else if day == today + 1 {
+            return "Tomorrow"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: date)
+        }
     }
 }
 
@@ -533,19 +850,18 @@ struct StatCard: View {
     }
 }
 
-// MARK: - MacOS Person Row Component (matching Organizations style)
+// MARK: - MacOS Person Row Component (Clean, minimal design)
 struct MacOSPersonRow: View {
     let person: Person
     let onTap: () -> Void
     let onDelete: (() -> Void)?
-    @StateObject private var userSession = UserSessionManager.shared
-    
+
     init(person: Person, onTap: @escaping () -> Void, onDelete: (() -> Void)? = nil) {
         self.person = person
         self.onTap = onTap
         self.onDelete = onDelete
     }
-    
+
     private var displayRole: String {
         if person.jobs.isEmpty {
             return "No role"
@@ -555,64 +871,166 @@ struct MacOSPersonRow: View {
             return "\(person.jobs.first!.displayName) +\(person.jobs.count - 1) more"
         }
     }
-    
+
+    private func formatPhoneForDisplay(_ phone: String) -> String {
+        // Remove all non-digit characters except +
+        let digitsOnly = phone.replacingOccurrences(of: "[^0-9+]", with: "", options: .regularExpression)
+
+        if digitsOnly.isEmpty { return phone }
+
+        // Always add + if not present
+        var workingString = digitsOnly
+        if !workingString.hasPrefix("+") && !workingString.isEmpty {
+            workingString = "+" + workingString
+        }
+
+        // Extract and format based on country code
+        if workingString.hasPrefix("+") {
+            let digits = String(workingString.dropFirst())
+
+            // European countries
+            if digits.hasPrefix("49") { // Germany
+                return formatWithPattern("+49", String(digits.dropFirst(2)), pattern: [3, 3, 3, 2])
+            } else if digits.hasPrefix("43") { // Austria
+                return formatWithPattern("+43", String(digits.dropFirst(2)), pattern: [3, 3, 3, 2])
+            } else if digits.hasPrefix("41") { // Switzerland
+                return formatWithPattern("+41", String(digits.dropFirst(2)), pattern: [2, 3, 2, 2])
+            } else if digits.hasPrefix("44") { // UK
+                return formatWithPattern("+44", String(digits.dropFirst(2)), pattern: [4, 3, 4])
+            } else if digits.hasPrefix("33") { // France
+                return formatWithPattern("+33", String(digits.dropFirst(2)), pattern: [1, 2, 2, 2, 2])
+            } else if digits.hasPrefix("1") { // US/Canada
+                return formatWithPattern("+1", String(digits.dropFirst(1)), pattern: [3, 3, 4])
+            } else {
+                return "+" + digits
+            }
+        }
+
+        return workingString
+    }
+
+    private func formatWithPattern(_ countryCode: String, _ number: String, pattern: [Int]) -> String {
+        let cleaned = number.filter { $0.isNumber }
+        var formatted = countryCode
+        var position = 0
+
+        for groupSize in pattern {
+            if position >= cleaned.count { break }
+            let endPos = min(position + groupSize, cleaned.count)
+            let start = cleaned.index(cleaned.startIndex, offsetBy: position)
+            let end = cleaned.index(cleaned.startIndex, offsetBy: endPos)
+            formatted += " \(String(cleaned[start..<end]))"
+            position = endPos
+        }
+
+        if position < cleaned.count {
+            let start = cleaned.index(cleaned.startIndex, offsetBy: position)
+            formatted += " \(String(cleaned[start...]))"
+        }
+
+        return formatted
+    }
+
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
-                // Name, role all in one line (matches Organizations row pattern exactly)
-                HStack(spacing: 8) {
+            HStack(spacing: 40) {
+                // Left side: Name and role stacked
+                VStack(alignment: .leading, spacing: 2) {
                     Text(person.name)
                         .font(.body)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
-                    
-                    Text("•")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
+
                     Text(displayRole)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                
-                Spacer()
-                
-                // Email and icons all in one line (matches Organizations row pattern exactly)
-                HStack(spacing: 8) {
-                    Text(person.email ?? "No email")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                    
+                .frame(width: 220, alignment: .leading)
+
+                // Middle: Email and phone with buttons stacked
+                VStack(alignment: .leading, spacing: 2) {
+                    // Email with button
                     HStack(spacing: 4) {
-                        if !(person.notes?.isEmpty ?? true) {
-                            Image(systemName: "note.text")
-                                .font(.caption2)
-                                .foregroundStyle(.blue)
-                        }
-                        
-                        // Admin delete button
-                        if userSession.canDelete, let onDelete = onDelete {
-                            Button(action: onDelete) {
-                                Image(systemName: "trash")
-                                    .font(.caption2)
-                                    .foregroundStyle(.red)
+                        if let email = person.email, !email.isEmpty {
+                            Text(email)
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+
+                            Button(action: {
+                                if let url = URL(string: "mailto:\(email)") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }) {
+                                Image(systemName: "envelope.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 16, height: 16)
                             }
                             .buttonStyle(.plain)
-                            .help("Delete person")
+                        } else {
+                            Text("No email")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         }
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
                     }
+                    .frame(height: 16)
+
+                    // Phone with button
+                    HStack(spacing: 4) {
+                        if let phone = person.mobilePhone, !phone.isEmpty {
+                            Text(formatPhoneForDisplay(phone))
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+
+                            Button(action: {
+                                if let url = URL(string: "tel:\(phone.replacingOccurrences(of: " ", with: ""))") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }) {
+                                Image(systemName: "phone.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 16, height: 16)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            Text("No phone")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .frame(height: 16)
+                }
+                .frame(width: 280, alignment: .leading)
+
+                Spacer()
+
+                // Right side: Icons
+                HStack(spacing: 4) {
+                    if !(person.notes?.isEmpty ?? true) {
+                        Image(systemName: "note.text")
+                            .font(.caption2)
+                            .foregroundStyle(.blue)
+                    }
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+            .background(.background)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(.separator.opacity(0.3), lineWidth: 0.5)
+            )
         }
         .buttonStyle(.plain)
         .accessibilityLabel(person.name)

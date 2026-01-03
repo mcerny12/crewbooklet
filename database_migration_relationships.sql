@@ -1,4 +1,4 @@
--- Migration: Add relationship support
+-- Migration: Add relationship support 
 -- Description: Adds indexes, constraints, and helper functions for relationship queries
 -- Date: 2025-01-25
 

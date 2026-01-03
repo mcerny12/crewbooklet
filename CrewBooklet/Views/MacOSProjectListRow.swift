@@ -52,7 +52,11 @@ struct MacOSProjectListRow: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+            .background(.background)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(.separator.opacity(0.3), lineWidth: 0.5)
+            )
         }
         .buttonStyle(.plain)
         .accessibilityLabel(project.name)

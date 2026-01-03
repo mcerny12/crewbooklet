@@ -27,31 +27,30 @@ struct ProjectDetailOverlay: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background overlay - covers entire window
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .ignoresSafeArea(.all)
+                // Clean background - no overlay dimming per macOS HIG
+                Color.clear
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             isPresented = false
                         }
                     }
-                
-                // Main content overlay - covers entire content area
+
+                // Main content overlay - clean and minimal
                 VStack(spacing: 0) {
                     // Project title header - positioned exactly where first list row would be
                     projectTitleHeader
-                    
+
                     // Tab navigation - compact and responsive
                     tabNavigationView
-                    
+
                     // Main content area
                     ScrollView {
                         switch selectedTab {
                         case .information:
                             informationContentView
                         case .crew:
-                            crewContentView  
+                            crewContentView
                         case .financial:
                             financialContentView
                         }
@@ -59,18 +58,21 @@ struct ProjectDetailOverlay: View {
                     .background(.background)
                 }
                 .background(.background)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(.separator.opacity(0.5), lineWidth: 1)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .task {
                     await loadProjectCrew()
                 }
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
                 .padding(.horizontal, 16)
-                .padding(.top, calculateProjectListTopOffset(geometry: geometry))
+                .padding(.top, 16) // Simple fixed top padding for clean look
             }
         }
     }
     
-    // MARK: - Project Title Header (exact position as first list row)
+    // MARK: - Project Title Header (EXACT match with MacOSProjectListRow)
     private var projectTitleHeader: some View {
         HStack(spacing: 12) {
             // Project name and number - IDENTICAL to MacOSProjectListRow
@@ -80,20 +82,20 @@ struct ProjectDetailOverlay: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                
+
                 Text("•")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
+
                 Text(project.projectNumber)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            
+
             Spacer()
-            
-            // Status and date - IDENTICAL to MacOSProjectListRow 
+
+            // Status and close button
             HStack(spacing: 8) {
                 // Status pill
                 Text(project.status.rawValue)
@@ -104,53 +106,53 @@ struct ProjectDetailOverlay: View {
                     .background(statusColor(for: project.status))
                     .foregroundStyle(.white)
                     .cornerRadius(10)
-                
-                // Created date
-                Text(formatDate(project.createdAt))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                // Back arrow 
-                Image(systemName: "chevron.left")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+
+                // Close button (replacing chevron from list row)
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isPresented = false
+                    }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Close")
             }
         }
-        .padding(.horizontal, 12) // Match MacOSProjectListRow exactly
-        .padding(.vertical, 9)    // Match MacOSProjectListRow exactly
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                isPresented = false
-            }
-        }
+        .padding(.horizontal, 12)  // EXACT match with MacOSProjectListRow
+        .padding(.vertical, 9)     // EXACT match with MacOSProjectListRow
+        .background(.background)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(.separator.opacity(0.3), lineWidth: 0.5)
+        )
     }
     
-    // MARK: - Tab Navigation - Compact & Responsive
+    // MARK: - Tab Navigation - Clean and minimal
     private var tabNavigationView: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 ForEach(ProjectDetailTab.allCases, id: \.self) { tab in
                     Button(action: {
-                        selectedTab = tab // Remove animation for instant response
+                        selectedTab = tab
                     }) {
                         Text(tab.rawValue)
-                            .font(.caption)
-                            .fontWeight(.medium)
+                            .font(.subheadline)
+                            .fontWeight(selectedTab == tab ? .semibold : .regular)
                             .foregroundStyle(selectedTab == tab ? .primary : .secondary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8) // Smaller padding
-                            .background(selectedTab == tab ? Color.accentColor.opacity(0.15) : Color.clear)
-                            .contentShape(Rectangle()) // Better hit target
+                            .padding(.vertical, 10)
+                            .background(selectedTab == tab ? Color.accentColor.opacity(0.1) : Color.clear)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .background(.thinMaterial)
-            
+            .background(.background)
+
             Divider()
-                .opacity(0.3)
         }
     }
     

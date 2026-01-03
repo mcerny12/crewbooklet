@@ -98,8 +98,13 @@ struct AddOrganizationSheet: View {
                     }
                     
                     SleekFormRow("Country") {
-                        TextField("Country", text: $viewModel.country)
-                            .textFieldStyle(.roundedBorder)
+                        Picker("Country", selection: $viewModel.country) {
+                            Text("Select country").tag("")
+                            ForEach(FilmCountries.sortedCountries, id: \.self) { country in
+                                Text(country).tag(country)
+                            }
+                        }
+                        .labelsHidden()
                     }
                     
                     SleekFormRow("Notes") {

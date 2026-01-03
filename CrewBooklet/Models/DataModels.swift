@@ -881,11 +881,13 @@ enum CrewDepartment: String, CaseIterable, Codable {
 enum UserRole: String, CaseIterable, Codable {
     case admin = "admin"
     case user = "user"
-    
+    case viewer = "viewer"
+
     var displayName: String {
         switch self {
         case .admin: return "Administrator"
         case .user: return "User"
+        case .viewer: return "Viewer"
         }
     }
     
@@ -893,13 +895,15 @@ enum UserRole: String, CaseIterable, Codable {
         switch self {
         case .admin: return true
         case .user: return false
+        case .viewer: return false
         }
     }
-    
+
     var canEditAll: Bool {
         switch self {
         case .admin: return true
         case .user: return false
+        case .viewer: return false
         }
     }
 }
