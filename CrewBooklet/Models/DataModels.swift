@@ -641,7 +641,7 @@ enum ProjectStatus: String, CaseIterable, Codable {
 }
 
 // MARK: - Project Assignment Model (Enhanced for Crew Management)
-struct ProjectAssignment: Identifiable, Codable {
+struct ProjectAssignment: Identifiable, Codable, Equatable {
     let id: UUID
     let projectId: UUID
     let personId: UUID

@@ -5,9 +5,10 @@ struct CrewMemberRow: View {
     @Binding var assignment: ProjectAssignment
     let person: Person
     let onRemove: () -> Void
-    
+
     @State private var customRoleText = ""
-    
+    private let supabaseService = SupabaseService.shared
+
     var body: some View {
         HStack(spacing: 12) {
             // Name column (fixed width)
@@ -140,6 +141,20 @@ struct CrewMemberRow: View {
             if let role = assignment.role, JobType.allCases.first(where: { $0.displayName == role }) == nil {
                 customRoleText = role
             }
+        }
+        .onChange(of: assignment) { _, newValue in
+            Task {
+                await saveAssignment()
+            }
+        }
+    }
+
+    private func saveAssignment() async {
+        do {
+            try await supabaseService.updateProjectAssignment(assignment)
+            print("✅ Assignment updated successfully")
+        } catch {
+            print("❌ Failed to update assignment: \(error)")
         }
     }
     
