@@ -10,9 +10,7 @@ import SwiftUI
 @main
 struct CrewBookletApp: App {
     @State private var visualDebugActive = false
-    @AppStorage("savedUsername") private var savedUsername: String = ""
-    @State private var isAuthenticated: Bool = false
-    @State private var currentUser: String? = nil
+    @StateObject private var sessionManager = UserSessionManager.shared
 
     init() {
         // Clear all cache on app startup to ensure fresh data after enum changes
@@ -24,13 +22,22 @@ struct CrewBookletApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if isAuthenticated, let user = currentUser {
-                ContentView(visualDebugActive: $visualDebugActive, currentUser: user)
-                    .frame(minWidth: 1280, minHeight: 800)
+            if sessionManager.isLoading {
+                ProgressView("Loading...")
+                    .frame(width: 400, height: 380)
+            } else if sessionManager.currentUser.isAuthenticated {
+                ContentView(
+                    visualDebugActive: $visualDebugActive,
+                    currentUser: sessionManager.currentUser.email
+                )
+                .frame(minWidth: 1280, minHeight: 800)
             } else {
-                LoginView { username in
-                    self.currentUser = username
-                    self.isAuthenticated = true
+                VStack {
+                    Text("Authentication Failed")
+                        .font(.title)
+                    Text("Please check Supabase connection")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 .frame(width: 400, height: 380)
             }

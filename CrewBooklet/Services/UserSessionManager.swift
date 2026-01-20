@@ -61,7 +61,7 @@ class UserSessionManager: ObservableObject {
         do {
             // For development: create or use a test account
             // In production, you'd implement proper sign-in UI
-            let email = "admin@crewbooklet.local"
+            let email = "admin@example.com"
             let password = "crewbooklet_dev_2026"
 
             // Try to sign in first
