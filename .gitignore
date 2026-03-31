@@ -77,3 +77,12 @@ playground.xcworkspace
 
 # Log files
 *.log
+
+# Next.js
+crewbooklet-web/.next/
+crewbooklet-web/node_modules/
+crewbooklet-web/.env.local
+crewbooklet-web/tsconfig.tsbuildinfo
+
+# Claude
+.claude/
