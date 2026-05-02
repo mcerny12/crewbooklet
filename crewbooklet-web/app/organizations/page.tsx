@@ -39,6 +39,8 @@ export default function OrganizationsPage() {
     org.city?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const selectedOrgId = selectedOrg?.id ?? null;
+
   const handleSelect = (org: Organization) => {
     setDrillTarget(null);
     setSelectedOrg(prev => prev?.id === org.id ? null : org);
@@ -121,7 +123,7 @@ export default function OrganizationsPage() {
                     key={organization.id}
                     organization={organization}
                     onSelect={handleSelect}
-                    isSelected={selectedOrg?.id === organization.id}
+                    isSelected={selectedOrgId === organization.id}
                   />
                 ))}
               </div>

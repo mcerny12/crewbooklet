@@ -1,22 +1,20 @@
 /**
  * Admin Users API
- * GET  /api/admin/users       — list all users with their roles
- * PATCH /api/admin/users      — update a user's role
+ * GET  /api/admin/users  — list all users with their roles
+ * PATCH /api/admin/users — update a user's role
  *
- * Protected: only callable by authenticated admins (middleware enforces /admin/* routes,
- * but this API route does its own check so it can't be hit directly).
+ * Protected: caller must be an authenticated admin (verified server-side).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 
 async function assertAdmin() {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.user_metadata?.role !== 'admin') {
-    return null;
-  }
+  if (!user || user.app_metadata?.role !== 'admin') return null;
   return user;
 }
 
@@ -26,17 +24,23 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const admin = createSupabaseAdminClient();
-  const { data, error } = await admin.auth.admin.listUsers();
+  let admin;
+  try {
+    admin = createSupabaseAdminClient();
+  } catch {
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 503 });
+  }
 
+  const { data, error } = await admin.auth.admin.listUsers();
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin listUsers:', error.message);
+    return NextResponse.json({ error: 'Failed to load users' }, { status: 500 });
   }
 
   const users = data.users.map((u) => ({
     id: u.id,
     email: u.email,
-    role: (u.user_metadata?.role as string) || 'user',
+    role: (u.app_metadata?.role as string) || 'user',
     createdAt: u.created_at,
     lastSignIn: u.last_sign_in_at,
   }));
@@ -44,31 +48,49 @@ export async function GET() {
   return NextResponse.json({ users });
 }
 
+const patchSchema = z.object({
+  userId: z.string().uuid(),
+  role: z.enum(['admin', 'user', 'viewer']),
+});
+
 export async function PATCH(request: NextRequest) {
   const caller = await assertAdmin();
   if (!caller) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { userId, role } = body as { userId: string; role: string };
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 
-  if (!userId || !['admin', 'user', 'viewer'].includes(role)) {
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid userId or role' }, { status: 400 });
   }
 
-  // Prevent admins from demoting themselves
-  if (userId === caller.id && role !== 'admin') {
+  const { userId, role } = parsed.data;
+
+  if (userId === caller.id) {
     return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
   }
 
-  const admin = createSupabaseAdminClient();
+  let admin;
+  try {
+    admin = createSupabaseAdminClient();
+  } catch {
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 503 });
+  }
+
   const { error } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: { role },
+    app_metadata: { role },
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('admin updateUserById:', error.message);
+    return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

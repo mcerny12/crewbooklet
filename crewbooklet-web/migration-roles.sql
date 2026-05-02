@@ -229,7 +229,7 @@ CREATE POLICY "writer_delete_invoice_items" ON invoice_items
 INSERT INTO user_roles (user_id, role)
 SELECT
   id,
-  COALESCE(raw_user_meta_data->>'role', 'user')
+  COALESCE(raw_app_meta_data->>'role', 'user')
 FROM auth.users
 ON CONFLICT (user_id) DO UPDATE
   SET role = EXCLUDED.role,

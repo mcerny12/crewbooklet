@@ -33,7 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       if (data.user && data.session) {
         // Get user role from database or metadata
-        const role = (data.user.user_metadata?.role as UserRole) || UserRole.User;
+        const role = (data.user.app_metadata?.role as UserRole) || UserRole.User;
 
         set({
           session: {
@@ -71,7 +71,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const session = await SupabaseService.getCurrentSession();
 
       if (session?.user) {
-        const role = (session.user.user_metadata?.role as UserRole) || UserRole.User;
+        const role = (session.user.app_metadata?.role as UserRole) || UserRole.User;
 
         set({
           session: {
@@ -89,7 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Listen for auth changes
       supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          const role = (session.user.user_metadata?.role as UserRole) || UserRole.User;
+          const role = (session.user.app_metadata?.role as UserRole) || UserRole.User;
 
           set({
             session: {

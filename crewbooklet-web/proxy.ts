@@ -54,7 +54,7 @@ export async function proxy(request: NextRequest) {
 
   // Admin-only routes
   if (ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
-    const role = user.user_metadata?.role as string | undefined;
+    const role = user.app_metadata?.role as string | undefined;
     if (role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url));
     }

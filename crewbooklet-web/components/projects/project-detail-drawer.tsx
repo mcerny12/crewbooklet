@@ -349,7 +349,7 @@ export function ProjectDetailDrawer({ project, open, onOpenChange }: ProjectDeta
           {/* Fixed Footer */}
           <div className="border-t bg-gray-50 dark:bg-gray-900 p-1.5 flex items-center justify-between">
             <EntryMetadata
-              createdAt={project.created_at}
+              createdAt={project.creation_date}
               updatedAt={project.updated_at}
               userId={project.user_id}
             />

@@ -9,6 +9,7 @@ import { Calendar, MapPin } from 'lucide-react';
 interface CompactProjectListItemProps {
   project: Project;
   onSelect: (project: Project) => void;
+  isSelected?: boolean;
 }
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
@@ -20,7 +21,7 @@ const STATUS_BADGE_COLORS: Record<string, string> = {
   HOLD: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
 };
 
-export function CompactProjectListItem({ project, onSelect }: CompactProjectListItemProps) {
+export function CompactProjectListItem({ project, onSelect, isSelected }: CompactProjectListItemProps) {
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return null;
     try { return format(new Date(dateString), 'MMM d, yyyy'); } catch { return null; }
@@ -28,7 +29,7 @@ export function CompactProjectListItem({ project, onSelect }: CompactProjectList
 
   return (
     <div
-      className="grid grid-cols-[2fr_1fr_1fr_1.5fr] gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-colors items-center text-sm border-b"
+      className={`grid grid-cols-[2fr_1fr_1fr_1.5fr] gap-3 px-4 py-2 cursor-pointer transition-colors items-center text-sm border-b ${isSelected ? 'bg-blue-50 dark:bg-blue-950' : 'hover:bg-gray-50 dark:hover:bg-gray-900'}`}
       onClick={() => onSelect(project)}
     >
       {/* Name & Number */}

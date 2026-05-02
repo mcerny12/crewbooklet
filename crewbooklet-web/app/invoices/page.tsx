@@ -30,6 +30,8 @@ export default function InvoicesPage() {
     inv.reference?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const selectedInvoiceId = selectedInvoice?.id ?? null;
+
   const handleSelect = (inv: Invoice) => {
     setSelectedInvoice(prev => prev?.id === inv.id ? null : inv);
   };
@@ -100,7 +102,7 @@ export default function InvoicesPage() {
                     key={inv.id}
                     invoice={inv}
                     onSelect={handleSelect}
-                    isSelected={selectedInvoice?.id === inv.id}
+                    isSelected={selectedInvoiceId === inv.id}
                   />
                 ))}
               </div>

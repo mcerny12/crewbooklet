@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
 import { useProjectsStore } from '@/lib/stores/projects-store';
@@ -13,28 +13,40 @@ import { AddProjectDialog } from '@/components/projects/add-project-dialog';
 import { ProjectDetailPanel } from '@/components/projects/project-detail-panel';
 import type { Project } from '@/lib/types/models';
 
+function ProjectIdSelector({ onSelect }: { onSelect: (id: string) => void }) {
+  const searchParams = useSearchParams();
+  const projects = useProjectsStore(state => state.projects);
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id && projects.length > 0) {
+      const match = projects.find(p => p.id === id);
+      if (match) onSelect(match.id);
+    }
+  }, [searchParams, projects, onSelect]);
+
+  return null;
+}
+
 export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const { canCreate } = usePermissions();
 
-  const searchParams = useSearchParams();
   const projects = useProjectsStore(state => state.projects);
   const isLoading = useProjectsStore(state => state.isLoading);
   const fetchProjects = useProjectsStore(state => state.fetchProjects);
+  const selectedProjectId = selectedProject?.id ?? null;
 
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
-  useEffect(() => {
-    const id = searchParams.get('id');
-    if (id && projects.length > 0) {
-      const match = projects.find(p => p.id === id);
-      if (match) setSelectedProject(match);
-    }
-  }, [searchParams, projects]);
+  const handleSelectById = (id: string) => {
+    const match = projects.find(p => p.id === id);
+    if (match) setSelectedProject(match);
+  };
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -44,6 +56,9 @@ export default function ProjectsPage() {
 
   return (
     <MainLayout>
+      <Suspense>
+        <ProjectIdSelector onSelect={handleSelectById} />
+      </Suspense>
       <div className="relative flex h-full flex-col">
         <div className="border-b px-4 py-3 shrink-0 flex items-center gap-2">
           <div className="relative flex-1">
@@ -65,7 +80,6 @@ export default function ProjectsPage() {
         </div>
 
         {selectedProject ? (
-          // Detail panel — takes over the full list area, overflow controlled inside panel
           <div className="flex-1 overflow-hidden">
             <ProjectDetailPanel
               project={selectedProject}
@@ -73,7 +87,6 @@ export default function ProjectsPage() {
             />
           </div>
         ) : (
-          // List view
           <div className="flex-1 overflow-y-auto">
             {isLoading ? (
               <div className="flex h-full items-center justify-center">
@@ -93,19 +106,18 @@ export default function ProjectsPage() {
               </div>
             ) : (
               <div>
-                {/* Header Row */}
                 <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr] gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b sticky top-0 z-10">
                   <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Name & Number</div>
                   <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Status</div>
                   <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Start Date</div>
                   <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Location</div>
                 </div>
-                {/* List Items */}
-                {filteredProjects.map((project) => (
+                {filteredProjects.map(project => (
                   <CompactProjectListItem
                     key={project.id}
                     project={project}
-                    onSelect={setSelectedProject}
+                    onSelect={(p) => setSelectedProject(p)}
+                    isSelected={selectedProjectId === project.id}
                   />
                 ))}
               </div>

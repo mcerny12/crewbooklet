@@ -37,6 +37,8 @@ export default function PeoplePage() {
     searchPeople(query);
   };
 
+  const selectedPersonId = selectedPerson?.id ?? null;
+
   const handleSelect = (person: Person) => {
     setDrillTarget(null);
     setSelectedPerson(prev => prev?.id === person.id ? null : person);
@@ -116,7 +118,7 @@ export default function PeoplePage() {
                     key={person.id}
                     person={person}
                     onSelect={handleSelect}
-                    isSelected={selectedPerson?.id === person.id}
+                    isSelected={selectedPersonId === person.id}
                   />
                 ))}
               </div>
