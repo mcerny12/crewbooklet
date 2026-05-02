@@ -51,6 +51,7 @@ function PrintContent() {
   const [year, month] = monthParam.split('-').map(Number);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!calIds.length) { setLoading(false); return; }
     (async () => {
       const { data: cals } = await supabase

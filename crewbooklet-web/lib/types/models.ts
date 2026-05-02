@@ -855,6 +855,6 @@ export interface InvoiceAttachment {
 }
 
 // MARK: - Helper Types for Forms
-export interface PersonFormData extends Omit<Person, 'id' | 'created_at' | 'updated_at'> {}
-export interface OrganizationFormData extends Omit<Organization, 'id' | 'created_at' | 'updated_at'> {}
-export interface ProjectFormData extends Omit<Project, 'id' | 'creation_date' | 'updated_at'> {}
+export type PersonFormData = Omit<Person, 'id' | 'created_at' | 'updated_at'>;
+export type OrganizationFormData = Omit<Organization, 'id' | 'created_at' | 'updated_at'>;
+export type ProjectFormData = Omit<Project, 'id' | 'creation_date' | 'updated_at'>;

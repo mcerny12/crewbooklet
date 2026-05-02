@@ -14,7 +14,7 @@ import { usePeopleStore } from '@/lib/stores/people-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useProjectAssignmentsStore } from '@/lib/stores/project-assignments-store';
-import { Gender, Language, JobType, FILM_COUNTRIES, CrewDepartment, AssignmentStatus, getDepartmentFromJob } from '@/lib/types/models';
+import { Gender, Language, JobType, FILM_COUNTRIES, AssignmentStatus, getDepartmentFromJob } from '@/lib/types/models';
 import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, Building2, ExternalLink, X } from 'lucide-react';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 
@@ -46,6 +46,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
   useEffect(() => {
     if (lastPersonIdRef.current !== person.id) {
       lastPersonIdRef.current = person.id;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditedPerson(person);
     }
     fetchAssignmentsByPerson(person.id);

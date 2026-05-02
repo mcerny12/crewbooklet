@@ -48,7 +48,9 @@ export function ProjectDetailDrawer({ project, open, onOpenChange }: ProjectDeta
   useEffect(() => {
     if (lastProjectIdRef.current !== project.id) {
       lastProjectIdRef.current = project.id;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditedProject(project);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrgSearchQuery('');
     }
   }, [project]);
@@ -298,7 +300,7 @@ export function ProjectDetailDrawer({ project, open, onOpenChange }: ProjectDeta
                   </Button>
                 </div>
                 {assignments.length === 0 ? (
-                  <p className="text-xs text-gray-500 py-4">No crew assigned yet. Click "Add Crew" to start.</p>
+                  <p className="text-xs text-gray-500 py-4">No crew assigned yet. Click &quot;Add Crew&quot; to start.</p>
                 ) : (
                   <div className="space-y-1">
                     {assignments.map((assignment) => {

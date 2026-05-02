@@ -74,7 +74,7 @@ export class SupabaseService {
 
   static async updatePerson(id: string, updates: Partial<Person>): Promise<Person | null> {
     // Remove user_id from updates to prevent RLS issues
-    const { user_id, ...cleanUpdates } = updates as any;
+    const { user_id: _uid1, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('people')
@@ -193,7 +193,7 @@ export class SupabaseService {
 
   static async updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | null> {
     // Remove fields that don't exist as DB columns
-    const { user_id, website, financial_details, documents, ...cleanUpdates } = updates as any;
+    const { user_id: _uid2, website: _w, financial_details: _fd, documents: _docs, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('organizations')
@@ -315,7 +315,7 @@ export class SupabaseService {
 
   static async updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
     // Remove user_id and project_number from updates to prevent RLS issues
-    const { user_id, project_number, ...cleanUpdates } = updates as any;
+    const { user_id: _uid3, project_number: _pn, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('projects')
@@ -389,7 +389,7 @@ export class SupabaseService {
     // these columns are added by migration-2026-03-19.sql and may not
     // exist yet. Omitting them when null keeps inserts compatible with
     // pre-migration schemas.
-    const { organization_id, notes, ...base } = assignment as any;
+    const { organization_id, notes, ...base } = assignment as Record<string, unknown>;
     const payload: Record<string, unknown> = { ...base, user_id: userId };
     if (organization_id != null) payload.organization_id = organization_id;
     if (notes != null) payload.notes = notes;
@@ -410,7 +410,7 @@ export class SupabaseService {
 
   static async updateProjectAssignment(id: string, updates: Partial<ProjectAssignment>): Promise<ProjectAssignment | null> {
     // Remove user_id from updates to prevent RLS issues
-    const { user_id, ...cleanUpdates } = updates as any;
+    const { user_id: _uid4, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('project_assignments')
@@ -493,21 +493,21 @@ export class SupabaseService {
 
   // MARK: - Real-time Subscriptions
 
-  static subscribeToPeople(callback: (payload: any) => void) {
+  static subscribeToPeople(callback: (payload: Record<string, unknown>) => void) {
     return supabase
       .channel('people_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'people' }, callback)
       .subscribe();
   }
 
-  static subscribeToProjects(callback: (payload: any) => void) {
+  static subscribeToProjects(callback: (payload: Record<string, unknown>) => void) {
     return supabase
       .channel('projects_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, callback)
       .subscribe();
   }
 
-  static subscribeToOrganizations(callback: (payload: any) => void) {
+  static subscribeToOrganizations(callback: (payload: Record<string, unknown>) => void) {
     return supabase
       .channel('organizations_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'organizations' }, callback)
@@ -565,7 +565,7 @@ export class SupabaseService {
   static async addInvoice(invoice: Partial<Invoice>): Promise<Invoice | null> {
     const { data: session } = await supabase.auth.getSession();
     const userId = session.session?.user.id;
-    const { items, ...invoiceData } = invoice as any;
+    const { items: _items, ...invoiceData } = invoice as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('invoices')
@@ -582,7 +582,7 @@ export class SupabaseService {
   }
 
   static async updateInvoice(id: string, updates: Partial<Invoice>): Promise<Invoice | null> {
-    const { user_id, items, ...cleanUpdates } = updates as any;
+    const { user_id: _uid5, items: _items2, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('invoices')

@@ -48,7 +48,9 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
   useEffect(() => {
     if (lastOrgIdRef.current !== organization.id) {
       lastOrgIdRef.current = organization.id;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditedOrg(organization);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUseCustomInvoice(hasCustomInvoice(organization));
     }
     if (people.length === 0) fetchPeople();

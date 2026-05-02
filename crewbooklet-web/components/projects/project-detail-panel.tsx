@@ -143,7 +143,9 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
   useEffect(() => {
     if (lastProjectIdRef.current !== project.id) {
       lastProjectIdRef.current = project.id;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditedProject(project);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrgSearchQuery('');
     }
   }, [project]);

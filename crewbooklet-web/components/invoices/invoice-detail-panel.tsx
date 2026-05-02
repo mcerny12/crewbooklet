@@ -129,12 +129,12 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
     if (itemsTimerRef.current) clearTimeout(itemsTimerRef.current);
     itemsTimerRef.current = setTimeout(async () => {
       const total = calcTotal(newItems);
-      await replaceItems(edited.id, newItems.map(({ id, ...rest }) => rest as Omit<InvoiceItem, 'id'>));
+      await replaceItems(edited.id, newItems.map(({ id: _id, ...rest }) => rest as Omit<InvoiceItem, 'id'>));
       await updateInvoice(edited.id, { total });
     }, 1000);
   }, [replaceItems, updateInvoice, edited.id]);
 
-  const handleChange = (field: keyof Invoice, value: any) => {
+  const handleChange = (field: keyof Invoice, value: Invoice[keyof Invoice]) => {
     const next = { ...edited, [field]: value };
     setEdited(next);
     scheduleSave(next, items);
@@ -202,15 +202,15 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
     setAttachments(prev => prev.filter(a => a.id !== att.id));
   };
 
-  const handleItemChange = (idx: number, field: keyof InvoiceItem, value: any) => {
+  const handleItemChange = (idx: number, field: keyof InvoiceItem, value: InvoiceItem[keyof InvoiceItem]) => {
     const newItems = items.map((item, i) => {
       if (i !== idx) return item;
       const updated = { ...item, [field]: value };
       if (['quantity', 'unit_price', 'tax_rate'].includes(field as string)) {
         updated.total = calcItemTotal(
-          field === 'quantity'   ? value : updated.quantity,
-          field === 'unit_price' ? value : updated.unit_price,
-          field === 'tax_rate'   ? value : updated.tax_rate,
+          (field === 'quantity'   ? value : updated.quantity)   as number,
+          (field === 'unit_price' ? value : updated.unit_price) as number,
+          (field === 'tax_rate'   ? value : updated.tax_rate)   as number,
         );
       }
       return updated;

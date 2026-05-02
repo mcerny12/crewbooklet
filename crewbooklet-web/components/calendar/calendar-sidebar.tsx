@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Share2, Trash2, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Share2, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Project, ProjectCalendar } from '@/lib/types/models';
 import { PROJECT_COLORS, PROJECT_COLOR_SHADES, ProjectStatus } from '@/lib/types/models';
 
@@ -34,7 +34,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
   const toggleCollapse = (projectId: string) => {
     setCollapsed(prev => {
       const next = new Set(prev);
-      next.has(projectId) ? next.delete(projectId) : next.add(projectId);
+      if (next.has(projectId)) { next.delete(projectId); } else { next.add(projectId); }
       return next;
     });
   };
@@ -94,7 +94,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
               {/* Sub-calendars */}
               {!isCollapsed && (
                 <div className="ml-4">
-                  {projectCals.map((cal, idx) => (
+                  {projectCals.map((cal) => (
                     <div key={cal.id} className="flex items-center gap-1.5 px-2 py-0.5 group hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
                       <button
                         type="button"
