@@ -828,6 +828,10 @@ export interface Invoice {
   // Computed totals (stored for display)
   total?: number | null;
 
+  // Aconto (advance payment) support
+  is_aconto?: boolean | null;
+  aconto_invoice_ids?: string[] | null;
+
   items?: InvoiceItem[];
 }
 

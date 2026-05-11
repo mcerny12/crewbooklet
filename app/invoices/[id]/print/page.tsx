@@ -39,11 +39,19 @@ export default function PrintInvoicePage() {
   const params = useParams();
   const id = params?.id as string;
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [acontos, setAcontos] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    SupabaseService.fetchInvoice(id).then(data => { setInvoice(data); setLoading(false); });
+    SupabaseService.fetchInvoice(id).then(async data => {
+      setInvoice(data);
+      if (data?.aconto_invoice_ids?.length) {
+        const linked = await SupabaseService.fetchInvoicesByIds(data.aconto_invoice_ids);
+        setAcontos(linked);
+      }
+      setLoading(false);
+    });
   }, [id]);
 
   useEffect(() => {
@@ -63,7 +71,9 @@ export default function PrintInvoicePage() {
   if (!invoice) return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>Invoice not found.</div>;
 
   const items = invoice.items ?? [];
-  const total = invoice.total ?? items.reduce((s, i) => s + i.total, 0);
+  const subtotal = invoice.total ?? items.reduce((s, i) => s + i.total, 0);
+  const acontoDeductionTotal = acontos.reduce((s, a) => s + (a.total ?? 0), 0);
+  const total = subtotal - acontoDeductionTotal;
   const period = fmtPeriod(invoice.service_period_start, invoice.service_period_end);
 
   return (
@@ -355,6 +365,20 @@ export default function PrintInvoicePage() {
                   <td className="c3">{fmtCurrency(item.unit_price)}</td>
                   <td className="c4">{item.tax_rate > 0 ? `${item.tax_rate}%` : '0%'}</td>
                   <td className="c5">{fmtCurrency(item.total)}</td>
+                </tr>
+              ))}
+              {acontos.length > 0 && (
+                <tr className="total-row">
+                  <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>Zwischensumme</td>
+                  <td className="c5">{fmtCurrency(subtotal)}</td>
+                </tr>
+              )}
+              {acontos.map(aconto => (
+                <tr key={aconto.id}>
+                  <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>
+                    Abzgl. Akonto {aconto.invoice_number}
+                  </td>
+                  <td className="c5">-{fmtCurrency(aconto.total ?? 0)}</td>
                 </tr>
               ))}
               <tr className="total-row">

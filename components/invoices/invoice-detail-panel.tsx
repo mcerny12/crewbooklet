@@ -13,6 +13,7 @@ import { useInvoiceStore } from '@/lib/stores/invoice-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronLeft, Trash2, Plus, Printer, X, Paperclip, Download, FileText } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 
@@ -91,6 +92,8 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   const updateInvoice = useInvoiceStore(state => state.updateInvoice);
   const deleteInvoice = useInvoiceStore(state => state.deleteInvoice);
   const replaceItems   = useInvoiceStore(state => state.replaceItems);
+  const allInvoices    = useInvoiceStore(state => state.invoices);
+  const fetchInvoices  = useInvoiceStore(state => state.fetchInvoices);
 
   const projects        = useProjectsStore(state => state.projects);
   const fetchProjects   = useProjectsStore(state => state.fetchProjects);
@@ -100,6 +103,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   useEffect(() => {
     if (projects.length === 0)      fetchProjects();
     if (organizations.length === 0) fetchOrganizations();
+    if (allInvoices.length === 0)   fetchInvoices();
   }, []);
 
   useEffect(() => {
@@ -254,6 +258,21 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 
+  const linkedAcontoIds = edited.aconto_invoice_ids ?? [];
+  const linkedAcontos = allInvoices.filter(inv => linkedAcontoIds.includes(inv.id));
+  const acontoDeductionTotal = linkedAcontos.reduce((sum, inv) => sum + (inv.total ?? 0), 0);
+  const amountDue = totalAmount - acontoDeductionTotal;
+
+  // Aconto invoices available to link: marked as aconto, same project or recipient, not self
+  const availableAcontos = allInvoices.filter(inv =>
+    inv.is_aconto === true &&
+    inv.id !== edited.id &&
+    (
+      (edited.project_id && inv.project_id === edited.project_id) ||
+      (edited.recipient_name && inv.recipient_name === edited.recipient_name)
+    )
+  );
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
 
@@ -275,8 +294,8 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-        {/* Number + status */}
-        <div className="flex items-center gap-4">
+        {/* Number + status + aconto flag */}
+        <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-xl font-bold">{edited.invoice_number}</h1>
           <Select value={edited.status} onValueChange={v => handleChange('status', v)}>
             <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
@@ -288,6 +307,14 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
               ))}
             </SelectContent>
           </Select>
+          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+            <Checkbox
+              checked={!!edited.is_aconto}
+              onCheckedChange={checked => handleChange('is_aconto', !!checked)}
+              className="h-3.5 w-3.5"
+            />
+            <span className="text-xs text-gray-600">Aconto invoice</span>
+          </label>
         </div>
 
         {/* Two-column: recipient | dates */}
@@ -418,13 +445,70 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
               </div>
             ))}
 
-            <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center">
-              <div className="col-span-4 text-xs font-semibold text-right text-gray-600">Total</div>
+            <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t">
+              <div className="col-span-4 text-xs font-semibold text-right text-gray-600">
+                {linkedAcontos.length > 0 ? 'Subtotal' : 'Total'}
+              </div>
               <div className="text-sm font-bold text-right">{formatCurrency(totalAmount)}</div>
               <div />
             </div>
+            {linkedAcontos.map(aconto => (
+              <div key={aconto.id} className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/20 items-center">
+                <div className="col-span-4 text-xs text-right text-amber-700 dark:text-amber-400">
+                  Aconto {aconto.invoice_number}
+                </div>
+                <div className="text-xs font-medium text-right text-amber-700 dark:text-amber-400">
+                  -{formatCurrency(aconto.total ?? 0)}
+                </div>
+                <div />
+              </div>
+            ))}
+            {linkedAcontos.length > 0 && (
+              <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t-2 border-gray-300">
+                <div className="col-span-4 text-xs font-semibold text-right text-gray-700">Amount Due</div>
+                <div className="text-sm font-bold text-right">{formatCurrency(amountDue)}</div>
+                <div />
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Aconto deduction linking (only for non-aconto final invoices) */}
+        {!edited.is_aconto && (
+          <div>
+            <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
+              Deduct Aconto Invoices
+            </Label>
+            {availableAcontos.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">
+                No aconto invoices found for this project or recipient. Mark an invoice as &quot;Aconto invoice&quot; first.
+              </p>
+            ) : (
+              <div className="space-y-1.5 border rounded p-3">
+                {availableAcontos.map(aconto => (
+                  <label key={aconto.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={linkedAcontoIds.includes(aconto.id)}
+                      onCheckedChange={checked => {
+                        const newIds = checked
+                          ? [...linkedAcontoIds, aconto.id]
+                          : linkedAcontoIds.filter(id => id !== aconto.id);
+                        handleChange('aconto_invoice_ids', newIds);
+                      }}
+                      className="h-3.5 w-3.5"
+                    />
+                    <span className="text-xs">
+                      {aconto.invoice_number}
+                      {aconto.total != null && (
+                        <span className="text-gray-500 ml-1">— {formatCurrency(aconto.total)}</span>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Attachments */}
         <div>

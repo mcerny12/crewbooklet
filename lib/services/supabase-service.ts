@@ -545,6 +545,16 @@ export class SupabaseService {
     return data;
   }
 
+  static async fetchInvoicesByIds(ids: string[]): Promise<Invoice[]> {
+    if (!ids.length) return [];
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, total, is_aconto')
+      .in('id', ids);
+    if (error) return [];
+    return (data ?? []) as Invoice[];
+  }
+
   static async getNextInvoiceNumber(): Promise<string> {
     const currentYear = new Date().getFullYear();
     const prefix = `CERNY-INV${currentYear}-`;

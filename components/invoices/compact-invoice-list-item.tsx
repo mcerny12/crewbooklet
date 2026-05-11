@@ -40,7 +40,14 @@ export function CompactInvoiceListItem({ invoice, onSelect, isSelected }: Compac
     >
       {/* Number */}
       <div className="min-w-0">
-        <div className="font-medium truncate">{invoice.invoice_number}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium truncate">{invoice.invoice_number}</span>
+          {invoice.is_aconto && (
+            <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+              ACONTO
+            </span>
+          )}
+        </div>
         <div className="text-xs text-gray-500 truncate">{invoice.reference || '—'}</div>
       </div>
 
