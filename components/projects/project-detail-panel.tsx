@@ -13,7 +13,8 @@ import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectAssignmentsStore } from '@/lib/stores/project-assignments-store';
-import { ProjectStatus, FILM_COUNTRIES, AssignmentStatus, CrewDepartment, JobType, getDepartmentFromJob } from '@/lib/types/models';
+import { ProjectStatus, FILM_COUNTRIES, AssignmentStatus, CrewDepartment } from '@/lib/types/models';
+import { useJobTypesStore } from '@/lib/stores/job-types-store';
 import { Trash2, Plus, ExternalLink, X, Search, ChevronLeft, Calendar, MapPin, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import type { ProjectAssignment } from '@/lib/types/models';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -122,6 +123,9 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [focusedCell, setFocusedCell] = useState<{ id: string; field: string } | null>(null);
   const lastProjectIdRef = useRef<string>(project.id);
+
+  const jobTypeNames = useJobTypesStore(s => s.jobTypeNames);
+  const getDepartmentForJob = useJobTypesStore(s => s.getDepartmentForJob);
 
   const updateProject = useProjectsStore(state => state.updateProject);
   const deleteProject = useProjectsStore(state => state.deleteProject);
@@ -526,11 +530,11 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                       {/* Role — click to select, click again to edit */}
                       {isEditingRole ? (
                         <InlineCellSearch
-                          options={Object.values(JobType)}
+                          options={jobTypeNames}
                           defaultValue={assignment.role ?? null}
                           onCommit={(v) => {
-                            const role = v as JobType | null;
-                            const dept = role ? getDepartmentFromJob(role) : null;
+                            const role = v ?? null;
+                            const dept = role ? getDepartmentForJob(role) : null;
                             updateAssignment(assignment.id, { role, department: dept ?? undefined });
                             setEditingCell(null);
                           }}

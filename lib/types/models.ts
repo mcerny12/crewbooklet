@@ -26,7 +26,7 @@ export interface Person {
   address?: Address | null;
 
   // Professional Info
-  jobs: JobType[];
+  jobs: string[];
   languages: Language[];
 
   // Organization Connection

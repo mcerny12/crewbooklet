@@ -5,7 +5,8 @@ import type { Person } from '@/lib/types/models';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, MapPin, Briefcase } from 'lucide-react';
-import { getJobCategory, JobCategoryColors } from '@/lib/types/models';
+import { JobCategoryColors } from '@/lib/types/models';
+import { useJobTypesStore } from '@/lib/stores/job-types-store';
 import { PersonDetailDrawer } from './person-detail-drawer';
 
 interface PersonListItemProps {
@@ -15,8 +16,9 @@ interface PersonListItemProps {
 export function PersonListItem({ person }: PersonListItemProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+  const getCategoryForJob = useJobTypesStore(s => s.getCategoryForJob);
   const primaryJob = person.jobs[0];
-  const jobCategory = primaryJob ? getJobCategory(primaryJob) : null;
+  const jobCategory = primaryJob ? getCategoryForJob(primaryJob) : null;
 
   return (
     <>

@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { JobType, Language, FILM_COUNTRIES } from '@/lib/types/models';
+import { Language, FILM_COUNTRIES } from '@/lib/types/models';
+import { useJobTypesStore } from '@/lib/stores/job-types-store';
 
 interface AddPersonDialogProps {
   open: boolean;
@@ -46,7 +47,7 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
         name: name.trim(),
         email: email || null,
         mobile_phone: mobilePhone || null,
-        jobs: jobs as JobType[],
+        jobs: jobs,
         languages: languages as Language[],
         address: (city || country) ? { city: city || null, country: country || null } : null,
         notes: null,
@@ -60,7 +61,8 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
     }
   };
 
-  const jobOptions = Object.values(JobType).map(j => ({ value: j, label: j }));
+  const jobTypeNames = useJobTypesStore(s => s.jobTypeNames);
+  const jobOptions = jobTypeNames.map(j => ({ value: j, label: j }));
   const languageOptions = Object.values(Language).map(l => ({ value: l, label: l }));
 
   return (

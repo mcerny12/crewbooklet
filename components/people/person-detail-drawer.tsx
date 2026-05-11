@@ -14,7 +14,8 @@ import { usePeopleStore } from '@/lib/stores/people-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useProjectAssignmentsStore } from '@/lib/stores/project-assignments-store';
-import { Gender, Language, JobType, FILM_COUNTRIES, AssignmentStatus, getDepartmentFromJob } from '@/lib/types/models';
+import { Gender, Language, FILM_COUNTRIES, AssignmentStatus } from '@/lib/types/models';
+import { useJobTypesStore } from '@/lib/stores/job-types-store';
 import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, Building2, ExternalLink, X } from 'lucide-react';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 
@@ -76,7 +77,8 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
   };
 
   const connectedOrg = organizations.find(o => o.id === editedPerson.organization_id) ?? null;
-  const jobOptions = Object.values(JobType).map(j => ({ value: j, label: j }));
+  const jobTypeNames = useJobTypesStore(s => s.jobTypeNames);
+  const jobOptions = jobTypeNames.map(j => ({ value: j, label: j }));
   const languageOptions = Object.values(Language).map(l => ({ value: l, label: l }));
 
   const getFaviconUrl = (website: string | null | undefined) => {
@@ -176,7 +178,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
           <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Professional</h3>
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
-            <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs as JobType[])} placeholder="Select jobs…" maxSelections={3} />
+            <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)}placeholder="Select jobs…" maxSelections={3} />
           </div>
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Languages</Label>
@@ -267,7 +269,8 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
                 <Button size="sm" onClick={async () => {
                   if (!newProjectId) return;
                   const primaryJob = editedPerson.jobs?.[0] ?? null;
-                  await addAssignment({ project_id: newProjectId, person_id: person.id, organization_id: null, role: primaryJob, department: primaryJob ? getDepartmentFromJob(primaryJob) : null, availability: AssignmentStatus.Anfragen, notes: null });
+                  const getDept = useJobTypesStore.getState().getDepartmentForJob;
+                  await addAssignment({ project_id: newProjectId, person_id: person.id, organization_id: null, role: primaryJob, department: primaryJob ? getDept(primaryJob) : null, availability: AssignmentStatus.Anfragen, notes: null });
                   setAddingToProject(false); setNewProjectId(null);
                 }} className="flex-1 h-7 text-xs" disabled={!newProjectId}>Assign</Button>
               </div>

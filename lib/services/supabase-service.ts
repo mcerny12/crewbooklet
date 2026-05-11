@@ -491,6 +491,32 @@ export class SupabaseService {
     return session;
   }
 
+  // MARK: - Job Types
+
+  static async fetchJobTypes(): Promise<{ id: string; name: string; category: string; sort_order: number }[]> {
+    const { data, error } = await supabase
+      .from('job_types')
+      .select('id, name, category, sort_order')
+      .order('sort_order', { ascending: true });
+    if (error) { console.error('fetchJobTypes:', error); return []; }
+    return data ?? [];
+  }
+
+  static async addJobType(name: string, category: string, sort_order: number): Promise<void> {
+    const { error } = await supabase.from('job_types').insert([{ name, category, sort_order }]);
+    if (error) throw error;
+  }
+
+  static async updateJobType(id: string, updates: { name?: string; category?: string; sort_order?: number }): Promise<void> {
+    const { error } = await supabase.from('job_types').update(updates).eq('id', id);
+    if (error) throw error;
+  }
+
+  static async deleteJobType(id: string): Promise<void> {
+    const { error } = await supabase.from('job_types').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   // MARK: - Real-time Subscriptions
 
   static subscribeToPeople(callback: (payload: Record<string, unknown>) => void) {

@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectAssignmentsStore } from '@/lib/stores/project-assignments-store';
-import { AssignmentStatus, JobType, CrewDepartment, FILM_COUNTRIES, getDepartmentFromJob, type Person } from '@/lib/types/models';
+import { AssignmentStatus, CrewDepartment, FILM_COUNTRIES, type Person } from '@/lib/types/models';
+import { useJobTypesStore } from '@/lib/stores/job-types-store';
 import { X, Check, ExternalLink } from 'lucide-react';
 import { PersonDetailDrawer } from '@/components/people/person-detail-drawer';
 
@@ -29,14 +30,17 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [previewPerson, setPreviewPerson] = useState<Person | null>(null);
 
+  const getDepartmentForJob = useJobTypesStore(s => s.getDepartmentForJob);
+  const jobTypeNames = useJobTypesStore(s => s.jobTypeNames);
+
   const hasFilter = searchName.trim() || searchJob || searchDept || searchCity.trim() || searchCountry;
 
   const results = useMemo(() => {
     if (!hasFilter) return [];
     return people.filter(p => {
       if (searchName.trim() && !p.name.toLowerCase().includes(searchName.trim().toLowerCase())) return false;
-      if (searchJob && !(p.jobs ?? []).includes(searchJob as JobType)) return false;
-      if (searchDept && !(p.jobs ?? []).some(j => getDepartmentFromJob(j) === searchDept)) return false;
+      if (searchJob && !(p.jobs ?? []).includes(searchJob)) return false;
+      if (searchDept && !(p.jobs ?? []).some(j => getDepartmentForJob(j) === searchDept)) return false;
       if (searchCity.trim() && !(p.address?.city ?? '').toLowerCase().includes(searchCity.trim().toLowerCase())) return false;
       if (searchCountry && (p.address?.country ?? '') !== searchCountry) return false;
       return true;
@@ -56,7 +60,7 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
     if (!selectedPerson) return;
     // Auto-derive role and department from person's primary job
     const primaryJob = selectedPerson.jobs?.[0] ?? null;
-    const dept = primaryJob ? getDepartmentFromJob(primaryJob) : null;
+    const dept = primaryJob ? getDepartmentForJob(primaryJob) : null;
     const result = await addAssignment({
       project_id: projectId,
       person_id: selectedPerson.id,
@@ -102,7 +106,7 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
                 <SelectTrigger size="xs" className="w-full"><SelectValue placeholder="Any role" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any role</SelectItem>
-                  {Object.values(JobType).map(j => <SelectItem key={j} value={j} className="whitespace-nowrap">{j}</SelectItem>)}
+                  {jobTypeNames.map(j => <SelectItem key={j} value={j} className="whitespace-nowrap">{j}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
