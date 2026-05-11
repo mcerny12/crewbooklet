@@ -557,7 +557,7 @@ export class SupabaseService {
 
   static async getNextInvoiceNumber(): Promise<string> {
     const currentYear = new Date().getFullYear();
-    const prefix = `CERNY-INV${currentYear}-`;
+    const prefix = `INV${currentYear}-`;
     const { data: existingInvoices } = await supabase
       .from('invoices')
       .select('invoice_number')
