@@ -45,7 +45,7 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
       if (searchCountry && (p.address?.country ?? '') !== searchCountry) return false;
       return true;
     });
-  }, [people, searchName, searchJob, searchDept, searchCity, searchCountry, hasFilter]);
+  }, [people, searchName, searchJob, searchDept, searchCity, searchCountry, hasFilter, getDepartmentForJob]);
 
   const reset = () => {
     setSearchName('');

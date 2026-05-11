@@ -133,7 +133,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
     if (itemsTimerRef.current) clearTimeout(itemsTimerRef.current);
     itemsTimerRef.current = setTimeout(async () => {
       const total = calcTotal(newItems);
-      await replaceItems(edited.id, newItems.map(({ id: _id, ...rest }) => rest as Omit<InvoiceItem, 'id'>));
+      await replaceItems(edited.id, newItems.map(({ id: _, ...rest }) => rest as Omit<InvoiceItem, 'id'>));
       await updateInvoice(edited.id, { total });
     }, 1000);
   }, [replaceItems, updateInvoice, edited.id]);
