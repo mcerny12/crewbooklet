@@ -1,7 +1,7 @@
 -- ============================================================
 -- Migration: DB-driven job types
 -- Run in Supabase Dashboard → SQL Editor
--- Requires migration-roles.sql to have been run first
+-- No dependencies — safe to run standalone
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS job_types (
@@ -23,15 +23,18 @@ DROP POLICY IF EXISTS "admin_delete_job_types"        ON job_types;
 CREATE POLICY "authenticated_read_job_types" ON job_types
   FOR SELECT TO authenticated USING (true);
 
--- Only admins can write
+-- Only admins can write (reads role from JWT app_metadata)
 CREATE POLICY "admin_insert_job_types" ON job_types
-  FOR INSERT TO authenticated WITH CHECK (get_my_role() = 'admin');
+  FOR INSERT TO authenticated
+  WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 CREATE POLICY "admin_update_job_types" ON job_types
-  FOR UPDATE TO authenticated USING (get_my_role() = 'admin');
+  FOR UPDATE TO authenticated
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 CREATE POLICY "admin_delete_job_types" ON job_types
-  FOR DELETE TO authenticated USING (get_my_role() = 'admin');
+  FOR DELETE TO authenticated
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- ── Seed: all existing job types ──────────────────────────────
 INSERT INTO job_types (name, category, sort_order) VALUES
