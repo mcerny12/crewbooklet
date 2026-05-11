@@ -124,7 +124,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
   const [focusedCell, setFocusedCell] = useState<{ id: string; field: string } | null>(null);
   const lastProjectIdRef = useRef<string>(project.id);
 
-  const jobTypeNames = useJobTypesStore(s => s.jobTypeNames);
+  const jobTypeNames = useJobTypesStore(s => s.jobTypes.map(j => j.name));
   const getDepartmentForJob = useJobTypesStore(s => s.getDepartmentForJob);
 
   const updateProject = useProjectsStore(state => state.updateProject);

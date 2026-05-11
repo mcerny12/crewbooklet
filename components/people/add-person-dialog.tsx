@@ -61,8 +61,7 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
     }
   };
 
-  const jobTypeNames = useJobTypesStore(s => s.jobTypeNames);
-  const jobOptions = jobTypeNames.map(j => ({ value: j, label: j }));
+  const jobOptions = useJobTypesStore(s => s.jobTypes.map(j => ({ value: j.name, label: j.name })));
   const languageOptions = Object.values(Language).map(l => ({ value: l, label: l }));
 
   return (

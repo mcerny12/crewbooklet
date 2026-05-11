@@ -18,12 +18,8 @@ interface JobTypesState {
   updateJobType: (id: string, updates: { name?: string; category?: string }) => Promise<void>;
   deleteJobType: (id: string) => Promise<void>;
 
-  // Helpers used by components that previously called getJobCategory / getDepartmentFromJob
   getCategoryForJob: (name: string) => string;
   getDepartmentForJob: (name: string) => CrewDepartment | null;
-
-  // Sorted names for SearchableSelect / Select options
-  jobTypeNames: string[];
 }
 
 export const useJobTypesStore = create<JobTypesState>((set, get) => ({
@@ -63,9 +59,5 @@ export const useJobTypesStore = create<JobTypesState>((set, get) => ({
   getDepartmentForJob: (name: string) => {
     const category = get().getCategoryForJob(name) as JobCategory;
     return JOB_CATEGORY_TO_DEPARTMENT[category] ?? CrewDepartment.Other;
-  },
-
-  get jobTypeNames() {
-    return get().jobTypes.map(j => j.name);
   },
 }));
