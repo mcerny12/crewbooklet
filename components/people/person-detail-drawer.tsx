@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Person, Organization, Project } from '@/lib/types/models';
 import { BottomDrawer } from '@/components/ui/bottom-drawer';
 import { Input } from '@/components/ui/input';
@@ -77,7 +77,8 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
   };
 
   const connectedOrg = organizations.find(o => o.id === editedPerson.organization_id) ?? null;
-  const jobOptions = useJobTypesStore(s => s.jobTypes.map(j => ({ value: j.name, label: j.name })));
+  const jobTypes = useJobTypesStore(s => s.jobTypes);
+  const jobOptions = useMemo(() => jobTypes.map(j => ({ value: j.name, label: j.name })), [jobTypes]);
   const languageOptions = Object.values(Language).map(l => ({ value: l, label: l }));
 
   const getFaviconUrl = (website: string | null | undefined) => {

@@ -31,7 +31,8 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
   const [previewPerson, setPreviewPerson] = useState<Person | null>(null);
 
   const getDepartmentForJob = useJobTypesStore(s => s.getDepartmentForJob);
-  const jobTypeNames = useJobTypesStore(s => s.jobTypes.map(j => j.name));
+  const _jobTypes = useJobTypesStore(s => s.jobTypes);
+  const jobTypeNames = useMemo(() => _jobTypes.map(j => j.name), [_jobTypes]);
 
   const hasFilter = searchName.trim() || searchJob || searchDept || searchCity.trim() || searchCountry;
 

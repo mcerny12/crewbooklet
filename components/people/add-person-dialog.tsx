@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -61,7 +61,8 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
     }
   };
 
-  const jobOptions = useJobTypesStore(s => s.jobTypes.map(j => ({ value: j.name, label: j.name })));
+  const jobTypes = useJobTypesStore(s => s.jobTypes);
+  const jobOptions = useMemo(() => jobTypes.map(j => ({ value: j.name, label: j.name })), [jobTypes]);
   const languageOptions = Object.values(Language).map(l => ({ value: l, label: l }));
 
   return (
