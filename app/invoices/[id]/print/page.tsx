@@ -23,7 +23,6 @@ function fmtCurrency(n: number | null | undefined): string {
   return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' EUR';
 }
 
-// ── Hardcoded sender details (from invtemp.pdf) ──
 const SENDER_BOLD   = 'Mortimer Cerny';
 const SENDER_LIGHT  = 'Production Service';
 const SENDER_ADDR   = 'Rodenbergstraße 2, 10439 Berlin, Germany';
@@ -34,6 +33,11 @@ const SENDER_KUIDNR = 'KU-IdNr DE460340497-EX';
 const BANK_NAME     = 'Mortimer Cerny';
 const BANK_IBAN     = 'DE41 1001 1001 2927 0427 52';
 const BANK_BIC      = 'NTSBDEB1XXX';
+
+// Height of the running header that repeats on every page
+const RUNNING_HDR_MM = 22;
+// Height of the extended (page-1-only) header block
+const EXTENDED_HDR_MM = 104.9 - RUNNING_HDR_MM; // 82.9mm
 
 export default function PrintInvoicePage() {
   const params = useParams();
@@ -56,11 +60,7 @@ export default function PrintInvoicePage() {
 
   useEffect(() => {
     if (!loading && invoice) {
-      const parts = [
-        invoice.invoice_number,
-        invoice.reference,
-        invoice.recipient_name,
-      ].filter(Boolean);
+      const parts = [invoice.invoice_number, invoice.reference, invoice.recipient_name].filter(Boolean);
       document.title = parts.join('-');
       const t = setTimeout(() => window.print(), 500);
       return () => clearTimeout(t);
@@ -105,11 +105,18 @@ export default function PrintInvoicePage() {
           flex-direction: column;
         }
 
-        /* ─── HEADER (fixed height = position of separator line 1) ─── */
-        .hdr {
-          height: 104.9mm;
+        /* ─── RUNNING HEADER (company name line) ───────────────────────
+           On screen: normal flow, sits above the extended header.
+           In print:  position: fixed — repeats at the top of every page.
+           The extended .hdr (page-1 only, normal flow) has a white bg
+           and higher z-index so it covers the running header on page 1.
+           On page 2+, only the running header is visible.
+        ─────────────────────────────────────────────────────────────── */
+        .running-hdr {
+          height: ${RUNNING_HDR_MM}mm;
           position: relative;
           flex-shrink: 0;
+          background: #fff;
         }
 
         .hdr-company {
@@ -125,10 +132,50 @@ export default function PrintInvoicePage() {
         .hdr-bold  { font-weight: 700; }
         .hdr-light { font-weight: 300; }
 
-        /* Left column: small sender address + recipient */
+        /* Invoice ref shown on page 2+ header (right side) */
+        .running-hdr-ref {
+          position: absolute;
+          top: 12.0mm;
+          right: 15.1mm;
+          font-size: 9pt;
+          font-weight: 400;
+          color: #555;
+        }
+
+        @media print {
+          .running-hdr {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1;
+          }
+
+          /* Content area gets top padding equal to running header height
+             so page-2+ content starts below the fixed header */
+          .page {
+            padding-top: ${RUNNING_HDR_MM}mm;
+          }
+        }
+
+        /* ─── EXTENDED HEADER (page 1 only — normal flow) ──────────────
+           Height reduced by RUNNING_HDR_MM since company name is now
+           in .running-hdr. Absolute positions adjusted by −22mm.
+           White bg + higher z-index covers .running-hdr on page 1.
+        ─────────────────────────────────────────────────────────────── */
+        .hdr {
+          height: ${EXTENDED_HDR_MM}mm;
+          position: relative;
+          flex-shrink: 0;
+          background: #fff;
+          z-index: 2;
+        }
+
+        /* Left: small sender address + recipient
+           Original top: 39.5mm from page top → 39.5 - 22 = 17.5mm from .hdr top */
         .hdr-left {
           position: absolute;
-          top: 39.5mm;
+          top: 17.5mm;
           left: 15.1mm;
           width: 93mm;
         }
@@ -145,10 +192,11 @@ export default function PrintInvoicePage() {
           line-height: 1.25;
         }
 
-        /* Right column: Rechnung + metadata */
+        /* Right: Rechnung + metadata
+           Original top: 33.2mm from page top → 33.2 - 22 = 11.2mm from .hdr top */
         .hdr-right {
           position: absolute;
-          top: 33.2mm;
+          top: 11.2mm;
           left: 113.9mm;
           right: 15.1mm;
         }
@@ -170,11 +218,6 @@ export default function PrintInvoicePage() {
         .ml { white-space: nowrap; }
         .mv { text-align: right; }
 
-        /* ─── SEPARATOR ─── */
-        .sep {
-          display: none;
-        }
-
         /* ─── CONTENT ─── */
         .content {
           flex: 1;
@@ -183,7 +226,11 @@ export default function PrintInvoicePage() {
           font-weight: 400;
         }
 
-        /* Greeting: white-space: pre-line handles newlines naturally */
+        @media print {
+          /* Leave room for the fixed bottom-bar on every page */
+          .content { padding-bottom: 20mm; }
+        }
+
         .greeting {
           white-space: pre-line;
           line-height: 1.5;
@@ -199,6 +246,7 @@ export default function PrintInvoicePage() {
         }
         thead tr { border-bottom: 0.75pt solid #000; }
         thead th { font-weight: 400; padding-bottom: 2mm; text-align: left; }
+        thead { display: table-header-group; } /* repeat on every page */
         tbody tr { border-bottom: none; }
         td { padding: 2.2mm 0; vertical-align: top; }
 
@@ -217,11 +265,19 @@ export default function PrintInvoicePage() {
           padding-bottom: 2mm;
         }
 
-        /* ─── FOOTER NOTES (hardcoded block) ─── */
+        /* Keep totals block and footer notes together — no page break inside */
+        .totals-block {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+
+        /* ─── FOOTER NOTES ─── */
         .fnotes {
           margin-top: 4mm;
           font-size: 9pt;
           line-height: 1.4;
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         .fnotes p { margin-bottom: 0; }
         .fnotes .gap { margin-top: 3.8mm; }
@@ -229,11 +285,13 @@ export default function PrintInvoicePage() {
         /* ─── SPACER ─── */
         .spacer { flex: 1; }
 
-        /* ─── BOTTOM BAR ─── */
+        /* ─── BOTTOM BAR ──────────────────────────────────────────────
+           On screen: normal flow, pushed to bottom via flex spacer.
+           In print:  position: fixed — stays at the bottom of every page.
+        ─────────────────────────────────────────────────────────────── */
         .bottom-bar {
           flex-shrink: 0;
           margin: 0 15.1mm;
-          border-top: none;
           padding-top: 2mm;
           padding-bottom: 7mm;
           display: flex;
@@ -245,6 +303,20 @@ export default function PrintInvoicePage() {
         }
         .bb-info { line-height: 1.55; }
         .bb-r { font-size: 5.9pt; white-space: nowrap; }
+
+        @media print {
+          .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0;
+            padding-left: 15.1mm;
+            padding-right: 15.1mm;
+            background: #fff;
+            z-index: 1;
+          }
+        }
 
         /* ─── SCREEN ONLY ─── */
         @media screen {
@@ -278,13 +350,20 @@ export default function PrintInvoicePage() {
 
       <div className="page">
 
-        {/* ─── HEADER ─── */}
-        <div className="hdr">
-
+        {/* ─── RUNNING HEADER — repeats on every print page ─── */}
+        <div className="running-hdr">
           <div className="hdr-company">
             <span className="hdr-bold">{SENDER_BOLD}</span>
             <span className="hdr-light">&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_LIGHT}</span>
           </div>
+          {/* Invoice reference shown on pages 2+ (page 1 covers this with .hdr) */}
+          <div className="running-hdr-ref">
+            {invoice.invoice_number}{invoice.reference ? ` – ${invoice.reference}` : ''}
+          </div>
+        </div>
+
+        {/* ─── EXTENDED HEADER — page 1 only (normal flow, white bg covers running-hdr) ─── */}
+        <div className="hdr">
 
           <div className="hdr-left">
             <div className="sender-small">{SENDER_BOLD}, {SENDER_ADDR}</div>
@@ -330,9 +409,6 @@ export default function PrintInvoicePage() {
           </div>
         </div>
 
-        {/* ─── SEPARATOR 1 ─── */}
-        <hr className="sep" />
-
         {/* ─── CONTENT ─── */}
         <div className="content">
 
@@ -352,7 +428,7 @@ export default function PrintInvoicePage() {
             </thead>
             <tbody>
               {items.map(item => (
-                <tr key={item.id}>
+                <tr key={item.id} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                   <td className="c1">
                     {item.description}
                     {item.sub_description && (
@@ -367,28 +443,39 @@ export default function PrintInvoicePage() {
                   <td className="c5">{fmtCurrency(item.total)}</td>
                 </tr>
               ))}
-              {acontos.length > 0 && (
-                <tr className="total-row">
-                  <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>Zwischensumme</td>
-                  <td className="c5">{fmtCurrency(subtotal)}</td>
-                </tr>
-              )}
+
+              {/* Totals block — keep together, no page break inside */}
+              <tr className="total-row totals-block">
+                {acontos.length > 0 ? (
+                  <>
+                    <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>Zwischensumme</td>
+                    <td className="c5">{fmtCurrency(subtotal)}</td>
+                  </>
+                ) : (
+                  <>
+                    <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>Gesamtbetrag</td>
+                    <td className="c5">{fmtCurrency(total)}</td>
+                  </>
+                )}
+              </tr>
               {acontos.map(aconto => (
-                <tr key={aconto.id}>
+                <tr key={aconto.id} className="totals-block">
                   <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>
                     Abzgl. Akonto {aconto.invoice_number}
                   </td>
                   <td className="c5">-{fmtCurrency(aconto.total ?? 0)}</td>
                 </tr>
               ))}
-              <tr className="total-row">
-                <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>Gesamtbetrag</td>
-                <td className="c5">{fmtCurrency(total)}</td>
-              </tr>
+              {acontos.length > 0 && (
+                <tr className="total-row totals-block">
+                  <td colSpan={4} style={{ textAlign: 'right', paddingRight: '4mm' }}>Gesamtbetrag</td>
+                  <td className="c5">{fmtCurrency(total)}</td>
+                </tr>
+              )}
             </tbody>
           </table>
 
-          {/* ─── HARDCODED FOOTER NOTES ─── */}
+          {/* ─── FOOTER NOTES — kept together, no page break inside ─── */}
           <div className="fnotes">
             <p>Der Leistungszeitraum, falls nicht anders angegeben, entspricht dem Rechnungsdatum.</p>
             <p className="gap">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
@@ -404,13 +491,13 @@ export default function PrintInvoicePage() {
 
         <div className="spacer" />
 
-        {/* ─── BOTTOM BAR ─── */}
+        {/* ─── BOTTOM BAR — fixed to bottom of every print page ─── */}
         <div className="bottom-bar">
           <div className="bb-info">
             <div>{SENDER_BOLD}, {SENDER_ADDR}</div>
             <div>M {SENDER_PHONE}&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_EMAIL}&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_TAXNR}&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_KUIDNR}</div>
           </div>
-          <div className="bb-r">page 1 of 1</div>
+          <div className="bb-r">{invoice.invoice_number}</div>
         </div>
 
       </div>
