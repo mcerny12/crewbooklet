@@ -1,10 +1,10 @@
 'use client';
 
 import type { Project } from '@/lib/types/models';
-import { Badge } from '@/components/ui/badge';
-import { ProjectStatus } from '@/lib/types/models';
+import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { format } from 'date-fns';
 import { Calendar, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CompactProjectListItemProps {
   project: Project;
@@ -12,61 +12,54 @@ interface CompactProjectListItemProps {
   isSelected?: boolean;
 }
 
-const STATUS_BADGE_COLORS: Record<string, string> = {
-  INQUIRY: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  BUDGET: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  PRODUCTION: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  COMPLETED: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
-  CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  HOLD: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-};
-
 export function CompactProjectListItem({ project, onSelect, isSelected }: CompactProjectListItemProps) {
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return null;
-    try { return format(new Date(dateString), 'MMM d, yyyy'); } catch { return null; }
+  const formatDate = (d: string | null | undefined) => {
+    if (!d) return null;
+    try { return format(new Date(d), 'MMM d, yyyy'); } catch { return null; }
   };
 
   return (
     <div
-      className={`grid grid-cols-[2fr_1fr_1fr_1.5fr] gap-3 px-4 py-2 cursor-pointer transition-colors items-center text-sm border-b ${isSelected ? 'bg-blue-50 dark:bg-blue-950' : 'hover:bg-gray-50 dark:hover:bg-gray-900'}`}
+      role="row"
+      aria-selected={isSelected}
       onClick={() => onSelect(project)}
+      className={cn(
+        'grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
+        'grid-cols-[2fr_1fr_1fr_1.5fr]',
+        isSelected
+          ? 'list-row-selected'
+          : 'hover:bg-muted/40',
+      )}
     >
-      {/* Name & Number */}
+      {/* Name & number */}
       <div className="min-w-0">
-        <div className="font-medium truncate">{project.name}</div>
-        <div className="text-xs text-gray-500 truncate">{project.project_number}</div>
+        <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{project.name}</div>
+        <div className="text-xs text-muted-foreground truncate">{project.project_number}</div>
       </div>
 
       {/* Status */}
       <div className="min-w-0">
-        <Badge className={`text-xs px-2 py-0 ${STATUS_BADGE_COLORS[project.status] ?? 'bg-gray-100 text-gray-800'}`}>
-          {project.status}
-        </Badge>
+        <ProjectStatusBadge status={project.status} />
       </div>
 
-      {/* Dates */}
+      {/* Start date */}
       <div className="min-w-0">
-        {project.start_date ? (
-          <div className="flex items-center gap-1 truncate">
-            <Calendar className="h-3 w-3 shrink-0 text-gray-400" />
-            <span className="truncate text-xs">{formatDate(project.start_date)}</span>
+        {formatDate(project.start_date) ? (
+          <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
+            <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+            <span className="truncate">{formatDate(project.start_date)}</span>
           </div>
-        ) : (
-          <span className="text-xs text-gray-400">—</span>
-        )}
+        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
       </div>
 
       {/* Location */}
       <div className="min-w-0">
         {project.shooting_location ? (
-          <div className="flex items-center gap-1 truncate">
-            <MapPin className="h-3 w-3 shrink-0 text-gray-400" />
-            <span className="truncate text-xs">{project.shooting_location}</span>
+          <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+            <span className="truncate">{project.shooting_location}</span>
           </div>
-        ) : (
-          <span className="text-xs text-gray-400">—</span>
-        )}
+        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
       </div>
     </div>
   );

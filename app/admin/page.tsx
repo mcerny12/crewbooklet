@@ -73,26 +73,26 @@ function UsersTab() {
   if (isLoading) return <p className="text-sm text-gray-500">Loading…</p>;
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 border-b">
+        <thead className="bg-muted/40 border-b">
           <tr>
-            <th className="text-left px-4 py-2 font-medium text-gray-600">Email</th>
-            <th className="text-left px-4 py-2 font-medium text-gray-600">Role</th>
-            <th className="text-left px-4 py-2 font-medium text-gray-600">Joined</th>
-            <th className="text-left px-4 py-2 font-medium text-gray-600">Last sign-in</th>
+            <th className="text-left px-5 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
+            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Role</th>
+            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Joined</th>
+            <th className="text-left px-4 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Last sign-in</th>
           </tr>
         </thead>
         <tbody className="divide-y">
           {users.map(user => (
-            <tr key={user.id} className="hover:bg-gray-50">
-              <td className="px-4 py-2.5">
+            <tr key={user.id} className="hover:bg-muted/20 transition-colors">
+              <td className="px-5 py-3">
                 <span className="font-medium">{user.email}</span>
                 {user.id === currentUserId && (
                   <span className="ml-2 text-xs text-gray-400">(you)</span>
                 )}
               </td>
-              <td className="px-4 py-2.5">
+              <td className="px-4 py-3">
                 {user.id === currentUserId ? (
                   <Badge className={`text-xs ${ROLE_BADGE[user.role]}`}>
                     {UserRoleDisplay[user.role as keyof typeof UserRoleDisplay] ?? user.role}
@@ -108,7 +108,7 @@ function UsersTab() {
                   </Select>
                 )}
               </td>
-              <td className="px-4 py-2.5 text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
+              <td className="px-4 py-3 text-muted-foreground text-[13px] tabular-nums">{new Date(user.createdAt).toLocaleDateString()}</td>
               <td className="px-4 py-2.5 text-gray-500">
                 {user.lastSignIn ? new Date(user.lastSignIn).toLocaleDateString() : '—'}
               </td>
@@ -273,11 +273,17 @@ function JobTypesTab() {
 export default function AdminPage() {
   return (
     <MainLayout>
-      <div className="p-6 max-w-3xl">
-        <div className="flex items-center gap-2 mb-6">
-          <Shield className="h-5 w-5 text-gray-500" />
-          <h1 className="text-xl font-semibold">Admin Panel</h1>
+      <div className="flex h-full flex-col">
+        {/* Page header */}
+        <div className="shrink-0 border-b bg-card px-6 py-5 flex items-center gap-3">
+          <Shield className="h-5 w-5 text-primary" aria-hidden />
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Admin Panel</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">Manage users and job type definitions.</p>
+          </div>
         </div>
+
+      <div className="flex-1 overflow-y-auto p-6 max-w-3xl">
 
         <Tabs defaultValue="users">
           <TabsList className="mb-4">
@@ -293,6 +299,7 @@ export default function AdminPage() {
             <JobTypesTab />
           </TabsContent>
         </Tabs>
+      </div>
       </div>
     </MainLayout>
   );

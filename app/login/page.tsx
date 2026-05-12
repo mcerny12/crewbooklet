@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Film } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,7 +19,6 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     try {
       await signIn(email, password);
       router.push('/');
@@ -29,18 +28,28 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">CrewBooklet</CardTitle>
-          <CardDescription>
-            Sign in to access your crew management system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-95">
+        {/* Brand */}
+        <div className="mb-8 flex flex-col items-center gap-3 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white shadow-md">
+            <Film className="h-6 w-6" aria-hidden />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">CrewBooklet</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Crew, projects, calendars, and invoices in one place.
+            </p>
+          </div>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-2xl border bg-card p-7 shadow-sm">
+          <h2 className="mb-5 text-base font-semibold">Sign in to your account</h2>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-[13px]">Email address</Label>
               <Input
                 id="email"
                 type="email"
@@ -49,10 +58,20 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-10"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-[13px]">Password</Label>
+                <a
+                  href="/forgot-password"
+                  className="text-[12px] text-primary hover:underline"
+                >
+                  Forgot password?
+                </a>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -61,30 +80,33 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                className="h-10"
               />
             </div>
+
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400">
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] text-red-700">
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+
+            <Button
+              type="submit"
+              className="mt-1 w-full h-10"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in…' : 'Sign in'}
             </Button>
-            <div className="text-center text-sm">
-              <a href="/forgot-password" className="text-blue-600 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-            <div className="text-center text-sm">
-              Don&apos;t have an account?{' '}
-              <a href="/signup" className="text-blue-600 hover:underline">
-                Create one
-              </a>
-            </div>
           </form>
-        </CardContent>
-      </Card>
+
+          <p className="mt-5 text-center text-[13px] text-muted-foreground">
+            Don&apos;t have an account?{' '}
+            <a href="/signup" className="text-primary hover:underline font-medium">
+              Create one
+            </a>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

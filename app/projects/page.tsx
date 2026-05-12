@@ -6,6 +6,7 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { CompactProjectListItem } from '@/components/projects/compact-project-list-item';
@@ -28,6 +29,20 @@ function ProjectIdSelector({ onSelect }: { onSelect: (id: string) => void }) {
   return null;
 }
 
+function ListHeader() {
+  return (
+    <div
+      aria-hidden
+      className="sticky top-0 z-10 grid items-center gap-3 bg-muted/60 px-5 py-2.5 border-b backdrop-blur-sm"
+      style={{ gridTemplateColumns: '2fr 1fr 1fr 1.5fr' }}
+    >
+      {['Name & Number', 'Status', 'Start Date', 'Location'].map(col => (
+        <div key={col} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{col}</div>
+      ))}
+    </div>
+  );
+}
+
 export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -39,9 +54,7 @@ export default function ProjectsPage() {
   const fetchProjects = useProjectsStore(state => state.fetchProjects);
   const selectedProjectId = selectedProject?.id ?? null;
 
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
   const handleSelectById = (id: string) => {
     const match = projects.find(p => p.id === id);
@@ -59,59 +72,57 @@ export default function ProjectsPage() {
       <Suspense>
         <ProjectIdSelector onSelect={handleSelectById} />
       </Suspense>
-      <div className="relative flex h-full flex-col">
-        <div className="border-b px-4 py-3 shrink-0 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search projects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-sm"
-              disabled={!!selectedProject}
-            />
-          </div>
-          {canCreate && (
-            <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Project
-            </Button>
-          )}
-        </div>
+      <div className="flex h-full flex-col">
+        <PageHeader
+          title="Projects"
+          subtitle={projects.length > 0 ? `${projects.length} projects` : undefined}
+          search={
+            !selectedProject ? (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <Input
+                  placeholder="Search projects…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9"
+                  aria-label="Search projects"
+                />
+              </div>
+            ) : undefined
+          }
+          actions={
+            canCreate ? (
+              <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
+                <Plus className="h-4 w-4" aria-hidden />
+                Add Project
+              </Button>
+            ) : undefined
+          }
+        />
 
         {selectedProject ? (
           <div className="flex-1 overflow-hidden">
-            <ProjectDetailPanel
-              project={selectedProject}
-              onClose={() => setSelectedProject(null)}
-            />
+            <ProjectDetailPanel project={selectedProject} onClose={() => setSelectedProject(null)} />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-lg text-gray-500">Loading...</div>
-              </div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
             ) : filteredProjects.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-2">
-                <p className="text-lg text-gray-500">
-                  {searchQuery ? 'No projects found' : 'No projects yet'}
+              <div className="flex h-40 flex-col items-center justify-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery ? 'No projects match your search' : 'No projects yet'}
                 </p>
                 {!searchQuery && canCreate && (
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" aria-hidden />
                     Add your first project
                   </Button>
                 )}
               </div>
             ) : (
-              <div>
-                <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr] gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b sticky top-0 z-10">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Name & Number</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Status</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Start Date</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Location</div>
-                </div>
+              <>
+                <ListHeader />
                 {filteredProjects.map(project => (
                   <CompactProjectListItem
                     key={project.id}
@@ -120,16 +131,13 @@ export default function ProjectsPage() {
                     isSelected={selectedProjectId === project.id}
                   />
                 ))}
-              </div>
+              </>
             )}
           </div>
         )}
       </div>
 
-      <AddProjectDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-      />
+      <AddProjectDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </MainLayout>
   );
 }

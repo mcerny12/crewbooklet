@@ -2,6 +2,7 @@
 
 import type { Person } from '@/lib/types/models';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CompactPersonListItemProps {
   person: Person;
@@ -9,8 +10,31 @@ interface CompactPersonListItemProps {
   isSelected: boolean;
 }
 
+/** Generate a stable pastel background for the initials avatar based on the name. */
+function avatarColor(name: string): string {
+  const colors = [
+    'bg-blue-100 text-blue-700',
+    'bg-violet-100 text-violet-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-amber-100 text-amber-700',
+    'bg-rose-100 text-rose-700',
+    'bg-cyan-100 text-cyan-700',
+    'bg-orange-100 text-orange-700',
+    'bg-teal-100 text-teal-700',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
 export function CompactPersonListItem({ person, onSelect, isSelected }: CompactPersonListItemProps) {
-  const primaryJob = person.jobs && person.jobs.length > 0 ? person.jobs[0] : null;
+  const primaryJob = person.jobs?.[0] ?? null;
 
   const handleEmailClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -24,51 +48,74 @@ export function CompactPersonListItem({ person, onSelect, isSelected }: CompactP
 
   return (
     <div
-      className={`grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-4 py-2 cursor-pointer transition-colors items-center text-sm border-b ${
-        isSelected
-          ? 'bg-blue-50 dark:bg-blue-950'
-          : 'hover:bg-gray-50 dark:hover:bg-gray-900'
-      }`}
+      role="row"
+      aria-selected={isSelected}
       onClick={() => onSelect(person)}
+      className={cn(
+        'grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
+        'grid-cols-[32px_2fr_1.5fr_1fr_1fr_1fr]',
+        isSelected
+          ? 'list-row-selected'
+          : 'hover:bg-muted/40',
+      )}
     >
-      {/* Name & Position */}
+      {/* Avatar */}
+      <div
+        aria-hidden
+        className={cn(
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
+          avatarColor(person.name),
+        )}
+      >
+        {initials(person.name)}
+      </div>
+
+      {/* Name & position */}
       <div className="min-w-0">
-        <div className={`font-medium truncate ${isSelected ? 'text-blue-700 dark:text-blue-300' : ''}`}>{person.name}</div>
-        {primaryJob && <div className="text-xs text-gray-500 truncate">{primaryJob}</div>}
+        <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{person.name}</div>
+        {primaryJob && <div className="truncate text-xs text-muted-foreground">{primaryJob}</div>}
       </div>
 
       {/* Email */}
       <div className="min-w-0">
         {person.email ? (
-          <button onClick={handleEmailClick} className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline truncate w-full" title={person.email}>
-            <Mail className="h-3 w-3 shrink-0" />
-            <span className="truncate text-xs">{person.email}</span>
+          <button
+            onClick={handleEmailClick}
+            className="flex items-center gap-1 text-primary hover:underline truncate w-full text-[12.5px]"
+            title={person.email}
+          >
+            <Mail className="h-3 w-3 shrink-0" aria-hidden />
+            <span className="truncate">{person.email}</span>
           </button>
-        ) : <span className="text-xs text-gray-400">—</span>}
+        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
       </div>
 
       {/* Phone */}
       <div className="min-w-0">
         {person.mobile_phone ? (
-          <button onClick={handlePhoneClick} className="flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline truncate w-full" title={person.mobile_phone}>
-            <Phone className="h-3 w-3 shrink-0" />
-            <span className="truncate text-xs">{person.mobile_phone}</span>
+          <button
+            onClick={handlePhoneClick}
+            className="flex items-center gap-1 text-primary hover:underline truncate w-full text-[12.5px]"
+            title={person.mobile_phone}
+          >
+            <Phone className="h-3 w-3 shrink-0" aria-hidden />
+            <span className="truncate">{person.mobile_phone}</span>
           </button>
-        ) : <span className="text-xs text-gray-400">—</span>}
+        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
       </div>
 
       {/* City */}
       <div className="min-w-0">
         {person.address?.city ? (
-          <div className="flex items-center gap-1 truncate">
-            <MapPin className="h-3 w-3 shrink-0 text-gray-400" />
-            <span className="truncate text-xs">{person.address.city}</span>
+          <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+            <span className="truncate">{person.address.city}</span>
           </div>
-        ) : <span className="text-xs text-gray-400">—</span>}
+        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
       </div>
 
       {/* Country */}
-      <div className="min-w-0 truncate text-xs text-gray-500">
+      <div className="truncate text-[12.5px] text-muted-foreground">
         {person.address?.country || '—'}
       </div>
     </div>

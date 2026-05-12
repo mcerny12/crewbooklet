@@ -48,37 +48,57 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+
+  /* Page background: slate-50 off-white */
+  --background: oklch(0.988 0.003 247);
+  --foreground: oklch(0.13 0.016 247);
+
+  /* Cards / surfaces: pure white */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.13 0.016 247);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.13 0.016 247);
+
+  /* Brand blue (≈ #2563eb) */
+  --primary: oklch(0.546 0.245 264.5);
+  --primary-foreground: oklch(1 0 0);
+
+  /* Subtle fill for secondary buttons / chips */
+  --secondary: oklch(0.969 0.007 247);
+  --secondary-foreground: oklch(0.13 0.016 247);
+
+  /* Muted text and backgrounds */
+  --muted: oklch(0.969 0.007 247);
+  --muted-foreground: oklch(0.554 0.024 247);
+
+  /* Hover / accent surfaces */
+  --accent: oklch(0.969 0.007 247);
+  --accent-foreground: oklch(0.13 0.016 247);
+
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+
+  /* Borders: slate-200 */
+  --border: oklch(0.928 0.013 247);
+  --input: oklch(0.928 0.013 247);
+
+  /* Focus ring: brand blue */
+  --ring: oklch(0.546 0.245 264.5);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Sidebar: white panel */
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.13 0.016 247);
+  --sidebar-primary: oklch(0.546 0.245 264.5);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.938 0.049 264.5);
+  --sidebar-accent-foreground: oklch(0.432 0.204 264.5);
+  --sidebar-border: oklch(0.928 0.013 247);
+  --sidebar-ring: oklch(0.546 0.245 264.5);
 }
 
 .dark {
@@ -130,5 +150,57 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* ── Detail-panel form fields ──────────────────────────────────────────────────
+   Inside .detail-form-fields, upgrade compact h-7/text-xs inputs to a more
+   comfortable 34 px / 13 px without touching every className="h-7 text-xs". */
+.detail-form-fields [data-slot="input"],
+.detail-form-fields [data-slot="select-trigger"],
+.detail-form-fields [data-slot="textarea"] {
+  min-height: 34px;
+  font-size: 13px;
+}
+.detail-form-fields [data-slot="label"] {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+}
+
+/* ── List rows ─────────────────────────────────────────────────────────────────
+   Selected row: brand-blue tint + left accent bar */
+.list-row-selected {
+  background-color: oklch(0.938 0.049 264.5 / 0.45) !important;
+  box-shadow: inset 3px 0 0 oklch(0.546 0.245 264.5);
+}
+
+/* ── Section card headers ──────────────────────────────────────────────────── */
+.section-card {
+  background: oklch(1 0 0);
+  border: 1px solid oklch(0.928 0.013 247);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.section-card-header {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid oklch(0.928 0.013 247);
+  background: oklch(0.988 0.003 247);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: oklch(0.554 0.024 247);
+}
+.section-card-body {
+  padding: 12px 14px;
+}
+
+/* ── Transitions ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .transition-colors {
+    transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
   }
 }

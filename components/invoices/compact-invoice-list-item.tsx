@@ -2,7 +2,9 @@
 
 import type { Invoice } from '@/lib/types/models';
 import { InvoiceStatus } from '@/lib/types/models';
+import { InvoiceStatusBadge } from '@/components/ui/status-badge';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface CompactInvoiceListItemProps {
   invoice: Invoice;
@@ -10,64 +12,60 @@ interface CompactInvoiceListItemProps {
   isSelected?: boolean;
 }
 
-const STATUS_BADGE_COLORS: Record<InvoiceStatus, string> = {
-  [InvoiceStatus.Draft]: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  [InvoiceStatus.Sent]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  [InvoiceStatus.Paid]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  [InvoiceStatus.Overdue]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  [InvoiceStatus.Cancelled]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-};
+function formatDate(d: string | null | undefined): string {
+  if (!d) return '—';
+  try { return format(new Date(d), 'dd.MM.yyyy'); } catch { return '—'; }
+}
+
+function formatAmount(n: number | null | undefined): string {
+  if (n == null) return '—';
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(n);
+}
 
 export function CompactInvoiceListItem({ invoice, onSelect, isSelected }: CompactInvoiceListItemProps) {
-  const formatDate = (d: string | null | undefined) => {
-    if (!d) return '—';
-    try { return format(new Date(d), 'dd.MM.yyyy'); } catch { return '—'; }
-  };
-
-  const formatAmount = (n: number | null | undefined) => {
-    if (n == null) return '—';
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
-  };
-
   return (
     <div
-      className={`grid grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-3 px-4 py-2 cursor-pointer transition-colors items-center text-sm border-b ${
-        isSelected
-          ? 'bg-blue-50 dark:bg-blue-950'
-          : 'hover:bg-gray-50 dark:hover:bg-gray-900'
-      }`}
+      role="row"
+      aria-selected={isSelected}
       onClick={() => onSelect(invoice)}
+      className={cn(
+        'grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
+        'grid-cols-[1.5fr_2fr_1fr_1fr_1fr]',
+        isSelected
+          ? 'list-row-selected'
+          : 'hover:bg-muted/40',
+      )}
     >
-      {/* Number */}
+      {/* Invoice number */}
       <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium truncate">{invoice.invoice_number}</span>
+        <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>
+          {invoice.invoice_number}
           {invoice.is_aconto && (
-            <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+            <span className="ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700">
               ACONTO
             </span>
           )}
         </div>
-        <div className="text-xs text-gray-500 truncate">{invoice.reference || '—'}</div>
+        <div className="text-xs text-muted-foreground truncate">{invoice.reference || '—'}</div>
       </div>
 
       {/* Recipient */}
       <div className="min-w-0">
-        <div className="truncate">{invoice.recipient_name || '—'}</div>
-        <div className="text-xs text-gray-500 truncate">{invoice.recipient_city || ''}</div>
+        <div className="truncate text-[13px]">{invoice.recipient_name || '—'}</div>
+        <div className="text-xs text-muted-foreground truncate">{invoice.recipient_city || ''}</div>
       </div>
 
       {/* Date */}
-      <div className="text-xs truncate">{formatDate(invoice.date)}</div>
+      <div className="text-[12.5px] text-muted-foreground tabular-nums">{formatDate(invoice.date)}</div>
 
-      {/* Total */}
-      <div className="text-xs font-medium truncate">{formatAmount(invoice.total)}</div>
+      {/* Total — right-aligned */}
+      <div className="text-[13px] font-semibold tabular-nums text-right">
+        {formatAmount(invoice.total)}
+      </div>
 
       {/* Status */}
       <div>
-        <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_COLORS[invoice.status] ?? STATUS_BADGE_COLORS[InvoiceStatus.Draft]}`}>
-          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-        </span>
+        <InvoiceStatusBadge status={invoice.status} />
       </div>
     </div>
   );

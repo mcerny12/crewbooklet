@@ -35,35 +35,43 @@ export default function Home() {
 
   return (
     <MainLayout>
-      <div className="relative flex h-full flex-col overflow-y-auto">
-        <div className="p-4">
-          {/* Stats Grid - more compact */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+      <div className="flex h-full flex-col overflow-y-auto">
+        {/* Page header */}
+        <div className="shrink-0 border-b bg-card px-6 py-5">
+          <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Overview of your crew, projects, and upcoming dates.
+          </p>
+        </div>
+
+        <div className="flex-1 p-6 space-y-5">
+          {/* KPI stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
-              title="Total People"
+              title="Crew members"
               value={people.length}
               icon={Users}
-              colorClass="text-blue-600"
+              colorClass="bg-blue-50 text-blue-600"
               onClick={() => router.push('/people')}
             />
             <StatCard
-              title="Active Projects"
+              title="Active projects"
               value={activeProjects.length}
               icon={Briefcase}
-              colorClass="text-green-600"
+              colorClass="bg-emerald-50 text-emerald-600"
               onClick={() => router.push('/projects')}
             />
             <StatCard
               title="Organizations"
               value={organizations.length}
               icon={Building2}
-              colorClass="text-orange-600"
+              colorClass="bg-orange-50 text-orange-600"
               onClick={() => router.push('/organizations')}
             />
           </div>
 
-          {/* Content Grid - more compact */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {/* Main content row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-1">
               <BirthdayCalendar people={people} />
             </div>

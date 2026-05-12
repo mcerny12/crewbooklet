@@ -84,56 +84,36 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
   const orgTypeOptions = Object.values(OrganizationJobType).map(t => ({ value: t, label: t }));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
 
-      {/* ── COLUMN HEADER ROW ── */}
-      <div className="grid grid-cols-[24px_2fr_1.5fr_1fr_1fr_1fr] gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b sticky top-0 z-10">
-        <div />
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Name & Type</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Email</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Phone</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Website</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Location</div>
-      </div>
-
-      {/* ── TITLE ROW ── */}
-      <div className="grid grid-cols-[24px_2fr_1.5fr_1fr_1fr_1fr] gap-3 px-4 py-2 border-b items-center bg-white dark:bg-gray-950 shrink-0">
-        <OrgLogo organization={editedOrg} size="sm" />
-        <button onClick={onClose} className="flex items-center gap-1 min-w-0 text-left group">
-          <ChevronLeft className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-blue-600 transition-colors" />
-          <div className="min-w-0">
-            <div className="font-semibold truncate text-base group-hover:text-blue-600 transition-colors">{editedOrg.name}</div>
-            {editedOrg.jobs?.[0] && <div className="text-xs text-gray-500 truncate">{editedOrg.jobs[0]}</div>}
-          </div>
+      {/* ── DETAIL HEADER ── */}
+      <div className="shrink-0 border-b bg-card px-5 py-3 flex items-center gap-3">
+        <button
+          onClick={onClose}
+          aria-label="Back to list"
+          className="flex items-center gap-1 group text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0 group-hover:text-primary transition-colors" />
         </button>
-        <div className="min-w-0">
-          {editedOrg.contact_email
-            ? <a href={`mailto:${editedOrg.contact_email}`} className="flex items-center gap-1 text-blue-600 hover:underline truncate text-xs"><Mail className="h-3 w-3 shrink-0" /><span className="truncate">{editedOrg.contact_email}</span></a>
-            : <span className="text-xs text-gray-400">—</span>}
-        </div>
-        <div className="min-w-0">
-          {editedOrg.contact_phone
-            ? <a href={`tel:${editedOrg.contact_phone}`} className="flex items-center gap-1 text-blue-600 hover:underline truncate text-xs"><Phone className="h-3 w-3 shrink-0" /><span className="truncate">{editedOrg.contact_phone}</span></a>
-            : <span className="text-xs text-gray-400">—</span>}
-        </div>
-        <div className="min-w-0">
-          {editedOrg.website
-            ? <a href={editedOrg.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline truncate text-xs"><Globe className="h-3 w-3 shrink-0" /><span className="truncate">{editedOrg.website.replace(/^https?:\/\/(www\.)?/, '')}</span></a>
-            : <span className="text-xs text-gray-400">—</span>}
-        </div>
-        <div className="min-w-0">
-          {editedOrg.city
-            ? <div className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0 text-gray-400" /><span className="truncate text-xs">{editedOrg.city}{editedOrg.country ? `, ${editedOrg.country}` : ''}</span></div>
-            : <span className="text-xs text-gray-400">—</span>}
+        <OrgLogo organization={editedOrg} size="sm" />
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-[15px] truncate">{editedOrg.name}</div>
+          <div className="flex items-center gap-3 mt-0.5 text-[12px] text-muted-foreground flex-wrap">
+            {editedOrg.jobs?.[0] && <span>{editedOrg.jobs[0]}</span>}
+            {editedOrg.contact_email && <a href={`mailto:${editedOrg.contact_email}`} className="flex items-center gap-1 hover:text-primary hover:underline"><Mail className="h-3 w-3" />{editedOrg.contact_email}</a>}
+            {editedOrg.contact_phone && <a href={`tel:${editedOrg.contact_phone}`} className="flex items-center gap-1 hover:text-primary hover:underline"><Phone className="h-3 w-3" />{editedOrg.contact_phone}</a>}
+            {editedOrg.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{editedOrg.city}{editedOrg.country ? `, ${editedOrg.country}` : ''}</span>}
+          </div>
         </div>
       </div>
 
       {/* ── INFO SECTION ── */}
-      <div className="border-b px-4 py-3 grid grid-cols-3 gap-4 shrink-0">
+      <div className="border-b px-4 py-3 grid grid-cols-3 gap-3 shrink-0">
 
         {/* Basic Info */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Basic Information</h3>
+        <div className="section-card">
+          <div className="section-card-header">Basic Information</div>
+          <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Organization Name</Label>
             <div className="flex items-center gap-1.5">
@@ -149,11 +129,13 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             <Input value={editedOrg.website || ''} onChange={e => updateField('website', e.target.value || null)} onBlur={() => { const v = (editedOrg.website || '').trim(); if (v && !v.startsWith('http')) updateField('website', 'https://' + v); }} className="h-7 text-xs" />
           </div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Notes</Label><Textarea value={editedOrg.notes || ''} onChange={e => updateField('notes', e.target.value || null)} rows={3} className="text-xs resize-none" /></div>
+          </div>
         </div>
 
         {/* Address */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Main Address</h3>
+        <div className="section-card">
+          <div className="section-card-header">Main Address</div>
+          <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Street</Label><Input value={editedOrg.street || ''} onChange={e => updateField('street', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Street 2</Label><Input value={editedOrg.street2 || ''} onChange={e => updateField('street2', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="grid grid-cols-[70px_1fr] gap-1">
@@ -186,15 +168,18 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
               </div>
             )}
           </div>
+          </div>
         </div>
 
         {/* Financial */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Financial</h3>
+        <div className="section-card">
+          <div className="section-card-header">Financial</div>
+          <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">VAT Number</Label><Input value={editedOrg.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', vat_number: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Bank Name</Label><Input value={editedOrg.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', bank_name: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedOrg.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">BIC / SWIFT</Label><Input value={editedOrg.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', bic: e.target.value || null })} className="h-7 text-xs" /></div>
+          </div>
         </div>
       </div>
 
@@ -203,7 +188,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
 
         {/* People */}
         <div className="px-4 py-2 border-b flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase text-gray-500">People</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">People</span>
           {!addingPerson && (
             <Button size="sm" variant="ghost" onClick={() => setAddingPerson(true)} className="h-6 text-xs px-2">
               <Plus className="h-3 w-3 mr-1" />Add Person
@@ -252,7 +237,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
 
         {/* Projects */}
         <div className="px-4 py-2 border-b flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase text-gray-500">Projects</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Projects</span>
           {!addingProject && (
             <Button size="sm" variant="ghost" onClick={() => setAddingProject(true)} className="h-6 text-xs px-2">
               <Plus className="h-3 w-3 mr-1" />Link Project
@@ -301,10 +286,10 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
       </div>
 
       {/* ── FOOTER ── */}
-      <div className="border-t bg-gray-50 dark:bg-gray-900 px-4 py-1.5 flex items-center justify-between shrink-0">
+      <div className="border-t bg-muted/40 px-5 py-2 flex items-center justify-between shrink-0">
         <EntryMetadata createdAt={organization.created_at} updatedAt={organization.updated_at} userId={organization.user_id} />
-        <Button variant="ghost" size="sm" onClick={handleDelete} className="h-6 w-6 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" title="Delete Organization">
-          <Trash2 className="h-3 w-3" />
+        <Button variant="ghost" size="icon-sm" onClick={handleDelete} className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10" aria-label="Delete organization">
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>

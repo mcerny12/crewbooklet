@@ -90,50 +90,35 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
 
-      {/* ── COLUMN HEADER ROW ── */}
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b sticky top-0 z-10">
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Name & Position</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Email</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Phone</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">City</div>
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Country</div>
-      </div>
-
-      {/* ── TITLE ROW ── */}
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-4 py-2 border-b items-center bg-white dark:bg-gray-950 shrink-0">
-        <button onClick={onClose} className="flex items-center gap-1 min-w-0 text-left group">
-          <ChevronLeft className="h-4 w-4 shrink-0 text-gray-400 group-hover:text-blue-600 transition-colors" />
-          <div className="min-w-0">
-            <div className="font-semibold truncate text-base group-hover:text-blue-600 transition-colors">{editedPerson.name}</div>
-            {editedPerson.jobs?.[0] && <div className="text-xs text-gray-500 truncate">{editedPerson.jobs[0]}</div>}
-          </div>
+      {/* ── DETAIL HEADER ── */}
+      <div className="shrink-0 border-b bg-card px-5 py-3 flex items-center gap-4">
+        <button
+          onClick={onClose}
+          aria-label="Back to list"
+          className="flex items-center gap-1 group text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0 group-hover:text-primary transition-colors" />
         </button>
-        <div className="min-w-0">
-          {editedPerson.email
-            ? <a href={`mailto:${editedPerson.email}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-blue-600 hover:underline truncate text-xs"><Mail className="h-3 w-3 shrink-0" /><span className="truncate">{editedPerson.email}</span></a>
-            : <span className="text-xs text-gray-400">—</span>}
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-[15px] truncate">{editedPerson.name}</div>
+          <div className="flex items-center gap-3 mt-0.5 text-[12px] text-muted-foreground flex-wrap">
+            {editedPerson.jobs?.[0] && <span>{editedPerson.jobs[0]}</span>}
+            {editedPerson.email && <a href={`mailto:${editedPerson.email}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 hover:text-primary hover:underline"><Mail className="h-3 w-3" />{editedPerson.email}</a>}
+            {editedPerson.mobile_phone && <a href={`tel:${editedPerson.mobile_phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 hover:text-primary hover:underline"><Phone className="h-3 w-3" />{editedPerson.mobile_phone}</a>}
+            {editedPerson.address?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{editedPerson.address.city}{editedPerson.address.country ? `, ${editedPerson.address.country}` : ''}</span>}
+          </div>
         </div>
-        <div className="min-w-0">
-          {editedPerson.mobile_phone
-            ? <a href={`tel:${editedPerson.mobile_phone}`} onClick={e => e.stopPropagation()} className="flex items-center gap-1 text-blue-600 hover:underline truncate text-xs"><Phone className="h-3 w-3 shrink-0" /><span className="truncate">{editedPerson.mobile_phone}</span></a>
-            : <span className="text-xs text-gray-400">—</span>}
-        </div>
-        <div className="min-w-0">
-          {editedPerson.address?.city
-            ? <div className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0 text-gray-400" /><span className="truncate text-xs">{editedPerson.address.city}</span></div>
-            : <span className="text-xs text-gray-400">—</span>}
-        </div>
-        <div className="min-w-0 truncate text-xs text-gray-500">{editedPerson.address?.country || '—'}</div>
       </div>
 
       {/* ── INFO SECTION ── */}
-      <div className="border-b px-4 py-3 grid grid-cols-3 gap-4 shrink-0">
+      <div className="border-b px-4 py-3 grid grid-cols-3 gap-3 shrink-0">
 
         {/* Personal */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Personal</h3>
+        <div className="section-card">
+          <div className="section-card-header">Personal</div>
+          <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Full Name</Label><Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Date of Birth</Label><Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5">
@@ -150,11 +135,13 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Mobile</Label><Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Work Phone</Label><Input type="tel" value={editedPerson.work_phone || ''} onChange={e => updateField('work_phone', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Website</Label><Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className="h-7 text-xs" /></div>
+          </div>
         </div>
 
         {/* Address */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Address</h3>
+        <div className="section-card">
+          <div className="section-card-header">Address</div>
+          <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Street</Label><Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Street 2</Label><Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="grid grid-cols-[70px_1fr] gap-1">
@@ -171,11 +158,14 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
             />
           </div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Notes</Label><Textarea value={editedPerson.notes || ''} onChange={e => updateField('notes', e.target.value || null)} rows={3} className="text-xs resize-none" /></div>
+          </div>
         </div>
 
         {/* Professional + Financial */}
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5">Professional</h3>
+        <div className="space-y-3">
+          <div className="section-card">
+            <div className="section-card-header">Professional</div>
+            <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
             <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)}placeholder="Select jobs…" maxSelections={3} />
@@ -184,11 +174,17 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
             <Label className="text-[10px] text-gray-500">Languages</Label>
             <MultiSelect options={languageOptions} selected={editedPerson.languages || []} onChange={langs => updateField('languages', langs as Language[])} placeholder="Select languages…" />
           </div>
-          <h3 className="text-[10px] font-semibold uppercase text-gray-500 border-b pb-0.5 pt-2">Financial</h3>
+            </div>
+          </div>
+          <div className="section-card">
+            <div className="section-card-header">Financial</div>
+            <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">VAT Number</Label><Input value={editedPerson.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', vat_number: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Bank Name</Label><Input value={editedPerson.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', bank_name: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">BIC / SWIFT</Label><Input value={editedPerson.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', bic: e.target.value || null })} className="h-7 text-xs" /></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -197,7 +193,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
 
         {/* Organization */}
         <div className="px-4 py-2 border-b flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase text-gray-500">Organization</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Organization</span>
           {!connectedOrg && !addingOrg && (
             <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
               <Plus className="h-3 w-3 mr-1" />Add Organization
@@ -244,7 +240,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
 
         {/* Projects */}
         <div className="px-4 py-2 border-b flex items-center justify-between shrink-0">
-          <span className="text-xs font-semibold uppercase text-gray-500">Projects</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Projects</span>
           {!addingToProject && (
             <Button size="sm" variant="ghost" onClick={() => setAddingToProject(true)} className="h-6 text-xs px-2">
               <Plus className="h-3 w-3 mr-1" />Assign to Project
@@ -310,10 +306,16 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
       </div>
 
       {/* ── FOOTER ── */}
-      <div className="border-t bg-gray-50 dark:bg-gray-900 px-4 py-1.5 flex items-center justify-between shrink-0">
+      <div className="border-t bg-muted/40 px-5 py-2 flex items-center justify-between shrink-0">
         <EntryMetadata createdAt={person.created_at} updatedAt={person.updated_at} userId={person.user_id} />
-        <Button variant="ghost" size="sm" onClick={handleDelete} className="h-6 w-6 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" title="Delete Person">
-          <Trash2 className="h-3 w-3" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleDelete}
+          className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+          aria-label="Delete person"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>

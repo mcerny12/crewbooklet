@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import type { Project } from '@/lib/types/models';
-import { ProjectStatus, ProjectStatusColors } from '@/lib/types/models';
-import { format } from 'date-fns';
 import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ProjectStatusBadge } from '@/components/ui/status-badge';
+import type { Project } from '@/lib/types/models';
+import { ProjectStatus } from '@/lib/types/models';
+import { format } from 'date-fns';
 
 interface RecentProjectsProps {
   projects: Project[];
@@ -19,61 +18,61 @@ export function RecentProjects({ projects }: RecentProjectsProps) {
 
   const recentProjects = projects
     .filter(p => p.status === ProjectStatus.Production || p.status === ProjectStatus.Budget)
-    .slice(0, 5);
+    .slice(0, 6);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between p-3">
-        <CardTitle className="text-sm font-semibold">Current Projects</CardTitle>
+    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b">
+        <h2 className="text-[14px] font-semibold">Active Projects</h2>
         <Link href="/projects">
-          <Button variant="outline" size="sm" className="h-7 text-xs">
-            View All
-            <ArrowRight className="ml-1 h-3 w-3" />
+          <Button variant="ghost" size="sm" className="h-7 text-[13px] gap-1 text-muted-foreground hover:text-foreground">
+            View all
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Button>
         </Link>
-      </CardHeader>
-      <CardContent className="p-3 pt-0">
-        {recentProjects.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-gray-500 text-sm mb-2">No active projects</p>
-            <Link href="/projects">
-              <Button variant="outline" size="sm">Create Project</Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-2">
+      </div>
+
+      {/* Table */}
+      {recentProjects.length === 0 ? (
+        <div className="py-10 text-center">
+          <p className="text-sm text-muted-foreground">No active projects</p>
+          <Link href="/projects" className="mt-2 inline-block">
+            <Button variant="outline" size="sm">Create project</Button>
+          </Link>
+        </div>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/40">
+              <th className="px-5 py-2.5 text-left text-[11px] font-semibold text-muted-foreground">Project</th>
+              <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-muted-foreground">Status</th>
+              <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-muted-foreground hidden sm:table-cell">Start</th>
+              <th className="px-3 py-2.5 text-left text-[11px] font-semibold text-muted-foreground hidden md:table-cell">Number</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
             {recentProjects.map((project) => (
-              <div
+              <tr
                 key={project.id}
                 onClick={() => router.push(`/projects?id=${project.id}`)}
-                className="flex items-center justify-between p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                className="cursor-pointer hover:bg-muted/30 transition-colors"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm truncate">{project.name}</span>
-                    <Badge variant="secondary" className="text-xs shrink-0">
-                      {project.project_number}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-                    <Badge
-                      variant="outline"
-                      className={`text-xs px-1 py-0 bg-${ProjectStatusColors[project.status as ProjectStatus]}-100`}
-                    >
-                      {project.status}
-                    </Badge>
-                    {project.start_date && (
-                      <span className="text-xs">
-                        {format(new Date(project.start_date), 'MMM d')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+                <td className="px-5 py-3 font-medium truncate max-w-0 w-full">{project.name}</td>
+                <td className="px-3 py-3 whitespace-nowrap">
+                  <ProjectStatusBadge status={project.status} />
+                </td>
+                <td className="px-3 py-3 text-muted-foreground text-[13px] whitespace-nowrap hidden sm:table-cell">
+                  {project.start_date ? format(new Date(project.start_date), 'MMM d, yyyy') : '—'}
+                </td>
+                <td className="px-3 py-3 text-muted-foreground text-[13px] hidden md:table-cell">
+                  {project.project_number}
+                </td>
+              </tr>
             ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }

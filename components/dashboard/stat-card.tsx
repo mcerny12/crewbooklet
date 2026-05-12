@@ -1,35 +1,45 @@
 'use client';
 
 import { LucideIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
+  /** Tailwind text-* colour class for the icon badge background */
   colorClass?: string;
   onClick?: () => void;
 }
 
-export function StatCard({ title, value, icon: Icon, colorClass = 'text-blue-600', onClick }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  icon: Icon,
+  colorClass = 'bg-blue-50 text-blue-600',
+  onClick,
+}: StatCardProps) {
   return (
-    <Card
-      className={onClick ? 'cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]' : ''}
+    <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => (e.key === 'Enter' || e.key === ' ') && onClick() : undefined}
       onClick={onClick}
+      className={cn(
+        'flex items-center gap-4 rounded-xl border bg-card px-5 py-4 shadow-sm',
+        onClick && 'cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+      )}
     >
-      <CardContent className="p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              {title}
-            </p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-          </div>
-          <div className={`${colorClass}`}>
-            <Icon className="h-6 w-6" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Icon badge */}
+      <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', colorClass)}>
+        <Icon className="h-5 w-5" aria-hidden />
+      </div>
+
+      {/* Text */}
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-muted-foreground">{title}</p>
+        <p className="mt-0.5 text-2xl font-bold tabular-nums leading-none">{value}</p>
+      </div>
+    </div>
   );
 }

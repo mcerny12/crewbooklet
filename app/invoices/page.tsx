@@ -5,12 +5,32 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { useInvoiceStore } from '@/lib/stores/invoice-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { CompactInvoiceListItem } from '@/components/invoices/compact-invoice-list-item';
 import { AddInvoiceDialog } from '@/components/invoices/add-invoice-dialog';
 import { InvoiceDetailPanel } from '@/components/invoices/invoice-detail-panel';
 import type { Invoice } from '@/lib/types/models';
+
+function ListHeader() {
+  return (
+    <div
+      aria-hidden
+      className="sticky top-0 z-10 grid items-center gap-3 bg-muted/60 px-5 py-2.5 border-b backdrop-blur-sm"
+      style={{ gridTemplateColumns: '1.5fr 2fr 1fr 1fr 1fr' }}
+    >
+      {['Number', 'Recipient', 'Date', 'Total', 'Status'].map((col, i) => (
+        <div
+          key={col}
+          className={`text-[11px] font-semibold text-muted-foreground uppercase tracking-wide ${i === 3 ? 'text-right' : ''}`}
+        >
+          {col}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,25 +62,33 @@ export default function InvoicesPage() {
 
   return (
     <MainLayout>
-      <div className="relative flex h-full flex-col">
-        <div className="border-b px-4 py-3 shrink-0 flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search invoices..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-sm"
-              disabled={!!selectedInvoice}
-            />
-          </div>
-          {canCreate && (
-            <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              New Invoice
-            </Button>
-          )}
-        </div>
+      <div className="flex h-full flex-col">
+        <PageHeader
+          title="Invoices"
+          subtitle={invoices.length > 0 ? `${invoices.length} invoices` : undefined}
+          search={
+            !selectedInvoice ? (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <Input
+                  placeholder="Search invoices…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9"
+                  aria-label="Search invoices"
+                />
+              </div>
+            ) : undefined
+          }
+          actions={
+            canCreate ? (
+              <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
+                <Plus className="h-4 w-4" aria-hidden />
+                New Invoice
+              </Button>
+            ) : undefined
+          }
+        />
 
         {selectedInvoice ? (
           <div className="flex-1 overflow-hidden">
@@ -71,32 +99,24 @@ export default function InvoicesPage() {
             />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-lg text-gray-500">Loading...</div>
-              </div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
             ) : filtered.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-2">
-                <p className="text-lg text-gray-500">
-                  {searchQuery ? 'No invoices found' : 'No invoices yet'}
+              <div className="flex h-40 flex-col items-center justify-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {searchQuery ? 'No invoices match your search' : 'No invoices yet'}
                 </p>
                 {!searchQuery && canCreate && (
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" aria-hidden />
                     Create your first invoice
                   </Button>
                 )}
               </div>
             ) : (
-              <div>
-                <div className="grid grid-cols-[1.5fr_2fr_1fr_1fr_1fr] gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b sticky top-0 z-10">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Number</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Recipient</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Date</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Total</div>
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">Status</div>
-                </div>
+              <>
+                <ListHeader />
                 {filtered.map(inv => (
                   <CompactInvoiceListItem
                     key={inv.id}
@@ -105,7 +125,7 @@ export default function InvoicesPage() {
                     isSelected={selectedInvoiceId === inv.id}
                   />
                 ))}
-              </div>
+              </>
             )}
           </div>
         )}

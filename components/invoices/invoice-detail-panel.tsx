@@ -274,25 +274,25 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden bg-background">
 
       {/* Toolbar */}
-      <div className="flex items-center gap-2 border-b px-4 py-2 shrink-0">
-        <Button variant="ghost" size="sm" onClick={onClose} className="gap-1 text-xs">
-          <ChevronLeft className="h-3 w-3" />Back
+      <div className="flex items-center gap-2 border-b bg-card px-5 py-3 shrink-0">
+        <Button variant="ghost" size="sm" onClick={onClose} className="gap-1.5 text-[13px] text-muted-foreground" aria-label="Back to invoices">
+          <ChevronLeft className="h-4 w-4" />Back
         </Button>
         <div className="flex-1" />
-        <span className="text-xs text-gray-400">{isSaving ? 'Saving…' : 'Saved'}</span>
-        <Button variant="outline" size="sm" onClick={() => window.open(`/invoices/${edited.id}/print`, '_blank')} className="gap-1 text-xs">
-          <Printer className="h-3 w-3" />Print / PDF
+        <span className="text-[12px] text-muted-foreground/60">{isSaving ? 'Saving…' : 'Saved'}</span>
+        <Button variant="outline" size="sm" onClick={() => window.open(`/invoices/${edited.id}/print`, '_blank')} className="gap-1.5 h-8 text-[13px]">
+          <Printer className="h-3.5 w-3.5" />Print / PDF
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700 text-xs gap-1">
-          <Trash2 className="h-3 w-3" />Delete
+        <Button variant="ghost" size="sm" onClick={handleDelete} className="text-muted-foreground/50 hover:text-destructive gap-1.5 h-8 text-[13px]" aria-label="Delete invoice">
+          <Trash2 className="h-3.5 w-3.5" />Delete
         </Button>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-5 space-y-5 detail-form-fields">
 
         {/* Number + status + aconto flag */}
         <div className="flex items-center gap-4 flex-wrap">
