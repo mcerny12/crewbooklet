@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
-import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
@@ -12,9 +11,9 @@ import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { CompactPersonListItem } from '@/components/people/compact-person-list-item';
 import { AddPersonDialog } from '@/components/people/add-person-dialog';
-import { PersonDetailDrawer } from '@/components/people/person-detail-drawer';
-import { ProjectDetailDrawer } from '@/components/projects/project-detail-drawer';
-import { OrganizationDetailDrawer } from '@/components/organizations/organization-detail-drawer';
+import { PersonDetailPane } from '@/components/people/person-detail-drawer';
+import { ProjectDetailPanel } from '@/components/projects/project-detail-panel';
+import { OrgDetailPane } from '@/components/organizations/organization-detail-drawer';
 import type { Person, Project, Organization } from '@/lib/types/models';
 
 type DrillTarget = { type: 'project'; item: Project } | { type: 'org'; item: Organization };
@@ -39,7 +38,7 @@ export default function PeoplePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { canCreate } = usePermissions();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
 
   const people = usePeopleStore(state => state.people);
@@ -47,9 +46,8 @@ export default function PeoplePage() {
   const fetchPeople = usePeopleStore(state => state.fetchPeople);
   const searchPeople = usePeopleStore(state => state.searchPeople);
   const fetchProjects = useProjectsStore(state => state.fetchProjects);
-  const fetchOrganizations = useOrganizationsStore(state => state.fetchOrganizations);
 
-  useEffect(() => { fetchPeople(); fetchProjects(); fetchOrganizations(); }, [fetchPeople, fetchProjects, fetchOrganizations]);
+  useEffect(() => { fetchPeople(); fetchProjects(); }, [fetchPeople, fetchProjects]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -58,20 +56,10 @@ export default function PeoplePage() {
 
   const handleSelect = (person: Person) => {
     setDrillTarget(null);
-    setSelectedPersonId(prev => prev === person.id ? null : person.id);
+    setSelectedPerson(prev => prev?.id === person.id ? null : person);
   };
 
-  // `people` already reflects the search filter (people-store mutates state via searchPeople)
-  const filteredPeople = people;
-  const selectedIndex = useMemo(
-    () => (selectedPersonId ? filteredPeople.findIndex(p => p.id === selectedPersonId) : -1),
-    [filteredPeople, selectedPersonId],
-  );
-  const selectedPerson = selectedIndex >= 0 ? filteredPeople[selectedIndex] : null;
-  const hasPrev = selectedIndex > 0;
-  const hasNext = selectedIndex >= 0 && selectedIndex < filteredPeople.length - 1;
-  const goPrev = () => { if (hasPrev) setSelectedPersonId(filteredPeople[selectedIndex - 1].id); };
-  const goNext = () => { if (hasNext) setSelectedPersonId(filteredPeople[selectedIndex + 1].id); };
+  const selectedPersonId = selectedPerson?.id ?? null;
 
   return (
     <MainLayout>
@@ -101,64 +89,53 @@ export default function PeoplePage() {
           }
         />
 
-        <div className="flex-1 overflow-y-auto min-h-0">
-          {isLoading ? (
-            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
-          ) : people.length === 0 ? (
-            <div className="flex h-40 flex-col items-center justify-center gap-3">
-              <p className="text-sm text-muted-foreground">No people found</p>
-              {canCreate && (
-                <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                  Add your first person
-                </Button>
-              )}
-            </div>
-          ) : (
-            <>
-              <ListHeader />
-              {people.map((person) => (
-                <CompactPersonListItem
-                  key={person.id}
-                  person={person}
-                  onSelect={handleSelect}
-                  isSelected={selectedPersonId === person.id}
-                />
-              ))}
-            </>
-          )}
-        </div>
+        {selectedPerson && drillTarget ? (
+          <div className="flex-1 overflow-hidden">
+            {drillTarget.type === 'project' ? (
+              <ProjectDetailPanel project={drillTarget.item} onClose={() => setDrillTarget(null)} />
+            ) : (
+              <OrgDetailPane organization={drillTarget.item} onClose={() => setDrillTarget(null)} />
+            )}
+          </div>
+        ) : selectedPerson ? (
+          <div className="flex-1 overflow-hidden">
+            <PersonDetailPane
+              person={selectedPerson}
+              onClose={() => setSelectedPerson(null)}
+              onOpenProject={(p) => setDrillTarget({ type: 'project', item: p })}
+              onOpenOrg={(o) => setDrillTarget({ type: 'org', item: o })}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {isLoading ? (
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+            ) : people.length === 0 ? (
+              <div className="flex h-40 flex-col items-center justify-center gap-3">
+                <p className="text-sm text-muted-foreground">No people found</p>
+                {canCreate && (
+                  <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+                    Add your first person
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <ListHeader />
+                {people.map((person) => (
+                  <CompactPersonListItem
+                    key={person.id}
+                    person={person}
+                    onSelect={handleSelect}
+                    isSelected={selectedPersonId === person.id}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
-
-      {selectedPerson && (
-        <PersonDetailDrawer
-          person={selectedPerson}
-          open={!!selectedPerson}
-          onOpenChange={(v) => { if (!v) setSelectedPersonId(null); }}
-          onPrev={goPrev}
-          onNext={goNext}
-          hasPrev={hasPrev}
-          hasNext={hasNext}
-          onOpenProject={(p) => setDrillTarget({ type: 'project', item: p })}
-          onOpenOrg={(o) => setDrillTarget({ type: 'org', item: o })}
-        />
-      )}
-
-      {drillTarget?.type === 'project' && (
-        <ProjectDetailDrawer
-          project={drillTarget.item}
-          open={true}
-          onOpenChange={(v) => { if (!v) setDrillTarget(null); }}
-        />
-      )}
-
-      {drillTarget?.type === 'org' && (
-        <OrganizationDetailDrawer
-          organization={drillTarget.item}
-          open={true}
-          onOpenChange={(v) => { if (!v) setDrillTarget(null); }}
-        />
-      )}
 
       <AddPersonDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
     </MainLayout>

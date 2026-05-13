@@ -29,8 +29,6 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
   const [searchCountry, setSearchCountry] = useState('');
   // Multi-select: set of selected person IDs
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  // Per-person role overrides (free-text; defaults to primary job)
-  const [roleOverrides, setRoleOverrides] = useState<Record<string, string>>({});
   const [previewPerson, setPreviewPerson] = useState<Person | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -55,33 +53,7 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
   const togglePerson = (person: Person) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(person.id)) {
-        next.delete(person.id);
-        setRoleOverrides(prevRoles => {
-          const nextRoles = { ...prevRoles };
-          delete nextRoles[person.id];
-          return nextRoles;
-        });
-      } else {
-        next.add(person.id);
-        setRoleOverrides(prevRoles => ({
-          ...prevRoles,
-          [person.id]: person.jobs?.[0] ?? '',
-        }));
-      }
-      return next;
-    });
-  };
-
-  const deselectPerson = (personId: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.delete(personId);
-      return next;
-    });
-    setRoleOverrides(prev => {
-      const next = { ...prev };
-      delete next[personId];
+      if (next.has(person.id)) { next.delete(person.id); } else { next.add(person.id); }
       return next;
     });
   };
@@ -93,7 +65,6 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
     setSearchCity('');
     setSearchCountry('');
     setSelectedIds(new Set());
-    setRoleOverrides({});
   };
 
   const handleAdd = async () => {
@@ -102,14 +73,12 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
     const selected = people.filter(p => selectedIds.has(p.id));
     await Promise.all(selected.map(person => {
       const primaryJob = person.jobs?.[0] ?? null;
-      const override = roleOverrides[person.id]?.trim();
-      const role = override && override.length > 0 ? override : primaryJob;
-      const dept = role ? (getDepartmentForJob(role) ?? null) : null;
+      const dept = primaryJob ? getDepartmentForJob(primaryJob) : null;
       return addAssignment({
         project_id: projectId,
         person_id: person.id,
         organization_id: null,
-        role: role ?? null,
+        role: primaryJob,
         department: dept,
         availability: AssignmentStatus.Anfragen,
         notes: null,
@@ -244,34 +213,6 @@ export function AddCrewDialog({ projectId, open, onOpenChange }: AddCrewDialogPr
             </div>
           )}
         </div>
-
-        {/* Selected crew — per-person role override */}
-        {selectedCount > 0 && (
-          <div className="px-6 pb-4">
-            <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1.5">Selected crew</div>
-            <div className="border rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-              {people.filter(p => selectedIds.has(p.id)).map(person => (
-                <div key={person.id} className="flex items-center gap-2 px-3 py-1.5">
-                  <span className="text-xs font-medium truncate max-w-50" title={person.name}>{person.name}</span>
-                  <Input
-                    value={roleOverrides[person.id] ?? ''}
-                    onChange={e => setRoleOverrides(prev => ({ ...prev, [person.id]: e.target.value }))}
-                    placeholder="Role (free-text)"
-                    className="h-7 text-xs flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => deselectPerson(person.id)}
-                    className="shrink-0 h-6 w-6 rounded flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    title="Remove from selection"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="px-6 py-5 border-t flex items-center justify-between gap-3">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Person, Organization, Project } from '@/lib/types/models';
-import { RightSlideOver } from '@/components/ui/right-slide-over';
+import { BottomDrawer } from '@/components/ui/bottom-drawer';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -328,42 +328,13 @@ interface PersonDetailDrawerProps {
   person: Person;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-  hasPrev?: boolean;
-  hasNext?: boolean;
-  onOpenProject?: (project: Project) => void;
-  onOpenOrg?: (org: Organization) => void;
 }
 
-export function PersonDetailDrawer({
-  person,
-  open,
-  onOpenChange,
-  onPrev,
-  onNext,
-  hasPrev,
-  hasNext,
-  onOpenProject,
-  onOpenOrg,
-}: PersonDetailDrawerProps) {
+export function PersonDetailDrawer({ person, open, onOpenChange }: PersonDetailDrawerProps) {
   return (
-    <RightSlideOver
-      open={open}
-      onOpenChange={onOpenChange}
-      title={person.name}
-      onPrev={onPrev}
-      onNext={onNext}
-      hasPrev={hasPrev}
-      hasNext={hasNext}
-    >
-      <PersonDetailContent
-        person={person}
-        onClose={() => onOpenChange(false)}
-        onOpenProject={onOpenProject}
-        onOpenOrg={onOpenOrg}
-      />
-    </RightSlideOver>
+    <BottomDrawer open={open} onOpenChange={onOpenChange}>
+      <PersonDetailContent person={person} onClose={() => onOpenChange(false)} />
+    </BottomDrawer>
   );
 }
 

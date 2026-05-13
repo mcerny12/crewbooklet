@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import type { Project, Organization } from '@/lib/types/models';
-import { RightSlideOver } from '@/components/ui/right-slide-over';
+import { BottomDrawer } from '@/components/ui/bottom-drawer';
 import { DetailTabs } from '@/components/ui/detail-tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,13 +24,9 @@ interface ProjectDetailDrawerProps {
   project: Project;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-  hasPrev?: boolean;
-  hasNext?: boolean;
 }
 
-export function ProjectDetailDrawer({ project, open, onOpenChange, onPrev, onNext, hasPrev, hasNext }: ProjectDetailDrawerProps) {
+export function ProjectDetailDrawer({ project, open, onOpenChange }: ProjectDetailDrawerProps) {
   const [activeTab, setActiveTab] = useState('information');
   const [editedProject, setEditedProject] = useState<Project>(project);
   const [showAddCrewDialog, setShowAddCrewDialog] = useState(false);
@@ -124,15 +120,7 @@ export function ProjectDetailDrawer({ project, open, onOpenChange, onPrev, onNex
 
   return (
     <>
-      <RightSlideOver
-        open={open}
-        onOpenChange={onOpenChange}
-        title={project.name}
-        onPrev={onPrev}
-        onNext={onNext}
-        hasPrev={hasPrev}
-        hasNext={hasNext}
-      >
+      <BottomDrawer open={open} onOpenChange={onOpenChange}>
         <DetailTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
         <div className="flex flex-col flex-1 min-h-0">
@@ -386,7 +374,7 @@ export function ProjectDetailDrawer({ project, open, onOpenChange, onPrev, onNex
           open={showAddCrewDialog}
           onOpenChange={setShowAddCrewDialog}
         />
-      </RightSlideOver>
+      </BottomDrawer>
 
       {/* Organization detail — opened by clicking the external link icon */}
       {orgForDetail && (
