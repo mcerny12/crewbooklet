@@ -106,6 +106,10 @@ All status badges should use `ProjectStatusBadge`, `InvoiceStatusBadge`, or `Ava
 
 ## UI rules
 
+### Never invent subheadlines or taglines
+
+Do not add subtitles, taglines, or descriptive subheadlines (e.g. "Production management" under the brand, or "Overview of your crew, projects, and upcoming dates." under "Dashboard") that aren't explicitly requested or already present in the design. If a page or component only has a title in the spec, render only the title. Generated filler copy is removed on sight.
+
 ### No plain dropdowns for large option lists
 
 **Never** use `<Select>` / `<SelectContent>` for lists with more than ~8 options.  

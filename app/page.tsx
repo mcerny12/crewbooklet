@@ -39,9 +39,6 @@ export default function Home() {
         {/* Page header */}
         <div className="shrink-0 border-b bg-card px-6 py-5">
           <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Overview of your crew, projects, and upcoming dates.
-          </p>
         </div>
 
         <div className="flex-1 p-6 space-y-5">

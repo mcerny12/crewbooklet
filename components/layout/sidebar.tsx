@@ -252,7 +252,6 @@ function SidebarBody({
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold tracking-tight">CrewBooklet</div>
-            <div className="truncate text-xs text-muted-foreground">Production management</div>
           </div>
         )}
 
