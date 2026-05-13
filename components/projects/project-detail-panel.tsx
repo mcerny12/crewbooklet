@@ -34,16 +34,23 @@ function InlineCellSearch({
   defaultValue,
   onCommit,
   onCancel,
+  allowCustomValue,
 }: {
   options: string[];
   defaultValue: string | null;
   onCommit: (value: string | null) => void;
   onCancel: () => void;
+  allowCustomValue?: boolean;
 }) {
   const [query, setQuery] = useState(defaultValue ?? '');
-  const filtered = query.trim()
-    ? options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
+  const trimmed = query.trim();
+  const filtered = trimmed
+    ? options.filter(o => o.toLowerCase().includes(trimmed.toLowerCase()))
     : options;
+  const hasExactMatch = trimmed
+    ? options.some(o => o.toLowerCase() === trimmed.toLowerCase())
+    : false;
+  const canCommitCustom = !!allowCustomValue && trimmed.length > 0 && !hasExactMatch;
 
   return (
     <div className="relative">
@@ -54,7 +61,15 @@ function InlineCellSearch({
         onBlur={onCancel}
         onKeyDown={e => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-          if (e.key === 'Enter' && filtered.length === 1) onCommit(filtered[0]);
+          if (e.key === 'Enter') {
+            if (filtered.length === 1) {
+              e.preventDefault();
+              onCommit(filtered[0]);
+            } else if (canCommitCustom) {
+              e.preventDefault();
+              onCommit(trimmed);
+            }
+          }
         }}
         placeholder="Search…"
         className="h-6 w-full rounded border border-blue-400 px-1.5 text-xs outline-none bg-white dark:bg-gray-900 dark:text-gray-100"
@@ -68,8 +83,18 @@ function InlineCellSearch({
         >
           — clear
         </button>
+        {canCommitCustom && (
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => onCommit(trimmed)}
+            className="w-full text-left text-xs px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-blue-600 dark:text-blue-300 border-b border-gray-100 dark:border-gray-800"
+          >
+            Use &ldquo;{trimmed}&rdquo; as custom
+          </button>
+        )}
         {filtered.length === 0 ? (
-          <div className="text-xs text-gray-400 px-2 py-1.5">No matches</div>
+          !canCommitCustom && <div className="text-xs text-gray-400 px-2 py-1.5">No matches</div>
         ) : filtered.map(opt => (
           <button
             key={opt}
@@ -511,6 +536,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                         <InlineCellSearch
                           options={jobTypeNames}
                           defaultValue={assignment.role ?? null}
+                          allowCustomValue
                           onCommit={(v) => {
                             const role = v ?? null;
                             const dept = role ? getDepartmentForJob(role) : null;
