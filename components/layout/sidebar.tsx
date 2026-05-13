@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, Briefcase, Building2, Calendar, LogOut,
-  LayoutDashboard, FileText, Shield, Film, PanelLeftClose,
+  LayoutDashboard, FileText, Shield, Film,
+  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePermissions } from '@/lib/hooks/use-permissions';
@@ -23,17 +24,21 @@ interface NavItemProps {
   icon: React.ElementType;
   label: string;
   active: boolean;
+  collapsed: boolean;
   onNavigate: () => void;
 }
 
-function NavItem({ href, icon: Icon, label, active, onNavigate }: NavItemProps) {
+function NavItem({ href, icon: Icon, label, active, collapsed, onNavigate }: NavItemProps) {
   return (
     <Link
       href={href}
       onClick={onNavigate}
+      title={collapsed ? label : undefined}
+      aria-label={collapsed ? label : undefined}
       className={cn(
-        'flex items-center gap-2.5 h-9 px-3 rounded-lg text-[13.5px] font-medium transition-colors',
+        'flex items-center h-9 rounded-lg text-[13.5px] font-medium transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        collapsed ? 'justify-center' : 'gap-2.5 px-3',
         active
           ? 'bg-primary/10 text-primary shadow-[inset_3px_0_0_var(--color-primary)]'
           : 'text-muted-foreground hover:bg-accent hover:text-foreground',
@@ -43,7 +48,7 @@ function NavItem({ href, icon: Icon, label, active, onNavigate }: NavItemProps) 
         aria-hidden
         className={cn('h-4.5 w-4.5 shrink-0', active ? 'text-primary' : 'text-muted-foreground/70')}
       />
-      {label}
+      {!collapsed && label}
     </Link>
   );
 }
@@ -62,6 +67,7 @@ export function Sidebar() {
   const session = useAuthStore(state => state.session);
   const { isAdmin } = usePermissions();
   const { open, setOpen } = useSidebar();
+  const collapsed = !open;
 
   const handleSignOut = async () => {
     await signOut();
@@ -77,80 +83,100 @@ export function Sidebar() {
     <aside
       className={cn(
         'shrink-0 flex h-screen flex-col border-r bg-card overflow-hidden transition-[width] duration-200 ease-out',
-        open ? 'w-63' : 'w-0',
+        collapsed ? 'w-14' : 'w-63',
       )}
-      aria-hidden={!open}
     >
-      <div className="flex h-full w-63 flex-col">
-        {/* ── Brand ─────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 py-4 shrink-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
-            <Film className="h-4 w-4" aria-hidden />
-          </div>
-          <span className="text-[16px] font-bold tracking-tight flex-1 min-w-0 truncate">CrewBooklet</span>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            aria-label="Close sidebar"
-            title="Close sidebar"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
+      {/* ── Brand ─────────────────────────────────────────────── */}
+      <div
+        className={cn(
+          'flex items-center shrink-0 py-4',
+          collapsed ? 'flex-col gap-2 px-1' : 'gap-3 px-4',
+        )}
+      >
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
+          <Film className="h-4 w-4" aria-hidden />
         </div>
+        {!collapsed && (
+          <span className="text-[16px] font-bold tracking-tight flex-1 min-w-0 truncate">CrewBooklet</span>
+        )}
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={open}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
+      </div>
 
-        <div className="mx-4 border-b" />
+      <div className={cn('border-b', collapsed ? 'mx-2' : 'mx-4')} />
 
-        {/* ── User profile ──────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 py-3 shrink-0">
-          <div
-            aria-hidden
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold"
-          >
-            {initials}
-          </div>
+      {/* ── User profile ──────────────────────────────────────── */}
+      <div
+        className={cn(
+          'flex items-center shrink-0',
+          collapsed ? 'justify-center px-1 py-3' : 'gap-3 px-4 py-3',
+        )}
+      >
+        <div
+          aria-hidden
+          title={collapsed ? `${session.email} (${roleMeta.label})` : undefined}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold"
+        >
+          {initials}
+        </div>
+        {!collapsed && (
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs text-muted-foreground leading-tight">{session.email}</div>
             <span className={cn('mt-0.5 inline-block rounded px-1.5 py-px text-[10px] font-semibold', roleMeta.className)}>
               {roleMeta.label}
             </span>
           </div>
+        )}
+      </div>
+
+      {/* ── Navigation ────────────────────────────────────────── */}
+      <nav
+        className={cn('flex-1 overflow-y-auto overflow-x-hidden py-1', collapsed ? 'px-2' : 'px-3')}
+        aria-label="Main navigation"
+      >
+        {!collapsed && <SectionLabel label="Workspace" />}
+        <div className={cn('space-y-0.5', collapsed && 'pt-2')}>
+          <NavItem href="/"              icon={LayoutDashboard} label="Dashboard"     active={pathname === '/'}                       collapsed={collapsed} onNavigate={closeOnNav} />
+          <NavItem href="/people"        icon={Users}           label="People"        active={pathname.startsWith('/people')}        collapsed={collapsed} onNavigate={closeOnNav} />
+          <NavItem href="/projects"      icon={Briefcase}       label="Projects"      active={pathname.startsWith('/projects')}      collapsed={collapsed} onNavigate={closeOnNav} />
+          <NavItem href="/organizations" icon={Building2}       label="Organizations" active={pathname.startsWith('/organizations')} collapsed={collapsed} onNavigate={closeOnNav} />
+          <NavItem href="/invoices"      icon={FileText}        label="Invoices"      active={pathname.startsWith('/invoices')}      collapsed={collapsed} onNavigate={closeOnNav} />
+          <NavItem href="/calendar"      icon={Calendar}        label="Calendar"      active={pathname.startsWith('/calendar')}      collapsed={collapsed} onNavigate={closeOnNav} />
         </div>
 
-        {/* ── Navigation ────────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto px-3 py-1" aria-label="Main navigation">
-          <SectionLabel label="Workspace" />
-          <div className="space-y-0.5">
-            <NavItem href="/"              icon={LayoutDashboard} label="Dashboard"     active={pathname === '/'}                       onNavigate={closeOnNav} />
-            <NavItem href="/people"        icon={Users}           label="People"        active={pathname.startsWith('/people')}        onNavigate={closeOnNav} />
-            <NavItem href="/projects"      icon={Briefcase}       label="Projects"      active={pathname.startsWith('/projects')}      onNavigate={closeOnNav} />
-            <NavItem href="/organizations" icon={Building2}       label="Organizations" active={pathname.startsWith('/organizations')} onNavigate={closeOnNav} />
-            <NavItem href="/invoices"      icon={FileText}        label="Invoices"      active={pathname.startsWith('/invoices')}      onNavigate={closeOnNav} />
-            <NavItem href="/calendar"      icon={Calendar}        label="Calendar"      active={pathname.startsWith('/calendar')}      onNavigate={closeOnNav} />
-          </div>
+        {isAdmin && (
+          <>
+            {!collapsed && <SectionLabel label="Admin" />}
+            <div className={cn('space-y-0.5', collapsed && 'pt-2')}>
+              <NavItem href="/admin" icon={Shield} label="User Management" active={pathname.startsWith('/admin')} collapsed={collapsed} onNavigate={closeOnNav} />
+            </div>
+          </>
+        )}
+      </nav>
 
-          {isAdmin && (
-            <>
-              <SectionLabel label="Admin" />
-              <div className="space-y-0.5">
-                <NavItem href="/admin" icon={Shield} label="User Management" active={pathname.startsWith('/admin')} onNavigate={closeOnNav} />
-              </div>
-            </>
+      {/* ── Footer ────────────────────────────────────────────── */}
+      <div className={cn('shrink-0 pb-4', collapsed ? 'px-2' : 'px-3')}>
+        <div className="border-t mb-2" />
+        <button
+          onClick={handleSignOut}
+          title={collapsed ? 'Sign out' : undefined}
+          className={cn(
+            'flex w-full items-center h-9 rounded-lg text-[13.5px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            collapsed ? 'justify-center' : 'gap-2.5 px-3',
           )}
-        </nav>
-
-        {/* ── Footer ────────────────────────────────────────────── */}
-        <div className="shrink-0 px-3 pb-4">
-          <div className="border-t mb-2" />
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-2.5 h-9 px-3 rounded-lg text-[13.5px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            aria-label="Sign out"
-          >
-            <LogOut aria-hidden className="h-4.5 w-4.5 shrink-0" />
-            Sign out
-          </button>
-        </div>
+          aria-label="Sign out"
+        >
+          <LogOut aria-hidden className="h-4.5 w-4.5 shrink-0" />
+          {!collapsed && 'Sign out'}
+        </button>
       </div>
     </aside>
   );
