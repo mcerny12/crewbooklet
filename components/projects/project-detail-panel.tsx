@@ -261,7 +261,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
       <div className="flex flex-col h-full bg-background">
 
         {/* ── DETAIL HEADER ── */}
-        <div className="shrink-0 border-b bg-card px-5 py-3 flex items-center gap-4">
+        <div className="shrink-0 border-b bg-card px-4 py-1.5 flex items-center gap-3">
           <button
             onClick={onClose}
             aria-label="Back to list"
@@ -285,21 +285,15 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
         </div>
 
         {/* ── PROJECT INFO ── */}
-        <div className="border-b px-4 py-3 grid grid-cols-2 gap-3 shrink-0">
+        <div className="border-b px-4 py-2 grid grid-cols-2 gap-2 shrink-0">
 
           {/* Column 1 */}
           <div className="section-card">
             <div className="section-card-header">Basic Information</div>
-            <div className="section-card-body space-y-1.5 detail-form-fields">
+            <div className="section-card-body space-y-1 detail-form-fields">
 
-            {/* Number + Name */}
-            <div className="grid grid-cols-[90px_1fr] gap-1.5">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] font-medium text-gray-500">Number</Label>
-                <div className="h-7 flex items-center px-2 text-xs font-mono text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded select-all">
-                  {editedProject.project_number}
-                </div>
-              </div>
+            {/* Name + Status */}
+            <div className="grid grid-cols-[1fr_130px] gap-1.5">
               <div className="space-y-0.5">
                 <Label className="text-[10px] font-medium text-gray-500">Project Name</Label>
                 <Input
@@ -308,29 +302,27 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                   className="h-7 text-xs"
                 />
               </div>
-            </div>
-
-            {/* Status */}
-            <div className="space-y-0.5">
-              <Label className="text-[10px] font-medium text-gray-500">Status</Label>
-              <Select
-                value={editedProject.status}
-                onValueChange={(value) => updateField('status', value as ProjectStatus)}
-              >
-                <SelectTrigger size="xs" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(ProjectStatus).map((s) => (
-                    <SelectItem key={s} value={s}>
-                      <div className="flex items-center gap-1.5">
-                        <div className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[s] ?? 'bg-gray-500'}`} />
-                        {s}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] font-medium text-gray-500">Status</Label>
+                <Select
+                  value={editedProject.status}
+                  onValueChange={(value) => updateField('status', value as ProjectStatus)}
+                >
+                  <SelectTrigger size="xs" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(ProjectStatus).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[s] ?? 'bg-gray-500'}`} />
+                          {s}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Client Organization */}
@@ -397,7 +389,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           </div>
 
           {/* Column 2: Schedule + Notes */}
-          <div className="space-y-3">
+          <div className="space-y-2">
           <div className="section-card">
             <div className="section-card-header">Schedule</div>
             <div className="section-card-body detail-form-fields">
@@ -415,7 +407,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
             <Textarea
               value={editedProject.notes || ''}
               onChange={(e) => updateField('notes', e.target.value || null)}
-              rows={4}
+              rows={2}
               placeholder="Project notes..."
               className="text-xs resize-none"
             />
