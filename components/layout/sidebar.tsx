@@ -74,24 +74,14 @@ export function Sidebar() {
   const initials = session.email ? session.email.slice(0, 2).toUpperCase() : '??';
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={() => setOpen(false)}
-        aria-hidden
-        className={cn(
-          'fixed inset-0 z-40 bg-black/30 transition-opacity duration-200',
-          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
-        )}
-      />
-
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 flex h-screen w-63 flex-col border-r bg-card transition-transform duration-200 ease-out',
-          open ? 'translate-x-0' : '-translate-x-full',
-        )}
-        aria-hidden={!open}
-      >
+    <aside
+      className={cn(
+        'shrink-0 flex h-screen flex-col border-r bg-card overflow-hidden transition-[width] duration-200 ease-out',
+        open ? 'w-63' : 'w-0',
+      )}
+      aria-hidden={!open}
+    >
+      <div className="flex h-full w-63 flex-col">
         {/* ── Brand ─────────────────────────────────────────────── */}
         <div className="flex items-center gap-3 px-5 py-5 shrink-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
@@ -152,7 +142,7 @@ export function Sidebar() {
             Sign out
           </button>
         </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 }

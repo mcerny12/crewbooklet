@@ -31,9 +31,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="h-screen overflow-hidden">
+      <div className="flex h-screen overflow-hidden">
         <Sidebar />
-        <main className="h-screen overflow-y-auto bg-white dark:bg-gray-950">
+        <main className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-gray-950">
           {children}
         </main>
       </div>

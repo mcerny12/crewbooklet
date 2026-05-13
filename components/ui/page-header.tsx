@@ -26,24 +26,23 @@ export function PageHeader({
   actions,
   className,
 }: PageHeaderProps) {
-  const { open, setOpen } = useSidebar();
+  const { open, toggle } = useSidebar();
   const hasSecondRow = !!(search || filters);
 
   return (
     <div className={cn('shrink-0 border-b bg-card px-4 py-2', className)}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          {!open && (
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              aria-label="Open sidebar"
-              title="Open sidebar"
-            >
-              <Menu className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={toggle}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            aria-label={open ? 'Close sidebar' : 'Open sidebar'}
+            aria-expanded={open}
+            title={open ? 'Close sidebar' : 'Open sidebar'}
+          >
+            <Menu className="h-4 w-4" />
+          </button>
           <h1 className="text-[15px] font-semibold tracking-tight text-foreground truncate">{title}</h1>
           {subtitle && (
             <span className="hidden sm:inline text-[11px] text-muted-foreground truncate">{subtitle}</span>
