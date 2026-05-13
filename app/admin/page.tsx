@@ -74,7 +74,8 @@ function UsersTab() {
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-140">
         <thead className="bg-muted/40 border-b">
           <tr>
             <th className="text-left px-5 py-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Email</th>
@@ -116,6 +117,7 @@ function UsersTab() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -275,7 +277,7 @@ export default function AdminPage() {
     <MainLayout>
       <div className="flex h-full flex-col">
         {/* Page header */}
-        <div className="shrink-0 border-b bg-card flex h-12 items-center gap-2 pl-14 pr-4 lg:pl-4">
+        <div className="shrink-0 border-b bg-card flex h-12 items-center gap-2 px-4">
           <Shield className="h-4 w-4 text-primary" aria-hidden />
           <h1 className="text-[15px] font-semibold tracking-tight">Admin Panel</h1>
         </div>

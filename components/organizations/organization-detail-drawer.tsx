@@ -13,7 +13,7 @@ import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { OrganizationJobType, FILM_COUNTRIES } from '@/lib/types/models';
-import { ChevronLeft, Mail, Phone, Globe, MapPin, Trash2, Plus, X, ExternalLink } from 'lucide-react';
+import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, X, ExternalLink } from 'lucide-react';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { OrgLogo } from './org-logo';
 
@@ -108,7 +108,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
       </div>
 
       {/* ── INFO SECTION ── */}
-      <div className="border-b px-4 py-3 grid grid-cols-3 gap-3 shrink-0">
+      <div className="border-b px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
 
         {/* Basic Info */}
         <div className="section-card">

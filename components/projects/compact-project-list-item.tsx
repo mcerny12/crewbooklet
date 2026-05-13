@@ -19,48 +19,93 @@ export function CompactProjectListItem({ project, onSelect, isSelected }: Compac
   };
 
   return (
-    <div
-      role="row"
-      aria-selected={isSelected}
-      onClick={() => onSelect(project)}
-      className={cn(
-        'grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
-        'grid-cols-[2fr_1fr_1fr_1.5fr]',
-        isSelected
-          ? 'list-row-selected'
-          : 'hover:bg-muted/40',
-      )}
-    >
-      {/* Name & number */}
-      <div className="min-w-0">
-        <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{project.name}</div>
-        <div className="text-xs text-muted-foreground truncate">{project.project_number}</div>
-      </div>
-
-      {/* Status */}
-      <div className="min-w-0">
-        <ProjectStatusBadge status={project.status} />
-      </div>
-
-      {/* Start date */}
-      <div className="min-w-0">
-        {formatDate(project.start_date) ? (
-          <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
-            <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
-            <span className="truncate">{formatDate(project.start_date)}</span>
+    <>
+      {/* ── MOBILE CARD (< md) ── */}
+      <div
+        role="row"
+        aria-selected={isSelected}
+        onClick={() => onSelect(project)}
+        className={cn(
+          'flex md:hidden flex-col gap-2 px-4 py-3 cursor-pointer border-b transition-colors',
+          isSelected ? 'list-row-selected' : 'hover:bg-muted/40',
+        )}
+      >
+        {/* Top row: name + badge */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className={cn('font-bold mobile-two-line text-[13.5px]', isSelected && 'text-primary')}>
+              {project.name}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">{project.project_number}</div>
           </div>
-        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+          <div className="shrink-0 pt-0.5">
+            <ProjectStatusBadge status={project.status} />
+          </div>
+        </div>
+
+        {/* Secondary row: date + location */}
+        {(project.start_date || project.shooting_location) && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {formatDate(project.start_date) && (
+              <div className="flex items-center gap-1 text-[12.5px] text-muted-foreground">
+                <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+                <span>{formatDate(project.start_date)}</span>
+              </div>
+            )}
+            {project.shooting_location && (
+              <div className="flex items-center gap-1 text-[12.5px] text-muted-foreground">
+                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+                <span>{project.shooting_location}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Location */}
-      <div className="min-w-0">
-        {project.shooting_location ? (
-          <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
-            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
-            <span className="truncate">{project.shooting_location}</span>
-          </div>
-        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+      {/* ── DESKTOP ROW (≥ md) ── */}
+      <div
+        role="row"
+        aria-selected={isSelected}
+        onClick={() => onSelect(project)}
+        className={cn(
+          'hidden md:grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
+          'grid-cols-[2fr_1fr_1fr_1.5fr]',
+          isSelected
+            ? 'list-row-selected'
+            : 'hover:bg-muted/40',
+        )}
+      >
+        {/* Name & number */}
+        <div className="min-w-0">
+          <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{project.name}</div>
+          <div className="text-xs text-muted-foreground truncate">{project.project_number}</div>
+        </div>
+
+        {/* Status */}
+        <div className="min-w-0">
+          <ProjectStatusBadge status={project.status} />
+        </div>
+
+        {/* Start date */}
+        <div className="min-w-0">
+          {formatDate(project.start_date) ? (
+            <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
+              <Calendar className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+              <span className="truncate">{formatDate(project.start_date)}</span>
+            </div>
+          ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+        </div>
+
+        {/* Location */}
+        <div className="min-w-0">
+          {project.shooting_location ? (
+            <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+              <span className="truncate">{project.shooting_location}</span>
+            </div>
+          ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

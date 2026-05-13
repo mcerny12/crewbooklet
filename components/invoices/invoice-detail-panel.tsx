@@ -318,7 +318,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
         </div>
 
         {/* Two-column: recipient | dates */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {/* Left: project + recipient */}
           <div className="space-y-4">
@@ -403,73 +403,75 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
             </Button>
           </div>
 
-          <div className="border rounded overflow-hidden">
-            <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b">
-              <div>Description</div><div>Qty</div><div>Unit Price</div><div>Tax %</div><div>Total</div><div />
-            </div>
-
-            {items.length === 0 && (
-              <div className="px-3 py-4 text-center text-xs text-gray-400">No items yet — click Add Item</div>
-            )}
-
-            {items.map((item, idx) => (
-              <div key={item.id} className="border-b last:border-b-0">
-                <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1.5 items-center">
-                  <Input value={item.description} onChange={e => handleItemChange(idx, 'description', e.target.value)} placeholder="Description" className="h-7 text-xs" />
-                  <Input type="number" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)} className="h-7 text-xs" min={0} step={0.5} />
-                  <Input type="number" value={item.unit_price} onChange={e => handleItemChange(idx, 'unit_price', parseFloat(e.target.value) || 0)} className="h-7 text-xs" min={0} step={0.01} />
-                  <Input type="number" value={item.tax_rate} onChange={e => handleItemChange(idx, 'tax_rate', parseFloat(e.target.value) || 0)} className="h-7 text-xs" min={0} max={100} />
-                  <div className="text-xs font-medium text-right">{formatCurrency(item.total)}</div>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-600" onClick={() => removeItem(idx)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="px-3 pb-1.5 flex items-center gap-2">
-                  <Input value={item.sub_description ?? ''} onChange={e => handleItemChange(idx, 'sub_description', e.target.value)} placeholder="Sub-description (optional)" className="flex-1 h-6 text-xs text-gray-500 border-dashed" />
-                  <button
-                    type="button"
-                    title="Attach file to this item"
-                    onClick={() => triggerUpload(item.description || `Item ${idx + 1}`)}
-                    className={`shrink-0 flex items-center gap-0.5 text-xs rounded px-1 py-0.5 transition-colors ${
-                      attachments.filter(a => a.label === (item.description || `Item ${idx + 1}`)).length > 0
-                        ? 'text-blue-600 bg-blue-50 dark:bg-blue-950'
-                        : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <Paperclip className="h-3 w-3" />
-                    {attachments.filter(a => a.label === (item.description || `Item ${idx + 1}`)).length > 0 && (
-                      <span>{attachments.filter(a => a.label === (item.description || `Item ${idx + 1}`)).length}</span>
-                    )}
-                  </button>
-                </div>
+          <div className="overflow-x-auto">
+            <div className="border rounded overflow-hidden min-w-125">
+              <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 text-xs font-semibold text-gray-500 border-b">
+                <div>Description</div><div>Qty</div><div>Unit Price</div><div>Tax %</div><div>Total</div><div />
               </div>
-            ))}
 
-            <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t">
-              <div className="col-span-4 text-xs font-semibold text-right text-gray-600">
-                {linkedAcontos.length > 0 ? 'Subtotal' : 'Total'}
-              </div>
-              <div className="text-sm font-bold text-right">{formatCurrency(totalAmount)}</div>
-              <div />
-            </div>
-            {linkedAcontos.map(aconto => (
-              <div key={aconto.id} className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/20 items-center">
-                <div className="col-span-4 text-xs text-right text-amber-700 dark:text-amber-400">
-                  Aconto {aconto.invoice_number}
+              {items.length === 0 && (
+                <div className="px-3 py-4 text-center text-xs text-gray-400">No items yet — click Add Item</div>
+              )}
+
+              {items.map((item, idx) => (
+                <div key={item.id} className="border-b last:border-b-0">
+                  <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1.5 items-center">
+                    <Input value={item.description} onChange={e => handleItemChange(idx, 'description', e.target.value)} placeholder="Description" className="h-7 text-xs" />
+                    <Input type="number" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)} className="h-7 text-xs" min={0} step={0.5} />
+                    <Input type="number" value={item.unit_price} onChange={e => handleItemChange(idx, 'unit_price', parseFloat(e.target.value) || 0)} className="h-7 text-xs" min={0} step={0.01} />
+                    <Input type="number" value={item.tax_rate} onChange={e => handleItemChange(idx, 'tax_rate', parseFloat(e.target.value) || 0)} className="h-7 text-xs" min={0} max={100} />
+                    <div className="text-xs font-medium text-right">{formatCurrency(item.total)}</div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-400 hover:text-red-600" onClick={() => removeItem(idx)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="px-3 pb-1.5 flex items-center gap-2">
+                    <Input value={item.sub_description ?? ''} onChange={e => handleItemChange(idx, 'sub_description', e.target.value)} placeholder="Sub-description (optional)" className="flex-1 h-6 text-xs text-gray-500 border-dashed" />
+                    <button
+                      type="button"
+                      title="Attach file to this item"
+                      onClick={() => triggerUpload(item.description || `Item ${idx + 1}`)}
+                      className={`shrink-0 flex items-center gap-0.5 text-xs rounded px-1 py-0.5 transition-colors ${
+                        attachments.filter(a => a.label === (item.description || `Item ${idx + 1}`)).length > 0
+                          ? 'text-blue-600 bg-blue-50 dark:bg-blue-950'
+                          : 'text-gray-400 hover:text-gray-600'
+                      }`}
+                    >
+                      <Paperclip className="h-3 w-3" />
+                      {attachments.filter(a => a.label === (item.description || `Item ${idx + 1}`)).length > 0 && (
+                        <span>{attachments.filter(a => a.label === (item.description || `Item ${idx + 1}`)).length}</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <div className="text-xs font-medium text-right text-amber-700 dark:text-amber-400">
-                  -{formatCurrency(aconto.total ?? 0)}
+              ))}
+
+              <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t">
+                <div className="col-span-4 text-xs font-semibold text-right text-gray-600">
+                  {linkedAcontos.length > 0 ? 'Subtotal' : 'Total'}
                 </div>
+                <div className="text-sm font-bold text-right">{formatCurrency(totalAmount)}</div>
                 <div />
               </div>
-            ))}
-            {linkedAcontos.length > 0 && (
-              <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t-2 border-gray-300">
-                <div className="col-span-4 text-xs font-semibold text-right text-gray-700">Amount Due</div>
-                <div className="text-sm font-bold text-right">{formatCurrency(amountDue)}</div>
-                <div />
-              </div>
-            )}
+              {linkedAcontos.map(aconto => (
+                <div key={aconto.id} className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/20 items-center">
+                  <div className="col-span-4 text-xs text-right text-amber-700 dark:text-amber-400">
+                    Aconto {aconto.invoice_number}
+                  </div>
+                  <div className="text-xs font-medium text-right text-amber-700 dark:text-amber-400">
+                    -{formatCurrency(aconto.total ?? 0)}
+                  </div>
+                  <div />
+                </div>
+              ))}
+              {linkedAcontos.length > 0 && (
+                <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t-2 border-gray-300">
+                  <div className="col-span-4 text-xs font-semibold text-right text-gray-700">Amount Due</div>
+                  <div className="text-sm font-bold text-right">{formatCurrency(amountDue)}</div>
+                  <div />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

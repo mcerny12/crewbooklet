@@ -285,7 +285,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
         </div>
 
         {/* ── PROJECT INFO ── */}
-        <div className="border-b px-4 py-2 grid grid-cols-2 gap-2 shrink-0">
+        <div className="border-b px-4 py-2 grid grid-cols-1 md:grid-cols-2 gap-2 shrink-0">
 
           {/* Column 1 */}
           <div className="section-card">
@@ -466,7 +466,8 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                 {assignments.length === 0 ? 'No crew assigned yet. Click "Add Crew" to start.' : 'No crew matches the current filter.'}
               </p>
             ) : (
-              <div className="space-y-1">
+              <div className="overflow-x-auto">
+              <div className="space-y-1 min-w-125">
                 {/* Sortable header */}
                 <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr_1fr_auto] gap-2 px-2 py-1 border-b">
                   {([
@@ -619,6 +620,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                     </div>
                   );
                 })}
+              </div>
               </div>
             )}
           </div>

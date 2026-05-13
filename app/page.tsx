@@ -37,7 +37,7 @@ export default function Home() {
     <MainLayout>
       <div className="flex h-full flex-col overflow-y-auto">
         {/* Page header */}
-        <div className="shrink-0 border-b bg-card flex h-12 items-center pl-14 pr-4 lg:pl-4">
+        <div className="shrink-0 border-b bg-card flex h-12 items-center px-4">
           <h1 className="text-[15px] font-semibold tracking-tight">Dashboard</h1>
         </div>
 

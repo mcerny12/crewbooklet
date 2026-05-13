@@ -13,6 +13,15 @@ npm run lint       # ESLint
 
 No test suite exists. Validate changes by running `npm run typecheck` and `npm run lint`.
 
+### Environment variables (`.env.local`)
+
+| Variable | Source |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API (secret) |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` for local dev |
+
 ---
 
 ## Architecture
@@ -28,6 +37,7 @@ Supabase DB → SupabaseService (static class) → Zustand stores → React comp
 - `lib/services/supabase-service.ts` — all DB operations in one static class. Never query Supabase directly from components.
 - `lib/stores/` — one Zustand store per domain (people, projects, organizations, invoices, calendar, project-assignments, job-types, auth). Stores call `SupabaseService` and hold client-side state.
 - `lib/supabase/client.ts` — browser client (used by service layer). `lib/supabase/server.ts` — SSR client (API routes). `lib/supabase/admin.ts` — service-role client (admin API only).
+- `proxy.ts` — Next.js middleware. Enforces authentication on all routes except the auth pages (`/login`, `/signup`, etc.) and the public calendar ICS endpoint (`/api/calendar/**`). Also restricts `/admin` to users with the `admin` role. Runs before every request.
 
 ### Auth & permissions
 
@@ -50,6 +60,18 @@ Job types are **database-driven**, not purely static. `useJobTypesStore` holds D
 ### Invoice printing
 
 Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel. Uses `jspdf` / `pdf-lib`.
+
+### Aconto invoices
+
+An "aconto" (advance payment) invoice has `is_aconto: true` and its `aconto_invoice_ids` array references the IDs of the invoices it covers. Handle this flag when rendering invoice totals or linking invoice records.
+
+### Calendar ICS feed
+
+`/api/calendar/[token]` is a **public** endpoint (no auth, bypassed in middleware) that serves an ICS file for a shared `ProjectCalendar`. The `share_token` on `ProjectCalendar` acts as the bearer credential.
+
+### `AssignmentStatus` enum key naming
+
+The enum keys use German words (`Gebucht`, `Angefragt`, etc.) but the values are English display strings (`"Booked"`, `"Inquired"`, etc.). Always use the enum key in code; never hardcode the string value.
 
 ---
 
@@ -74,6 +96,9 @@ CSS variables in `:root`:
 | `<ProjectStatusBadge>` | `components/ui/status-badge.tsx` | Consistent project status pill |
 | `<InvoiceStatusBadge>` | `components/ui/status-badge.tsx` | Consistent invoice status pill |
 | `<AvailabilityBadge>` | `components/ui/status-badge.tsx` | Crew availability pill |
+| `<DetailTabs>` | `components/ui/detail-tabs.tsx` | Tab bar for detail panes (pass `tabs`, `activeTab`, `onTabChange`) |
+| `<EntryMetadata>` | `components/ui/entry-metadata.tsx` | Created/updated timestamps at the bottom of detail panes |
+| `<MultiSelect>` | `components/ui/multi-select.tsx` | Badge-style multi-value dropdown for small fixed lists |
 
 ### Form fields in detail panels
 

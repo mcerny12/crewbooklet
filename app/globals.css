@@ -204,3 +204,50 @@
     transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
   }
 }
+
+/* ── Mobile safety ─────────────────────────────────────────────────────────── */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* On mobile the compact detail-form-fields overrides would produce 13 px
+   inputs, which triggers iOS auto-zoom. Override back to 16 px min on small
+   screens and give touch-friendly heights. Desktop keeps the 34 px / 13 px. */
+@media (max-width: 767px) {
+  .detail-form-fields [data-slot="input"],
+  .detail-form-fields [data-slot="select-trigger"],
+  .detail-form-fields [data-slot="textarea"] {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  /* Prevent iOS Safari zoom on any input focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Utility classes used by mobile list cards and detail views */
+.mobile-truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-two-line {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Bottom safe-area padding for iOS notch devices */
+.safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}

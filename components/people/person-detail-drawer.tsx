@@ -113,7 +113,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
       </div>
 
       {/* ── INFO SECTION ── */}
-      <div className="border-b px-4 py-3 grid grid-cols-3 gap-3 shrink-0">
+      <div className="border-b px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
 
         {/* Personal */}
         <div className="section-card">

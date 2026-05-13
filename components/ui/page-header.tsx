@@ -25,7 +25,7 @@ export function PageHeader({
   const hasSecondRow = !!(search || filters);
 
   return (
-    <div className={cn('shrink-0 border-b bg-card pl-14 pr-4 lg:pl-4', className)}>
+    <div className={cn('shrink-0 border-b bg-card px-4', className)}>
       <div className="flex h-12 items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <h1 className="text-[15px] font-semibold tracking-tight text-foreground truncate">{title}</h1>
@@ -38,8 +38,8 @@ export function PageHeader({
 
       {hasSecondRow && (
         <div className="flex items-center gap-2 pb-2">
-          {search && <div className="flex-1 min-w-0 max-w-sm">{search}</div>}
-          {filters && <div className="flex items-center gap-2">{filters}</div>}
+          {search && <div className="flex-1 min-w-0">{search}</div>}
+          {filters && <div className="flex items-center gap-2 shrink-0">{filters}</div>}
         </div>
       )}
     </div>

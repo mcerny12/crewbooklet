@@ -23,7 +23,7 @@ function ListHeader() {
   return (
     <div
       aria-hidden
-      className="sticky top-0 z-10 grid items-center gap-3 bg-muted/60 px-5 py-2.5 border-b backdrop-blur-sm"
+      className="sticky top-0 z-10 hidden md:grid items-center gap-3 bg-muted/60 px-5 py-2.5 border-b backdrop-blur-sm"
       style={{ gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 1fr' }}
     >
       <div />

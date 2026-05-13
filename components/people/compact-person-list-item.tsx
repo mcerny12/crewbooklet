@@ -47,77 +47,140 @@ export function CompactPersonListItem({ person, onSelect, isSelected }: CompactP
   };
 
   return (
-    <div
-      role="row"
-      aria-selected={isSelected}
-      onClick={() => onSelect(person)}
-      className={cn(
-        'grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
-        'grid-cols-[32px_2fr_1.5fr_1fr_1fr_1fr]',
-        isSelected
-          ? 'list-row-selected'
-          : 'hover:bg-muted/40',
-      )}
-    >
-      {/* Avatar */}
+    <>
+      {/* ── Mobile card (< 768px) ── */}
       <div
-        aria-hidden
+        role="row"
+        aria-selected={isSelected}
+        onClick={() => onSelect(person)}
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
-          avatarColor(person.name),
+          'flex md:hidden flex-col gap-2.5 px-4 py-3 cursor-pointer border-b transition-colors',
+          isSelected ? 'list-row-selected' : 'hover:bg-muted/40',
         )}
       >
-        {initials(person.name)}
-      </div>
-
-      {/* Name & position */}
-      <div className="min-w-0">
-        <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{person.name}</div>
-        {primaryJob && <div className="truncate text-xs text-muted-foreground">{primaryJob}</div>}
-      </div>
-
-      {/* Email */}
-      <div className="min-w-0">
-        {person.email ? (
-          <button
-            onClick={handleEmailClick}
-            className="flex items-center gap-1 text-primary hover:underline truncate w-full text-[12.5px]"
-            title={person.email}
+        {/* Top row: avatar + name + job */}
+        <div className="flex items-center gap-3">
+          <div
+            aria-hidden
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
+              avatarColor(person.name),
+            )}
           >
-            <Mail className="h-3 w-3 shrink-0" aria-hidden />
-            <span className="truncate">{person.email}</span>
-          </button>
-        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
-      </div>
-
-      {/* Phone */}
-      <div className="min-w-0">
-        {person.mobile_phone ? (
-          <button
-            onClick={handlePhoneClick}
-            className="flex items-center gap-1 text-primary hover:underline truncate w-full text-[12.5px]"
-            title={person.mobile_phone}
-          >
-            <Phone className="h-3 w-3 shrink-0" aria-hidden />
-            <span className="truncate">{person.mobile_phone}</span>
-          </button>
-        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
-      </div>
-
-      {/* City */}
-      <div className="min-w-0">
-        {person.address?.city ? (
-          <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
-            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
-            <span className="truncate">{person.address.city}</span>
+            {initials(person.name)}
           </div>
-        ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+          <div className="min-w-0">
+            <div className={cn('font-semibold text-[13.5px] mobile-truncate', isSelected && 'text-primary')}>{person.name}</div>
+            {primaryJob && <div className="truncate text-xs text-muted-foreground">{primaryJob}</div>}
+          </div>
+        </div>
+
+        {/* Secondary rows indented under avatar */}
+        <div className="pl-12 flex flex-col gap-1.5">
+          {person.email && (
+            <button
+              onClick={handleEmailClick}
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] w-fit max-w-full"
+              title={person.email}
+            >
+              <Mail className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="mobile-truncate">{person.email}</span>
+            </button>
+          )}
+          {person.mobile_phone && (
+            <button
+              onClick={handlePhoneClick}
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] w-fit max-w-full"
+              title={person.mobile_phone}
+            >
+              <Phone className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="mobile-truncate">{person.mobile_phone}</span>
+            </button>
+          )}
+          {(person.address?.city || person.address?.country) && (
+            <div className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+              <span className="mobile-truncate">
+                {[person.address.city, person.address.country].filter(Boolean).join(', ')}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Country */}
-      <div className="truncate text-[12.5px] text-muted-foreground">
-        {person.address?.country || '—'}
+      {/* ── Desktop grid row (≥ 768px) ── */}
+      <div
+        role="row"
+        aria-selected={isSelected}
+        onClick={() => onSelect(person)}
+        className={cn(
+          'hidden md:grid items-center gap-3 px-5 py-3 cursor-pointer border-b transition-colors',
+          'grid-cols-[32px_2fr_1.5fr_1fr_1fr_1fr]',
+          isSelected
+            ? 'list-row-selected'
+            : 'hover:bg-muted/40',
+        )}
+      >
+        {/* Avatar */}
+        <div
+          aria-hidden
+          className={cn(
+            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
+            avatarColor(person.name),
+          )}
+        >
+          {initials(person.name)}
+        </div>
+
+        {/* Name & position */}
+        <div className="min-w-0">
+          <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{person.name}</div>
+          {primaryJob && <div className="truncate text-xs text-muted-foreground">{primaryJob}</div>}
+        </div>
+
+        {/* Email */}
+        <div className="min-w-0">
+          {person.email ? (
+            <button
+              onClick={handleEmailClick}
+              className="flex items-center gap-1 text-primary hover:underline truncate w-full text-[12.5px]"
+              title={person.email}
+            >
+              <Mail className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{person.email}</span>
+            </button>
+          ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+        </div>
+
+        {/* Phone */}
+        <div className="min-w-0">
+          {person.mobile_phone ? (
+            <button
+              onClick={handlePhoneClick}
+              className="flex items-center gap-1 text-primary hover:underline truncate w-full text-[12.5px]"
+              title={person.mobile_phone}
+            >
+              <Phone className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{person.mobile_phone}</span>
+            </button>
+          ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+        </div>
+
+        {/* City */}
+        <div className="min-w-0">
+          {person.address?.city ? (
+            <div className="flex items-center gap-1 truncate text-[12.5px] text-muted-foreground">
+              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
+              <span className="truncate">{person.address.city}</span>
+            </div>
+          ) : <span className="text-[12.5px] text-muted-foreground/50">—</span>}
+        </div>
+
+        {/* Country */}
+        <div className="truncate text-[12.5px] text-muted-foreground">
+          {person.address?.country || '—'}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
