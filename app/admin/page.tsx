@@ -275,12 +275,9 @@ export default function AdminPage() {
     <MainLayout>
       <div className="flex h-full flex-col">
         {/* Page header */}
-        <div className="shrink-0 border-b bg-card px-6 py-5 flex items-center gap-3">
-          <Shield className="h-5 w-5 text-primary" aria-hidden />
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Admin Panel</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">Manage users and job type definitions.</p>
-          </div>
+        <div className="shrink-0 border-b bg-card flex h-12 items-center gap-2 pl-14 pr-4 lg:pl-4">
+          <Shield className="h-4 w-4 text-primary" aria-hidden />
+          <h1 className="text-[15px] font-semibold tracking-tight">Admin Panel</h1>
         </div>
 
       <div className="flex-1 overflow-y-auto p-6 max-w-3xl">

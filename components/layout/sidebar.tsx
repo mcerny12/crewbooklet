@@ -221,7 +221,7 @@ function SidebarBody({
           'shrink-0 border-b',
           collapsed
             ? 'flex flex-col items-center gap-2 py-3 px-2'
-            : 'flex h-16 items-center gap-3 px-3',
+            : 'flex h-12 items-center gap-3 px-3',
         )}
       >
         {collapsed ? (
