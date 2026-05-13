@@ -34,16 +34,21 @@ function InlineCellSearch({
   defaultValue,
   onCommit,
   onCancel,
+  allowCustomValue = false,
 }: {
   options: string[];
   defaultValue: string | null;
   onCommit: (value: string | null) => void;
   onCancel: () => void;
+  allowCustomValue?: boolean;
 }) {
   const [query, setQuery] = useState(defaultValue ?? '');
-  const filtered = query.trim()
+  const trimmedQuery = query.trim();
+  const filtered = trimmedQuery
     ? options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
     : options;
+  const hasExactMatch = options.some(o => o.toLowerCase() === trimmedQuery.toLowerCase());
+  const showCustomHint = allowCustomValue && trimmedQuery.length > 0 && !hasExactMatch;
 
   return (
     <div className="relative">
@@ -54,12 +59,28 @@ function InlineCellSearch({
         onBlur={onCancel}
         onKeyDown={e => {
           if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
-          if (e.key === 'Enter' && filtered.length === 1) onCommit(filtered[0]);
+          if (e.key === 'Enter') {
+            if (filtered.length === 1) { onCommit(filtered[0]); return; }
+            if (allowCustomValue && trimmedQuery.length > 0 && !hasExactMatch) {
+              e.preventDefault();
+              onCommit(trimmedQuery);
+            }
+          }
         }}
         placeholder="Search…"
         className="h-6 w-full rounded border border-blue-400 px-1.5 text-xs outline-none bg-white dark:bg-gray-900 dark:text-gray-100"
       />
       <div className="absolute top-full left-0 z-60 min-w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded shadow-lg max-h-48 overflow-y-auto">
+        {showCustomHint && (
+          <button
+            type="button"
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => onCommit(trimmedQuery)}
+            className="w-full text-left text-xs px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-blue-600 dark:text-blue-300 border-b border-gray-100 dark:border-gray-800"
+          >
+            Use &quot;{trimmedQuery}&quot; as custom role
+          </button>
+        )}
         <button
           type="button"
           onMouseDown={e => e.preventDefault()}
@@ -511,6 +532,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                         <InlineCellSearch
                           options={jobTypeNames}
                           defaultValue={assignment.role ?? null}
+                          allowCustomValue
                           onCommit={(v) => {
                             const role = v ?? null;
                             const dept = role ? getDepartmentForJob(role) : null;
