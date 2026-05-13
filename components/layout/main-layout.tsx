@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Sidebar } from './sidebar';
+import { SidebarProvider } from './sidebar-context';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -29,11 +30,13 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-white dark:bg-gray-950">
-        {children}
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="h-screen overflow-hidden">
+        <Sidebar />
+        <main className="h-screen overflow-y-auto bg-white dark:bg-gray-950">
+          {children}
+        </main>
+      </div>
+    </SidebarProvider>
   );
 }
