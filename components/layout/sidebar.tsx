@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, Briefcase, Building2, Calendar, LogOut,
-  LayoutDashboard, FileText, Shield, Film,
+  LayoutDashboard, FileText, Shield, Film, PanelLeftClose,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePermissions } from '@/lib/hooks/use-permissions';
@@ -83,11 +83,20 @@ export function Sidebar() {
     >
       <div className="flex h-full w-63 flex-col">
         {/* ── Brand ─────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-5 py-5 shrink-0">
+        <div className="flex items-center gap-3 px-4 py-4 shrink-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
             <Film className="h-4 w-4" aria-hidden />
           </div>
-          <span className="text-[16px] font-bold tracking-tight">CrewBooklet</span>
+          <span className="text-[16px] font-bold tracking-tight flex-1 min-w-0 truncate">CrewBooklet</span>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
         </div>
 
         <div className="mx-4 border-b" />
