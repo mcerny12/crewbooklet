@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import {
   Users, Briefcase, Building2, Calendar, LogOut,
   LayoutDashboard, FileText, Shield, Film,
-  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePermissions } from '@/lib/hooks/use-permissions';
@@ -90,25 +89,41 @@ export function Sidebar() {
       <div
         className={cn(
           'flex items-center shrink-0 py-4',
-          collapsed ? 'flex-col gap-2 px-1' : 'gap-3 px-4',
+          collapsed ? 'justify-center px-1' : 'gap-3 px-4',
         )}
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
-          <Film className="h-4 w-4" aria-hidden />
-        </div>
-        {!collapsed && (
-          <span className="text-[16px] font-bold tracking-tight flex-1 min-w-0 truncate">CrewBooklet</span>
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+          >
+            <Film className="h-4 w-4" aria-hidden />
+          </button>
+        ) : (
+          <>
+            <Link
+              href="/"
+              onClick={closeOnNav}
+              aria-label="Go to dashboard"
+              title="Go to dashboard"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Film className="h-4 w-4" aria-hidden />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="flex-1 min-w-0 text-left text-[16px] font-bold tracking-tight truncate rounded hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              CrewBooklet
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-expanded={open}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-        </button>
       </div>
 
       <div className={cn('border-b', collapsed ? 'mx-2' : 'mx-4')} />
