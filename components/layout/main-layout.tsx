@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { Sidebar } from './sidebar';
+import { Sidebar, MobileSidebarTrigger } from './sidebar';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -34,6 +34,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-gray-950">
         {children}
       </main>
+      <MobileSidebarTrigger />
     </div>
   );
 }
