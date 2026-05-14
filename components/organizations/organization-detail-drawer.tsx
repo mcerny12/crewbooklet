@@ -16,6 +16,8 @@ import { OrganizationJobType, FILM_COUNTRIES } from '@/lib/types/models';
 import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, X, ExternalLink } from 'lucide-react';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { OrgLogo } from './org-logo';
+import { useIsMobile } from '@/lib/hooks/use-media-query';
+import { OrgMobileDetail } from './org-mobile-detail';
 
 interface OrgDetailContentProps {
   organization: Organization;
@@ -25,6 +27,7 @@ interface OrgDetailContentProps {
 }
 
 function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }: OrgDetailContentProps) {
+  const isMobile = useIsMobile();
   const [editedOrg, setEditedOrg] = useState<Organization>(organization);
   const [useCustomInvoice, setUseCustomInvoice] = useState(hasCustomInvoice(organization));
   const [addingPerson, setAddingPerson] = useState(false);
@@ -82,6 +85,29 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
   };
 
   const orgTypeOptions = Object.values(OrganizationJobType).map(t => ({ value: t, label: t }));
+
+  if (isMobile) {
+    return (
+      <OrgMobileDetail
+        organization={organization}
+        editedOrg={editedOrg}
+        updateField={updateField}
+        useCustomInvoice={useCustomInvoice}
+        setUseCustomInvoice={setUseCustomInvoice}
+        clearCustomInvoice={clearCustomInvoice}
+        orgPeople={orgPeople}
+        orgProjects={orgProjects}
+        allPeople={people}
+        allProjects={projects}
+        updatePerson={(id, updates) => updatePerson(id, updates)}
+        updateProject={(id, updates) => updateProject(id, updates)}
+        onClose={onClose}
+        onDelete={handleDelete}
+        onOpenProject={onOpenProject}
+        onOpenPerson={onOpenPerson}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">

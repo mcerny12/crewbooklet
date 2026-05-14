@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
+import { MobilePageHeader } from '@/components/layout/mobile-page-header';
 import { CompactProjectListItem } from '@/components/projects/compact-project-list-item';
 import { AddProjectDialog } from '@/components/projects/add-project-dialog';
 import { ProjectDetailPanel } from '@/components/projects/project-detail-panel';
@@ -73,32 +74,67 @@ export default function ProjectsPage() {
         <ProjectIdSelector onSelect={handleSelectById} />
       </Suspense>
       <div className="flex h-full flex-col">
-        <PageHeader
+        {/* Mobile header */}
+        <MobilePageHeader
           title="Projects"
           subtitle={projects.length > 0 ? `${projects.length} projects` : undefined}
-          search={
-            !selectedProject ? (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-                <Input
-                  placeholder="Search projects…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9"
-                  aria-label="Search projects"
-                />
-              </div>
-            ) : undefined
-          }
-          actions={
-            canCreate ? (
-              <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
-                <Plus className="h-4 w-4" aria-hidden />
-                Add Project
-              </Button>
+          rightAction={
+            canCreate && !selectedProject ? (
+              <button
+                type="button"
+                onClick={() => setIsAddDialogOpen(true)}
+                aria-label="Add project"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <Plus className="h-5 w-5" aria-hidden />
+              </button>
             ) : undefined
           }
         />
+        {/* Mobile search */}
+        {!selectedProject && (
+          <div className="lg:hidden border-b px-4 py-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
+                placeholder="Search projects…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-base"
+                aria-label="Search projects"
+              />
+            </div>
+          </div>
+        )}
+        {/* Desktop header */}
+        <div className="hidden lg:block">
+          <PageHeader
+            title="Projects"
+            subtitle={projects.length > 0 ? `${projects.length} projects` : undefined}
+            search={
+              !selectedProject ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                  <Input
+                    placeholder="Search projects…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9"
+                    aria-label="Search projects"
+                  />
+                </div>
+              ) : undefined
+            }
+            actions={
+              canCreate ? (
+                <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Add Project
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
 
         {selectedProject ? (
           <div className="flex-1 overflow-hidden">

@@ -53,9 +53,22 @@ All pages are `'use client'`. Each domain page (`/people`, `/projects`, `/organi
 - When an item is selected: detail pane takes over the whole content area
 - Detail panes use 1000ms debounce auto-save — **no explicit save buttons**
 
+On desktop the detail pane renders inline (full content area). On mobile, detail panes are wrapped in `<BottomDrawer>` (`*-detail-drawer.tsx` variants for people/orgs). Projects and invoices use `*-detail-panel.tsx`.
+
+#### Cross-entity drill navigation
+
+Pages support navigating to a related entity from within a detail pane (e.g., clicking a project link from a person's detail). This is handled via a `DrillTarget` union state in the page component:
+
+```tsx
+type DrillTarget = { type: 'project'; item: Project } | { type: 'org'; item: Organization };
+const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
+```
+
+When `drillTarget` is set, it renders the target entity's detail pane instead of the primary selection. Closing the drilled pane returns to `null`, which restores the primary detail.
+
 ### Job types
 
-Job types are **database-driven**, not purely static. `useJobTypesStore` holds DB records fetched on app load. Static `JobType` enum in `lib/types/models.ts` is used as a fallback/reference; the live list comes from the store. Always prefer `useJobTypesStore` when rendering job type options in forms.
+Job types are **database-driven**, not purely static. `useJobTypesStore` holds `JobTypeRecord[]` (from DB — `id`, `name`, `category`, `sort_order`) fetched on app load. The static `JobType` enum in `lib/types/models.ts` is a reference/fallback only; always use `useJobTypesStore` when rendering job type options in forms. The store exposes `getCategoryForJob(name)` and `getDepartmentForJob(name)` helpers.
 
 ### Invoice printing
 
@@ -99,6 +112,7 @@ CSS variables in `:root`:
 | `<DetailTabs>` | `components/ui/detail-tabs.tsx` | Tab bar for detail panes (pass `tabs`, `activeTab`, `onTabChange`) |
 | `<EntryMetadata>` | `components/ui/entry-metadata.tsx` | Created/updated timestamps at the bottom of detail panes |
 | `<MultiSelect>` | `components/ui/multi-select.tsx` | Badge-style multi-value dropdown for small fixed lists |
+| `<BottomDrawer>` | `components/ui/bottom-drawer.tsx` | Resizable mobile bottom sheet — draggable handle, vh-based height (20–85vh) |
 
 ### Form fields in detail panels
 
@@ -184,4 +198,6 @@ Every main page must use `<PageHeader>` from `components/ui/page-header.tsx` ins
 
 ### Sidebar navigation
 
-The sidebar (`components/layout/sidebar.tsx`) is 252px wide with white background. Nav items use `h-9 rounded-lg` and the active state applies `bg-primary/10 text-primary` with a 3px left shadow accent. Do not add new nav items without updating the sidebar component.
+The sidebar (`components/layout/sidebar.tsx`) is 252px wide with white background. Nav items use `h-9 rounded-lg` and the active state applies `bg-primary/10 text-primary` with a 3px left shadow accent. Nav items are defined in `components/layout/nav-config.ts` (`primaryNavItems` / `adminNavItems`) — update that file to add or remove routes, not `sidebar.tsx` directly.
+
+The sidebar has a three-state responsive model managed by `SidebarProvider` / `useSidebar()` from `components/layout/sidebar-context.tsx`: desktop-expanded, desktop-collapsed (icon-only), and mobile (full-width overlay). On mobile, `MainLayout` renders a `MobileNavBar` with a hamburger that opens the overlay. Use `useIsMobile()`, `useIsTablet()`, `useIsDesktop()` from `lib/hooks/use-media-query.ts` for breakpoint-conditional rendering.

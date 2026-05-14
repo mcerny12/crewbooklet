@@ -11,6 +11,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useJobTypesStore } from '@/lib/stores/job-types-store';
 import { UserRoleDisplay } from '@/lib/types/models';
 import { Shield, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import { MobilePageHeader } from '@/components/layout/mobile-page-header';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -276,8 +277,10 @@ export default function AdminPage() {
   return (
     <MainLayout>
       <div className="flex h-full flex-col">
-        {/* Page header */}
-        <div className="shrink-0 border-b bg-card flex h-12 items-center gap-2 px-4">
+        {/* Mobile header */}
+        <MobilePageHeader title="Admin Panel" />
+        {/* Desktop header */}
+        <div className="hidden lg:flex shrink-0 border-b bg-card h-12 items-center gap-2 px-4">
           <Shield className="h-4 w-4 text-primary" aria-hidden />
           <h1 className="text-[15px] font-semibold tracking-tight">Admin Panel</h1>
         </div>

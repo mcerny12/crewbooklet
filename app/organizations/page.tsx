@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
+import { MobilePageHeader } from '@/components/layout/mobile-page-header';
 import { CompactOrganizationListItem } from '@/components/organizations/compact-organization-list-item';
 import { AddOrganizationDialog } from '@/components/organizations/add-organization-dialog';
 import { OrgDetailPane } from '@/components/organizations/organization-detail-drawer';
@@ -65,32 +66,67 @@ export default function OrganizationsPage() {
   return (
     <MainLayout>
       <div className="flex h-full flex-col">
-        <PageHeader
+        {/* Mobile header */}
+        <MobilePageHeader
           title="Organizations"
-          subtitle={organizations.length > 0 ? `${organizations.length} companies & vendors` : undefined}
-          search={
-            !selectedOrg ? (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-                <Input
-                  placeholder="Search organizations…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9"
-                  aria-label="Search organizations"
-                />
-              </div>
-            ) : undefined
-          }
-          actions={
-            canCreate ? (
-              <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
-                <Plus className="h-4 w-4" aria-hidden />
-                Add Organization
-              </Button>
+          subtitle={organizations.length > 0 ? `${organizations.length} orgs` : undefined}
+          rightAction={
+            canCreate && !selectedOrg ? (
+              <button
+                type="button"
+                onClick={() => setIsAddDialogOpen(true)}
+                aria-label="Add organization"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <Plus className="h-5 w-5" aria-hidden />
+              </button>
             ) : undefined
           }
         />
+        {/* Mobile search */}
+        {!selectedOrg && (
+          <div className="lg:hidden border-b px-4 py-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
+                placeholder="Search organizations…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-base"
+                aria-label="Search organizations"
+              />
+            </div>
+          </div>
+        )}
+        {/* Desktop header */}
+        <div className="hidden lg:block">
+          <PageHeader
+            title="Organizations"
+            subtitle={organizations.length > 0 ? `${organizations.length} companies & vendors` : undefined}
+            search={
+              !selectedOrg ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                  <Input
+                    placeholder="Search organizations…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9"
+                    aria-label="Search organizations"
+                  />
+                </div>
+              ) : undefined
+            }
+            actions={
+              canCreate ? (
+                <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Add Organization
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
 
         {selectedOrg && drillTarget ? (
           <div className="flex-1 overflow-hidden">

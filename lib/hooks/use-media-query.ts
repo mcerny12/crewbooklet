@@ -17,11 +17,15 @@ export function useMediaQuery(query: string, defaultValue = false): boolean {
 }
 
 export function useIsMobile(): boolean {
-  return useMediaQuery('(max-width: 767px)');
+  return useMediaQuery('(max-width: 767px)', false);
+}
+
+export function useIsTabletOrMobile(): boolean {
+  return useMediaQuery('(max-width: 1023px)', false);
 }
 
 export function useIsTablet(): boolean {
-  return useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
+  return useMediaQuery('(min-width: 768px) and (max-width: 1023px)', false);
 }
 
 export function useIsDesktop(): boolean {

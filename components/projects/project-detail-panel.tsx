@@ -23,6 +23,8 @@ import { AddOrgToProjectDialog } from './add-org-to-project-dialog';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { OrganizationDetailDrawer } from '@/components/organizations/organization-detail-drawer';
 import { format } from 'date-fns';
+import { useIsMobile } from '@/lib/hooks/use-media-query';
+import { ProjectMobileDetail } from './project-mobile-detail';
 
 interface ProjectDetailPanelProps {
   project: Project;
@@ -255,6 +257,46 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
       setEditingCell(null);
     }
   };
+
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <>
+        <ProjectMobileDetail
+          project={project}
+          editedProject={editedProject}
+          updateField={updateField}
+          onClose={onClose}
+          onDelete={handleDelete}
+          organizations={organizations}
+          people={people}
+          assignments={assignments}
+          filteredAssignments={filteredAssignments}
+          crewFilter={crewFilter}
+          setCrewFilter={setCrewFilter}
+          crewDeptFilter={crewDeptFilter}
+          setCrewDeptFilter={setCrewDeptFilter}
+          jobTypeNames={jobTypeNames}
+          getDepartmentForJob={getDepartmentForJob}
+          updateAssignment={updateAssignment}
+          deleteAssignment={deleteAssignment}
+          onAddCrew={() => setShowAddCrewDialog(true)}
+          onAddOrg={() => setShowAddOrgDialog(true)}
+        />
+        <AddCrewDialog
+          projectId={project.id}
+          open={showAddCrewDialog}
+          onOpenChange={setShowAddCrewDialog}
+        />
+        <AddOrgToProjectDialog
+          projectId={project.id}
+          open={showAddOrgDialog}
+          onOpenChange={setShowAddOrgDialog}
+        />
+      </>
+    );
+  }
 
   return (
     <>

@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
+import { useIsMobile } from '@/lib/hooks/use-media-query';
+import { MobilePageHeader } from '@/components/layout/mobile-page-header';
+import { MobileDesktopOnlyPlaceholder } from '@/components/mobile/mobile-desktop-only-placeholder';
 import { CompactInvoiceListItem } from '@/components/invoices/compact-invoice-list-item';
 import { AddInvoiceDialog } from '@/components/invoices/add-invoice-dialog';
 import { InvoiceDetailPanel } from '@/components/invoices/invoice-detail-panel';
@@ -33,6 +36,7 @@ function ListHeader() {
 }
 
 export default function InvoicesPage() {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -59,6 +63,20 @@ export default function InvoicesPage() {
   const handleCreated = (inv: Invoice) => {
     setSelectedInvoice(inv);
   };
+
+  if (isMobile) {
+    return (
+      <MainLayout>
+        <MobilePageHeader title="Invoices" subtitle="Desktop only" />
+        <MobileDesktopOnlyPlaceholder
+          title="Invoices are available on desktop"
+          description="Invoice creation and PDF generation are optimised for larger screens. Please use CrewBooklet on a desktop browser for invoices."
+          actionHref="/"
+          actionLabel="Go to Dashboard"
+        />
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

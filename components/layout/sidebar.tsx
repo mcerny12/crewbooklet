@@ -14,6 +14,7 @@ import {
   primaryNavItems,
   adminNavItems,
   isNavItemActive,
+  getVisibleNavItems,
   type NavItem as NavItemType,
 } from './nav-config';
 import { UserRole } from '@/lib/types/models';
@@ -288,7 +289,7 @@ function SidebarBody({
         className={cn('flex-1 space-y-4 overflow-y-auto overflow-x-hidden py-4', collapsed ? 'px-2' : 'px-3')}
       >
         <SidebarNavGroup label="Workspace" collapsed={collapsed}>
-          {primaryNavItems.map(item => (
+          {getVisibleNavItems(primaryNavItems, !isDesktop).map(item => (
             <NavItem
               key={item.href}
               item={item}

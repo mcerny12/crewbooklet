@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
+import { MobilePageHeader } from '@/components/layout/mobile-page-header';
 import { CompactPersonListItem } from '@/components/people/compact-person-list-item';
 import { AddPersonDialog } from '@/components/people/add-person-dialog';
 import { PersonDetailPane } from '@/components/people/person-detail-drawer';
@@ -64,30 +65,65 @@ export default function PeoplePage() {
   return (
     <MainLayout>
       <div className="flex h-full flex-col">
-        <PageHeader
+        {/* Mobile header */}
+        <MobilePageHeader
           title="People"
           subtitle={people.length > 0 ? `${people.length} crew members` : undefined}
-          search={
+          rightAction={
+            canCreate && !selectedPerson ? (
+              <button
+                type="button"
+                onClick={() => setIsAddDialogOpen(true)}
+                aria-label="Add person"
+                className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <Plus className="h-5 w-5" aria-hidden />
+              </button>
+            ) : undefined
+          }
+        />
+        {/* Mobile search */}
+        {!selectedPerson && (
+          <div className="lg:hidden border-b px-4 py-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <Input
                 placeholder="Search people…"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-9 h-9"
+                className="pl-9 h-9 text-base"
                 aria-label="Search people"
               />
             </div>
-          }
-          actions={
-            canCreate ? (
-              <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
-                <Plus className="h-4 w-4" aria-hidden />
-                Add Person
-              </Button>
-            ) : undefined
-          }
-        />
+          </div>
+        )}
+        {/* Desktop header */}
+        <div className="hidden lg:block">
+          <PageHeader
+            title="People"
+            subtitle={people.length > 0 ? `${people.length} crew members` : undefined}
+            search={
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <Input
+                  placeholder="Search people…"
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-9 h-9"
+                  aria-label="Search people"
+                />
+              </div>
+            }
+            actions={
+              canCreate ? (
+                <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Add Person
+                </Button>
+              ) : undefined
+            }
+          />
+        </div>
 
         {selectedPerson && drillTarget ? (
           <div className="flex-1 overflow-hidden">
