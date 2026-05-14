@@ -67,7 +67,7 @@ export function AddOrgToProjectDialog({ projectId, open, onOpenChange }: AddOrgT
 
   return (
     <>
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full mx-4" style={{ maxWidth: '1056px' }}>
 
         {/* Header */}
