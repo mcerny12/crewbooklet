@@ -18,6 +18,8 @@ import { Gender, Language, FILM_COUNTRIES, AssignmentStatus } from '@/lib/types/
 import { useJobTypesStore } from '@/lib/stores/job-types-store';
 import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, Building2, ExternalLink, X } from 'lucide-react';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
+import { useIsMobile } from '@/lib/hooks/use-media-query';
+import { PersonMobileDetail } from './person-mobile-detail';
 
 interface PersonDetailContentProps {
   person: Person;
@@ -27,6 +29,7 @@ interface PersonDetailContentProps {
 }
 
 function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: PersonDetailContentProps) {
+  const isMobile = useIsMobile();
   const [editedPerson, setEditedPerson] = useState<Person>(person);
   const [addingOrg, setAddingOrg] = useState(false);
   const [newOrgId, setNewOrgId] = useState<string | null>(null);
@@ -88,6 +91,24 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
       return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`;
     } catch { return null; }
   };
+
+  if (isMobile) {
+    return (
+      <PersonMobileDetail
+        person={person}
+        editedPerson={editedPerson}
+        updateField={updateField}
+        onClose={onClose}
+        onDelete={handleDelete}
+        organizations={organizations}
+        projects={projects}
+        assignments={assignments}
+        addAssignment={addAssignment}
+        onOpenProject={onOpenProject}
+        onOpenOrg={onOpenOrg}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">

@@ -98,7 +98,7 @@ export function MobileSwipeTabs({
           <TabsPrimitive.Content
             key={tab.value}
             value={tab.value}
-            className="h-full min-h-0 overflow-y-auto px-4 py-4 focus-visible:outline-none"
+            className="h-full min-h-0 overflow-y-auto px-4 py-4 tab-panel-safe focus-visible:outline-none"
           >
             {tab.content}
           </TabsPrimitive.Content>

@@ -59,7 +59,7 @@ export function CompactOrganizationListItem({
           {organization.contact_email && (
             <button
               onClick={handleEmailClick}
-              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-7 w-full text-left"
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-10 w-full text-left"
               title={organization.contact_email}
             >
               <Mail className="h-3 w-3 shrink-0" aria-hidden />
@@ -69,7 +69,7 @@ export function CompactOrganizationListItem({
           {organization.contact_phone && (
             <button
               onClick={handlePhoneClick}
-              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-7 w-full text-left"
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-10 w-full text-left"
               title={organization.contact_phone}
             >
               <Phone className="h-3 w-3 shrink-0" aria-hidden />
@@ -79,7 +79,7 @@ export function CompactOrganizationListItem({
           {organization.website && (
             <button
               onClick={handleWebsiteClick}
-              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-7 w-full text-left"
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-10 w-full text-left"
               title={organization.website}
             >
               <Globe className="h-3 w-3 shrink-0" aria-hidden />
@@ -87,7 +87,7 @@ export function CompactOrganizationListItem({
             </button>
           )}
           {organization.city && (
-            <div className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground min-h-7">
+            <div className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground min-h-10">
               <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" aria-hidden />
               <span className="truncate">{organization.city}{organization.country ? `, ${organization.country}` : ''}</span>
             </div>

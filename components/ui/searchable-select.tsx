@@ -42,45 +42,45 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
 
   if (selected) {
     return (
-      <div className={cn('flex items-center gap-1 h-7 px-2 text-xs border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800', className)}>
-        <span className="flex-1 truncate text-gray-800 dark:text-gray-200">{selected.label}</span>
-        {selected.sublabel && <span className="text-gray-400 shrink-0 text-[10px]">{selected.sublabel}</span>}
+      <div className={cn('ss-root flex items-center gap-2 min-h-9 px-3 text-sm border border-input rounded-lg bg-muted/40', className)}>
+        <span className="flex-1 truncate">{selected.label}</span>
+        {selected.sublabel && <span className="text-muted-foreground shrink-0 text-xs">{selected.sublabel}</span>}
         <button
           type="button"
           onClick={() => { onChange(null); setQuery(''); }}
-          className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
-          title="Clear"
+          className="text-muted-foreground hover:text-destructive transition-colors shrink-0 flex h-6 w-6 items-center justify-center"
+          aria-label="Clear selection"
         >
-          <X className="h-3 w-3" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className={cn('relative', className)}>
-      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none z-10" />
+    <div ref={containerRef} className={cn('ss-root relative', className)}>
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none z-10" />
       <Input
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => { if (query.trim().length > 0) setOpen(true); }}
         placeholder={placeholder}
-        className="h-7 text-xs pl-6"
+        className="min-h-9 text-sm pl-8"
       />
       {open && query.trim().length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-0.5 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg max-h-56 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="text-xs text-gray-400 px-2 py-1.5">No results found</div>
+            <div className="text-sm text-muted-foreground px-3 py-2.5">No results found</div>
           ) : filtered.map((opt) => (
             <button
               key={opt.id}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => { onChange(opt.id); setQuery(''); setOpen(false); }}
-              className="w-full text-left text-xs px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-between gap-2"
+              className="w-full text-left text-sm px-3 py-2.5 min-h-10 hover:bg-muted/60 transition-colors flex items-center justify-between gap-2"
             >
               <span className="truncate">{opt.label}</span>
-              {opt.sublabel && <span className="text-gray-400 shrink-0 text-[10px]">{opt.sublabel}</span>}
+              {opt.sublabel && <span className="text-muted-foreground shrink-0 text-xs">{opt.sublabel}</span>}
             </button>
           ))}
         </div>

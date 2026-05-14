@@ -251,3 +251,22 @@ body {
 .safe-bottom {
   padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
 }
+
+/* SearchableSelect: enforce touch-friendly height on mobile */
+@media (max-width: 1023px) {
+  .ss-root {
+    min-height: 44px !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+  }
+  .ss-root input {
+    min-height: 44px !important;
+    font-size: 16px !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* Tab panel safe-area bottom gap for mobile */
+.tab-panel-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+}

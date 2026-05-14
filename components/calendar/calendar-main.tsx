@@ -11,7 +11,9 @@ import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 import { useCalendarStore } from '@/lib/stores/calendar-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
+import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { CalendarSidebar } from './calendar-sidebar';
+import { CalendarMobileView } from './calendar-mobile-view';
 import { EventDialog } from './event-dialog';
 import { PrintDialog } from './print-dialog';
 import type { CalendarEvent, ProjectCalendar } from '@/lib/types/models';
@@ -37,6 +39,7 @@ interface RBCEvent {
 }
 
 export function CalendarMain() {
+  const isMobile = useIsMobile();
   const { calendars, events, isLoading, error, fetchAll, createCalendar, updateCalendar, deleteCalendar, createEvent, updateEvent, deleteEvent } = useCalendarStore();
   const { projects, fetchProjects } = useProjectsStore();
 
@@ -153,6 +156,31 @@ export function CalendarMain() {
         <p className="text-xs text-gray-500 max-w-md text-center">{error}</p>
         <button onClick={() => fetchAll()} className="text-xs text-blue-600 underline mt-1">Retry</button>
       </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <>
+        <CalendarMobileView
+          events={events}
+          calendars={calendars}
+          onSelectEvent={(ev) => { setEditingEvent(ev); setPendingSlot(null); setDialogOpen(true); }}
+          onAddEvent={(date) => { setPendingSlot({ start: date, end: date }); setEditingEvent(null); setDialogOpen(true); }}
+        />
+        {dialogOpen && (
+          <EventDialog
+            open={dialogOpen}
+            event={editingEvent}
+            initialSlot={pendingSlot}
+            calendars={enrichedCalendars}
+            onClose={() => setDialogOpen(false)}
+            onSave={async (data) => { await createEvent(data); setDialogOpen(false); }}
+            onUpdate={async (id, data) => { await updateEvent(id, data); setDialogOpen(false); }}
+            onDelete={editingEvent ? async (id) => { await deleteEvent(id); setDialogOpen(false); } : undefined}
+          />
+        )}
+      </>
     );
   }
 

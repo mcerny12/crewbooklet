@@ -80,7 +80,7 @@ export function CompactPersonListItem({ person, onSelect, isSelected }: CompactP
           {person.email && (
             <button
               onClick={handleEmailClick}
-              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] w-fit max-w-full"
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-10 w-fit max-w-full"
               title={person.email}
             >
               <Mail className="h-3 w-3 shrink-0" aria-hidden />
@@ -90,7 +90,7 @@ export function CompactPersonListItem({ person, onSelect, isSelected }: CompactP
           {person.mobile_phone && (
             <button
               onClick={handlePhoneClick}
-              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] w-fit max-w-full"
+              className="flex items-center gap-1.5 text-primary hover:underline text-[12.5px] min-h-10 w-fit max-w-full"
               title={person.mobile_phone}
             >
               <Phone className="h-3 w-3 shrink-0" aria-hidden />
