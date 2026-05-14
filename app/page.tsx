@@ -127,7 +127,7 @@ export default function Home() {
     <MainLayout>
       <div className="flex h-full flex-col overflow-y-auto">
         {/* Mobile header */}
-        <MobilePageHeader title="CrewBooklet" subtitle="Production overview" />
+        <MobilePageHeader title="CrewBooklet" />
         {/* Desktop header */}
         <div className="hidden lg:flex shrink-0 border-b bg-card h-12 items-center px-4">
           <h1 className="text-[15px] font-semibold tracking-tight">Dashboard</h1>

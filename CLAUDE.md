@@ -13,6 +13,19 @@ npm run lint       # ESLint
 
 No test suite exists. Validate changes by running `npm run typecheck` and `npm run lint`.
 
+### Database setup (first time)
+
+Run migration files in this order in Supabase Dashboard → SQL Editor:
+
+1. `migration-2026-03-19.sql` — base schema
+2. `migration-attachments.sql`
+3. `migration-calendar.sql`
+4. `migration-invoices.sql`
+5. `migration-roles.sql` — RBAC
+6. `migration-job-types.sql`
+7. `migration-aconto.sql`
+8. `migration-fix-invoice-numbers.sql`
+
 ### Environment variables (`.env.local`)
 
 | Variable | Source |
@@ -43,7 +56,15 @@ Supabase DB → SupabaseService (static class) → Zustand stores → React comp
 
 `AuthProvider` (`components/providers/auth-provider.tsx`) runs at root, calls `useAuthStore.initialize()` and pre-fetches job types. `MainLayout` redirects unauthenticated users to `/login`.
 
-User role is in `app_metadata.role` (Supabase). The three roles are `admin`, `user`, `viewer`. Use `usePermissions()` from `lib/hooks/use-permissions.ts` to gate UI — it returns `{ canCreate, canEdit, canDelete, isAdmin, isViewer }`.
+User role is in `app_metadata.role` (Supabase). Use `usePermissions()` from `lib/hooks/use-permissions.ts` to gate UI — it returns `{ canCreate, canEdit, canDelete, isAdmin, isViewer }`.
+
+| Role | Read | Create / Edit / Delete | Admin panel |
+|---|:---:|:---:|:---:|
+| `admin` | ✓ | ✓ | ✓ |
+| `user` | ✓ | ✓ | |
+| `viewer` | ✓ | | |
+
+Roles live in `app_metadata` (service-role protected — users cannot self-promote). The first admin must be set via Supabase Dashboard → SQL Editor or the admin API directly.
 
 ### Page pattern
 
@@ -53,7 +74,9 @@ All pages are `'use client'`. Each domain page (`/people`, `/projects`, `/organi
 - When an item is selected: detail pane takes over the whole content area
 - Detail panes use 1000ms debounce auto-save — **no explicit save buttons**
 
-On desktop the detail pane renders inline (full content area). On mobile, detail panes are wrapped in `<BottomDrawer>` (`*-detail-drawer.tsx` variants for people/orgs). Projects and invoices use `*-detail-panel.tsx`.
+On desktop the detail pane renders inline (full content area). On mobile, `*-detail-drawer.tsx` files (people, orgs) and `*-detail-panel.tsx` files (projects, invoices) check `useIsMobile()` and delegate to the corresponding `*-mobile-detail.tsx` component, which uses `MobileEntityDetailLayout` for a full-screen overlay experience.
+
+Add-dialogs (e.g., `AddPersonDialog`) use plain `useState` for form state — no `react-hook-form`.
 
 #### Cross-entity drill navigation
 
@@ -200,4 +223,24 @@ Every main page must use `<PageHeader>` from `components/ui/page-header.tsx` ins
 
 The sidebar (`components/layout/sidebar.tsx`) is 252px wide with white background. Nav items use `h-9 rounded-lg` and the active state applies `bg-primary/10 text-primary` with a 3px left shadow accent. Nav items are defined in `components/layout/nav-config.ts` (`primaryNavItems` / `adminNavItems`) — update that file to add or remove routes, not `sidebar.tsx` directly.
 
-The sidebar has a three-state responsive model managed by `SidebarProvider` / `useSidebar()` from `components/layout/sidebar-context.tsx`: desktop-expanded, desktop-collapsed (icon-only), and mobile (full-width overlay). On mobile, `MainLayout` renders a `MobileNavBar` with a hamburger that opens the overlay. Use `useIsMobile()`, `useIsTablet()`, `useIsDesktop()` from `lib/hooks/use-media-query.ts` for breakpoint-conditional rendering.
+The sidebar has a three-state responsive model managed by `SidebarProvider` / `useSidebar()` from `components/layout/sidebar-context.tsx`: desktop-expanded, desktop-collapsed (icon-only), and mobile (full-width overlay). On mobile, `MainLayout` renders a `MobileNavBar` with a hamburger that opens the overlay. Use the breakpoint hooks from `lib/hooks/use-media-query.ts` for conditional rendering:
+
+| Hook | Breakpoint |
+|---|---|
+| `useIsMobile()` | ≤ 767px |
+| `useIsTablet()` | 768–1023px |
+| `useIsTabletOrMobile()` | ≤ 1023px |
+| `useIsDesktop()` | ≥ 1024px |
+
+### Mobile component system
+
+Full-screen mobile detail views (`*-mobile-detail.tsx`) are built from the `components/mobile/` barrel (`@/components/mobile`):
+
+| Component | Purpose |
+|---|---|
+| `<MobileEntityDetailLayout>` | Full-screen overlay with back header, summary slot, and footer |
+| `<MobileSwipeTabs>` | Swipeable tab bar for mobile detail sections |
+| `<MobileField>` | Labelled field row; `mobileInputCn` / `mobileTextareaCn` / `mobileSelectCn` helpers for consistent sizing |
+| `<MobileSectionCard>` | Grouped card with header, mirrors desktop `.section-card` |
+| `<MobileEmptyState>` | Empty placeholder for empty lists within mobile details |
+| `<MobileAppHeader>` | Top bar with back/hamburger modes used by `MobileEntityDetailLayout` |

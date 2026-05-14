@@ -28,18 +28,18 @@ export function MobileAppHeader({
   return (
     <header
       className={cn(
-        'lg:hidden sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85',
-        'px-4 pt-safe-or-3 pb-3',
+        'lg:hidden shrink-0 border-b bg-background',
+        'px-3 pb-2',
         className
       )}
-      style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+      style={{ paddingTop: 'max(8px, env(safe-area-inset-top))' }}
     >
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
           onClick={isBack ? onBack : onMenu}
           aria-label={isBack ? 'Back' : 'Open navigation'}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border bg-card text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl hover:bg-muted text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
         >
           {isBack ? (
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -49,9 +49,9 @@ export function MobileAppHeader({
         </button>
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold tracking-tight leading-tight">{title}</h1>
+          <h1 className="truncate text-base font-semibold leading-tight">{title}</h1>
           {subtitle ? (
-            <p className="truncate text-xs text-muted-foreground leading-tight">{subtitle}</p>
+            <p className="truncate text-[11px] text-muted-foreground leading-tight">{subtitle}</p>
           ) : null}
         </div>
 

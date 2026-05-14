@@ -8,7 +8,7 @@ export default function CalendarPage() {
   return (
     <MainLayout>
       <div className="h-full flex flex-col overflow-hidden">
-        <MobilePageHeader title="Calendar" subtitle="Upcoming schedule" />
+        <MobilePageHeader title="Calendar" />
         <div className="flex-1 min-h-0 overflow-hidden">
           <CalendarMain />
         </div>

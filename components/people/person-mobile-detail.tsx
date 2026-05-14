@@ -51,7 +51,7 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
   const [newOrgId, setNewOrgId] = useState<string | null>(null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <MobileField label="Full Name">
         <Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className={mobileInputCn} />
       </MobileField>
@@ -111,7 +111,7 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Organization</p>
         {connectedOrg ? (
-          <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm">
+          <div className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm">
             <Building2 className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{connectedOrg.name}</p>
@@ -139,11 +139,11 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
               placeholder="Search organization…"
               className="flex-1"
             />
-            <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="h-11 rounded-xl">Link</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="h-11 rounded-xl">Cancel</Button>
+            <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="h-9 rounded-lg">Link</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="h-9 rounded-lg">Cancel</Button>
           </div>
         ) : (
-          <Button variant="outline" onClick={() => setAddingOrg(true)} className="w-full h-11 rounded-xl gap-2">
+          <Button variant="outline" onClick={() => setAddingOrg(true)} className="w-full h-9 rounded-lg gap-2">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Link Organization
           </Button>
@@ -163,7 +163,7 @@ function AddressTab({ editedPerson, updateField }: {
   const update = (patch: Partial<typeof addr>) => updateField('address', { ...addr, ...patch });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <MobileField label="Street">
         <Input value={addr?.street1 || ''} onChange={e => update({ street1: e.target.value || null })} className={mobileInputCn} />
       </MobileField>
@@ -208,9 +208,9 @@ function ProjectsTab({ person, editedPerson, projects, assignments, addAssignmen
   const getDept = useJobTypesStore(s => s.getDepartmentForJob);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {adding ? (
-        <div className="space-y-3 rounded-2xl border bg-card p-4 shadow-sm">
+        <div className="space-y-2 rounded-xl border bg-card p-3 shadow-sm">
           <p className="text-sm font-medium">Assign to project</p>
           <SearchableSelect
             options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
@@ -219,17 +219,17 @@ function ProjectsTab({ person, editedPerson, projects, assignments, addAssignmen
             placeholder="Search project…"
           />
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setAdding(false); setNewProjectId(null); }} className="flex-1 h-11 rounded-xl">Cancel</Button>
+            <Button variant="outline" onClick={() => { setAdding(false); setNewProjectId(null); }} className="flex-1 h-9 rounded-lg">Cancel</Button>
             <Button disabled={!newProjectId} onClick={async () => {
               if (!newProjectId) return;
               const primaryJob = editedPerson.jobs?.[0] ?? null;
               await addAssignment({ project_id: newProjectId, person_id: person.id, organization_id: null, role: primaryJob, department: primaryJob ? getDept(primaryJob) : null, availability: AssignmentStatus.Anfragen, notes: null });
               setAdding(false); setNewProjectId(null);
-            }} className="flex-1 h-11 rounded-xl">Assign</Button>
+            }} className="flex-1 h-9 rounded-lg">Assign</Button>
           </div>
         </div>
       ) : (
-        <Button onClick={() => setAdding(true)} className="w-full h-11 rounded-xl gap-2">
+        <Button onClick={() => setAdding(true)} className="w-full h-9 rounded-lg gap-2">
           <Plus className="h-4 w-4" aria-hidden="true" />
           Assign to Project
         </Button>
@@ -247,7 +247,7 @@ function ProjectsTab({ person, editedPerson, projects, assignments, addAssignmen
             const project = projects.find(p => p.id === a.project_id);
             if (!project) return null;
             return (
-              <div key={a.id} className="rounded-2xl border bg-card p-4 shadow-sm space-y-2">
+              <div key={a.id} className="rounded-xl border bg-card p-3 shadow-sm space-y-2">
                 <div className="flex min-w-0 items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{project.name}</p>
@@ -290,7 +290,7 @@ function FinancialMetaTab({ editedPerson, updateField, person, onDelete }: {
   const baseFd = { id: fd?.id ?? '', ...fd };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <MobileField label="VAT Number">
         <Input value={fd?.vat_number || ''} onChange={e => updateField('financial_details', { ...baseFd, vat_number: e.target.value || null })} className={mobileInputCn} />
       </MobileField>
@@ -304,14 +304,14 @@ function FinancialMetaTab({ editedPerson, updateField, person, onDelete }: {
         <Input value={fd?.bic || ''} onChange={e => updateField('financial_details', { ...baseFd, bic: e.target.value || null })} className={mobileInputCn} />
       </MobileField>
 
-      <div className="rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="rounded-xl border bg-card p-3 shadow-sm">
         <EntryMetadata createdAt={person.created_at} updatedAt={person.updated_at} userId={person.user_id} />
       </div>
 
       <button
         type="button"
         onClick={onDelete}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
       >
         <Trash2 className="h-4 w-4" aria-hidden="true" />
         Delete Person
@@ -332,13 +332,13 @@ function PersonSummaryCard({ person }: { person: Person }) {
         <span className="text-muted-foreground">{person.jobs.slice(0, 2).join(' · ')}</span>
       ) : null}
       {person.email && (
-        <a href={`mailto:${person.email}`} className="flex items-center gap-1.5 text-primary hover:underline min-h-10">
+        <a href={`mailto:${person.email}`} className="flex items-center gap-1.5 text-primary hover:underline">
           <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span className="truncate">{person.email}</span>
         </a>
       )}
       {person.mobile_phone && (
-        <a href={`tel:${person.mobile_phone}`} className="flex items-center gap-1.5 text-primary hover:underline min-h-10">
+        <a href={`tel:${person.mobile_phone}`} className="flex items-center gap-1.5 text-primary hover:underline">
           <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span>{person.mobile_phone}</span>
         </a>
@@ -354,8 +354,6 @@ export function PersonMobileDetail({
   organizations, projects, assignments, addAssignment,
   onOpenProject, onOpenOrg,
 }: PersonMobileDetailProps) {
-  const primaryJob = editedPerson.jobs?.[0];
-
   const tabs: MobileSwipeTab[] = [
     {
       value: 'profile',
@@ -410,7 +408,6 @@ export function PersonMobileDetail({
   return (
     <MobileEntityDetailLayout
       title={editedPerson.name}
-      subtitle={primaryJob || undefined}
       onBack={onClose}
       summary={<PersonSummaryCard person={editedPerson} />}
     >

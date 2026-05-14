@@ -23,13 +23,14 @@ export function MobileEntityDetailLayout({
   footer,
 }: MobileEntityDetailLayoutProps) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background lg:hidden">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background lg:hidden">
       <MobileAppHeader
         mode="back"
         title={title}
         subtitle={subtitle}
         onBack={onBack}
         rightAction={rightAction}
+        className="shrink-0"
       />
 
       {summary ? (

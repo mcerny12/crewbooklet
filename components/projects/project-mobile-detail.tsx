@@ -1,7 +1,7 @@
 'use client';
 
 import type { Project, Organization, ProjectAssignment, AssignmentStatus as AssignmentStatusType } from '@/lib/types/models';
-import { AssignmentStatus, CrewDepartment, FILM_COUNTRIES, ProjectStatus } from '@/lib/types/models';
+import { AssignmentStatus, CrewDepartment, FILM_COUNTRIES } from '@/lib/types/models';
 import { MobileEntityDetailLayout } from '@/components/mobile/mobile-entity-detail-layout';
 import { MobileSwipeTabs } from '@/components/mobile/mobile-swipe-tabs';
 import type { MobileSwipeTab } from '@/components/mobile/mobile-swipe-tabs';
@@ -9,16 +9,15 @@ import { MobileField, mobileInputCn, mobileTextareaCn } from '@/components/mobil
 import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { InlineDateRangePicker } from '@/components/ui/date-range-picker';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
-import { Trash2, Plus, X, Search, CalendarDays, MapPin } from 'lucide-react';
+import { ChevronDown, Mail, Phone, Trash2, Plus, X, Search, CalendarDays, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 // ── types ──────────────────────────────────────────────────────
 
@@ -29,7 +28,7 @@ export type ProjectMobileDetailProps = {
   onClose: () => void;
   onDelete: () => void;
   organizations: Organization[];
-  people: { id: string; name: string }[];
+  people: { id: string; name: string; email?: string | null; mobile_phone?: string | null }[];
   assignments: ProjectAssignment[];
   filteredAssignments: ProjectAssignment[];
   crewFilter: string;
@@ -70,77 +69,140 @@ function MobileCrewCard({
   assignment, people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment,
 }: {
   assignment: ProjectAssignment;
-  people: { id: string; name: string }[];
+  people: { id: string; name: string; email?: string | null; mobile_phone?: string | null }[];
   organizations: Organization[];
   jobTypeNames: string[];
   getDepartmentForJob: (name: string) => CrewDepartment | null;
   updateAssignment: (id: string, updates: Partial<ProjectAssignment>) => void;
   deleteAssignment: (id: string) => Promise<void>;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const displayName = getDisplayName(assignment, people, organizations);
-  const isOrg = !!assignment.organization_id && !assignment.person_id;
+  const person = assignment.person_id ? people.find(p => p.id === assignment.person_id) ?? null : null;
+  const email = person?.email ?? null;
+  const phone = person?.mobile_phone ?? null;
+
+  // Build role options including any custom value already stored
+  const roleOptions = useMemo(() => {
+    const opts = jobTypeNames.map(j => ({ id: j, label: j }));
+    const currentRole = assignment.role;
+    if (currentRole && !jobTypeNames.includes(currentRole)) {
+      opts.unshift({ id: currentRole, label: currentRole });
+    }
+    return opts;
+  }, [jobTypeNames, assignment.role]);
 
   return (
-    <article className="rounded-2xl border bg-card p-4 shadow-sm space-y-4">
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold">{displayName}</h3>
-          {isOrg && <p className="text-xs text-muted-foreground">Organization</p>}
-        </div>
+    <article className="rounded-xl border bg-card shadow-sm overflow-hidden">
+      {/* Collapsed header — always visible */}
+      <div className="flex min-w-0 items-center gap-2 px-3 py-2.5">
         <button
           type="button"
-          aria-label={`Remove ${displayName} from project`}
-          onClick={async () => {
-            if (confirm(`Remove ${displayName} from this project?`)) await deleteAssignment(assignment.id);
-          }}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          onClick={() => setExpanded(v => !v)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none"
+          aria-expanded={expanded}
         >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold leading-tight">{displayName}</div>
+            <div className="truncate text-xs text-muted-foreground leading-tight mt-0.5">
+              {assignment.role ?? '—'}
+              {assignment.department ? ` · ${assignment.department}` : ''}
+            </div>
+          </div>
+          <span className={`inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${ASSIGNMENT_STATUS_COLORS[assignment.availability] ?? 'bg-gray-100 text-gray-600'}`}>
+            {assignment.availability}
+          </span>
         </button>
-      </div>
 
-      <div className="grid gap-3">
-        <MobileField label="Role">
-          <SearchableSelect
-            options={jobTypeNames.map(j => ({ id: j, label: j }))}
-            value={assignment.role ?? null}
-            onChange={(role) => {
-              const dept = role ? getDepartmentForJob(role) : null;
-              updateAssignment(assignment.id, { role, department: dept ?? undefined });
-            }}
-            placeholder="Search role..."
-          />
-        </MobileField>
-
-        <MobileField label="Availability">
-          <Select
-            value={assignment.availability}
-            onValueChange={(v) => updateAssignment(assignment.id, { availability: v as AssignmentStatusType })}
+        {/* Contact icons */}
+        <div className="flex shrink-0 items-center gap-0.5">
+          {phone ? (
+            <a
+              href={`tel:${phone}`}
+              onClick={e => e.stopPropagation()}
+              aria-label={`Call ${displayName}`}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-muted"
+            >
+              <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          ) : null}
+          {email ? (
+            <a
+              href={`mailto:${email}`}
+              onClick={e => e.stopPropagation()}
+              aria-label={`Email ${displayName}`}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-muted"
+            >
+              <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setExpanded(v => !v)}
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted focus-visible:outline-none"
           >
-            <SelectTrigger className={mobileInputCn}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.values(AssignmentStatus).map(s => (
-                <SelectItem key={s} value={s}>
-                  <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${ASSIGNMENT_STATUS_COLORS[s] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {s}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </MobileField>
-
-        <MobileField label="Rate / Notes">
-          <Textarea
-            value={assignment.notes ?? ''}
-            onChange={(e) => updateAssignment(assignment.id, { notes: e.target.value || null })}
-            className={mobileTextareaCn}
-            placeholder="e.g. €500/day, flat fee…"
-          />
-        </MobileField>
+            <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+          </button>
+        </div>
       </div>
+
+      {/* Expanded form */}
+      {expanded && (
+        <div className="border-t px-3 py-3 space-y-3">
+          <MobileField label="Role">
+            <SearchableSelect
+              options={roleOptions}
+              value={assignment.role ?? null}
+              onChange={(role) => {
+                const dept = role ? getDepartmentForJob(role) : null;
+                updateAssignment(assignment.id, { role, department: dept ?? undefined });
+              }}
+              placeholder="Search role…"
+              className="h-9 text-sm"
+            />
+          </MobileField>
+
+          <MobileField label="Availability">
+            <Select
+              value={assignment.availability}
+              onValueChange={(v) => updateAssignment(assignment.id, { availability: v as AssignmentStatusType })}
+            >
+              <SelectTrigger className="h-9 min-h-9 rounded-lg px-2.5 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(AssignmentStatus).map(s => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </MobileField>
+
+          <MobileField label="Rate / Notes">
+            <Textarea
+              value={assignment.notes ?? ''}
+              onChange={(e) => updateAssignment(assignment.id, { notes: e.target.value || null })}
+              className="min-h-17 rounded-lg px-2.5 py-2 text-sm leading-snug resize-y"
+              placeholder="e.g. €500/day, flat fee…"
+            />
+          </MobileField>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              aria-label={`Remove ${displayName} from project`}
+              onClick={async () => {
+                if (confirm(`Remove ${displayName} from this project?`)) await deleteAssignment(assignment.id);
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border border-destructive/30 bg-destructive/5 text-xs font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Remove
+            </button>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
@@ -149,15 +211,15 @@ function MobileCrewCard({
 
 function ProjectSummaryCard({ project, clientOrg }: { project: Project; clientOrg: Organization | null }) {
   return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm space-y-3">
+    <div className="rounded-2xl border bg-card px-4 py-2.5 shadow-sm space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{project.project_number}</span>
+        <span className="text-xs font-medium">{project.project_number}</span>
         <ProjectStatusBadge status={project.status} />
       </div>
-      <dl className="space-y-1.5 text-sm">
+      <dl className="space-y-1 text-xs">
         {(project.start_date || project.end_date) && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <dd>
               {formatDate(project.start_date)}
               {project.end_date ? ` – ${formatDate(project.end_date)}` : ''}
@@ -166,7 +228,7 @@ function ProjectSummaryCard({ project, clientOrg }: { project: Project; clientOr
         )}
         {(project.shooting_location || project.inquiry_country) && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <dd className="truncate">{project.shooting_location ?? project.inquiry_country}</dd>
           </div>
         )}
@@ -192,30 +254,6 @@ function OverviewTab({ editedProject, updateField, organizations }: {
 
   return (
     <div className="space-y-4">
-      <MobileField label="Project Name">
-        <Input
-          value={editedProject.name}
-          onChange={(e) => updateField('name', e.target.value)}
-          className={mobileInputCn}
-        />
-      </MobileField>
-
-      <MobileField label="Status">
-        <Select
-          value={editedProject.status}
-          onValueChange={(v) => updateField('status', v as ProjectStatus)}
-        >
-          <SelectTrigger className={mobileInputCn}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.values(ProjectStatus).map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </MobileField>
-
       <MobileField label="Client Organization">
         {selectedOrg ? (
           <div className="flex h-11 items-center gap-2 rounded-xl border bg-muted/30 px-3 text-sm">
@@ -359,36 +397,6 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
   );
 }
 
-function OrganizationsTab({ editedProject, updateField, organizations }: {
-  editedProject: Project;
-  updateField: <K extends keyof Project>(field: K, value: Project[K]) => void;
-  organizations: Organization[];
-}) {
-  const clientOrg = organizations.find(o => o.id === editedProject.client_organization_id) ?? null;
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border bg-card p-4 shadow-sm space-y-3">
-        <h3 className="text-sm font-semibold">Client Organization</h3>
-        {clientOrg ? (
-          <div className="flex items-center gap-3">
-            <span className="min-w-0 flex-1 text-sm truncate">{clientOrg.name}</span>
-            <button
-              type="button"
-              onClick={() => updateField('client_organization_id', null)}
-              aria-label="Remove client organization"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No client organization set. Set it in the Overview tab.</p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function NotesTab({ editedProject, updateField, project, onDelete }: {
   editedProject: Project;
@@ -472,11 +480,6 @@ export function ProjectMobileDetail({
           onAddOrg={onAddOrg}
         />
       ),
-    },
-    {
-      value: 'organizations',
-      label: 'Orgs',
-      content: <OrganizationsTab editedProject={editedProject} updateField={updateField} organizations={organizations} />,
     },
     {
       value: 'notes',

@@ -15,7 +15,7 @@ type MobileFieldProps = {
 
 export function MobileField({ label, children, helper, error, className, htmlFor }: MobileFieldProps) {
   return (
-    <div className={cn('grid gap-1.5', className)}>
+    <div className={cn('grid gap-1', className)}>
       <Label htmlFor={htmlFor} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
@@ -26,6 +26,6 @@ export function MobileField({ label, children, helper, error, className, htmlFor
   );
 }
 
-export const mobileInputCn = 'h-11 text-base rounded-xl';
-export const mobileTextareaCn = 'min-h-24 text-base rounded-xl resize-y';
-export const mobileSelectCn = 'h-11 text-base rounded-xl';
+export const mobileInputCn = 'h-9 min-h-9 rounded-lg px-2.5 text-sm';
+export const mobileTextareaCn = 'min-h-20 rounded-lg px-2.5 py-2 text-sm leading-snug resize-y';
+export const mobileSelectCn = 'h-9 min-h-9 rounded-lg px-2.5 text-sm';

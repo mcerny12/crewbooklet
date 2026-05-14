@@ -97,7 +97,7 @@ export function CalendarMobileView({ events, calendars, onSelectEvent, onAddEven
           <div className="px-4 py-8">
             <MobileEmptyState
               icon={<CalendarDays className="h-10 w-10" />}
-              title="No events in {format(month, 'MMMM')}"
+              title={`No events in ${format(month, 'MMMM')}`}
               description="Tap the button below to add an event."
               action={
                 <Button onClick={() => onAddEvent(new Date())} className="h-11 rounded-xl gap-2">

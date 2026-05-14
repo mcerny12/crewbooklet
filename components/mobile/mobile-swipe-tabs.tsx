@@ -69,21 +69,21 @@ export function MobileSwipeTabs({
     >
       <TabsPrimitive.List
         aria-label="Detail sections"
-        className="flex shrink-0 gap-1 overflow-x-auto border-b bg-background px-4 py-2 scrollbar-none"
-        style={{ scrollbarWidth: 'none' }}
+        className="shrink-0 grid border-b bg-muted/40 mx-3 my-2 rounded-xl p-0.5"
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}
       >
         {tabs.map((tab) => (
           <TabsPrimitive.Trigger
             key={tab.value}
             value={tab.value}
             className={cn(
-              'flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-medium whitespace-nowrap',
+              'flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-xs font-medium',
               'text-muted-foreground transition-colors',
-              'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground',
+              'data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
             )}
           >
-            <span>{tab.label}</span>
+            <span className="truncate">{tab.label}</span>
             {tab.badge}
           </TabsPrimitive.Trigger>
         ))}
@@ -98,7 +98,7 @@ export function MobileSwipeTabs({
           <TabsPrimitive.Content
             key={tab.value}
             value={tab.value}
-            className="h-full min-h-0 overflow-y-auto px-4 py-4 tab-panel-safe focus-visible:outline-none"
+            className="h-full min-h-0 overflow-y-auto px-3 py-3 focus-visible:outline-none"
           >
             {tab.content}
           </TabsPrimitive.Content>

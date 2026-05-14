@@ -5,7 +5,6 @@ import { usePeopleStore } from '@/lib/stores/people-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Language, FILM_COUNTRIES } from '@/lib/types/models';
@@ -67,67 +66,72 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader className="pb-2">
+      <DialogContent className="w-full max-w-lg sm:max-w-2xl p-0 gap-0">
+        <DialogHeader className="px-4 pt-4 pb-3 border-b">
           <DialogTitle className="text-sm font-semibold">Add Person</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="flex flex-col max-h-[80vh]">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
-          {/* Row 1: Name + Email + Phone */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Name *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required disabled={isSubmitting} className="h-7 text-xs" />
+            {/* Name — full width always */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Name *</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required disabled={isSubmitting} className="h-9 text-sm" />
             </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="john@example.com" disabled={isSubmitting} className="h-7 text-xs" />
+
+            {/* Email + Phone — stack on mobile, side-by-side on sm */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Email</label>
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="john@example.com" disabled={isSubmitting} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Phone</label>
+                <Input value={mobilePhone} onChange={(e) => setMobilePhone(e.target.value)} type="tel" placeholder="+49 123 456 789" disabled={isSubmitting} className="h-9 text-sm" />
+              </div>
             </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Mobile Phone</Label>
-              <Input value={mobilePhone} onChange={(e) => setMobilePhone(e.target.value)} type="tel" placeholder="+49 123 456 789" disabled={isSubmitting} className="h-7 text-xs" />
+
+            {/* Jobs + Languages — stack on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Jobs / Roles (up to 3)</label>
+                <MultiSelect options={jobOptions} selected={jobs} onChange={setJobs} placeholder="Select jobs…" maxSelections={3} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Languages</label>
+                <MultiSelect options={languageOptions} selected={languages} onChange={setLanguages} placeholder="Select languages…" />
+              </div>
             </div>
+
+            {/* City + Country — stack on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">City</label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Berlin" disabled={isSubmitting} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Country</label>
+                <SearchableSelect
+                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+                  value={country || null}
+                  onChange={(v) => setCountry(v ?? '')}
+                  placeholder="Search country..."
+                />
+              </div>
+            </div>
+
           </div>
 
-          {/* Row 2: Jobs + Languages */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Jobs / Roles (up to 3)</Label>
-              <MultiSelect options={jobOptions} selected={jobs} onChange={setJobs} placeholder="Select jobs…" maxSelections={3} />
-            </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Languages</Label>
-              <MultiSelect options={languageOptions} selected={languages} onChange={setLanguages} placeholder="Select languages…" />
-            </div>
-          </div>
-
-          {/* Row 3: City + Country */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">City</Label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Berlin" disabled={isSubmitting} className="h-7 text-xs" />
-            </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Country</Label>
-              <SearchableSelect
-                options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
-                value={country || null}
-                onChange={(v) => setCountry(v ?? '')}
-                placeholder="Search country..."
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => { resetForm(); onOpenChange(false); }} disabled={isSubmitting}>
+          {/* Sticky footer */}
+          <div className="shrink-0 flex justify-end gap-2 px-4 py-3 border-t bg-background">
+            <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { resetForm(); onOpenChange(false); }} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="h-7 text-xs" disabled={isSubmitting || !name.trim()}>
+            <Button type="submit" size="sm" className="h-9" disabled={isSubmitting || !name.trim()}>
               {isSubmitting ? 'Adding…' : 'Add Person'}
             </Button>
           </div>
-
         </form>
       </DialogContent>
     </Dialog>

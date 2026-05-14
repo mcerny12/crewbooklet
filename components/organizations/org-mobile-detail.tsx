@@ -169,7 +169,7 @@ function PeopleTab({ orgPeople, allPeople, updatePerson, onOpenPerson, organizat
                 setNewPersonId(null);
                 setAdding(false);
               }}
-              className="h-11 rounded-xl"
+              className="h-9 rounded-lg"
             >
               Add
             </Button>
@@ -177,13 +177,13 @@ function PeopleTab({ orgPeople, allPeople, updatePerson, onOpenPerson, organizat
               size="sm"
               variant="ghost"
               onClick={() => { setAdding(false); setNewPersonId(null); }}
-              className="h-11 rounded-xl"
+              className="h-9 rounded-lg"
             >
               Cancel
             </Button>
           </>
         ) : (
-          <Button onClick={() => setAdding(true)} className="w-full h-11 rounded-xl gap-2">
+          <Button onClick={() => setAdding(true)} className="w-full h-9 rounded-lg gap-2">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add Person
           </Button>
@@ -199,7 +199,7 @@ function PeopleTab({ orgPeople, allPeople, updatePerson, onOpenPerson, organizat
       ) : (
         <div className="space-y-2">
           {orgPeople.map(person => (
-            <div key={person.id} className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm">
+            <div key={person.id} className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{person.name}</p>
                 {person.jobs?.length ? (
@@ -268,7 +268,7 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
                 setNewProjectId(null);
                 setAdding(false);
               }}
-              className="h-11 rounded-xl"
+              className="h-9 rounded-lg"
             >
               Link
             </Button>
@@ -276,13 +276,13 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
               size="sm"
               variant="ghost"
               onClick={() => { setAdding(false); setNewProjectId(null); }}
-              className="h-11 rounded-xl"
+              className="h-9 rounded-lg"
             >
               Cancel
             </Button>
           </>
         ) : (
-          <Button onClick={() => setAdding(true)} variant="outline" className="w-full h-11 rounded-xl gap-2">
+          <Button onClick={() => setAdding(true)} variant="outline" className="w-full h-9 rounded-lg gap-2">
             <Plus className="h-4 w-4" aria-hidden="true" />
             Link Project
           </Button>
@@ -298,7 +298,7 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
       ) : (
         <div className="space-y-2">
           {orgProjects.map(project => (
-            <div key={project.id} className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm">
+            <div key={project.id} className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{project.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{project.project_number} · {project.status}</p>
@@ -333,12 +333,14 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
 
 // ── Financial tab ──────────────────────────────────────────────
 
-function FinancialTab({ editedOrg, updateField, useCustomInvoice, setUseCustomInvoice, clearCustomInvoice }: {
+function FinancialTab({ editedOrg, updateField, useCustomInvoice, setUseCustomInvoice, clearCustomInvoice, organization, onDelete }: {
   editedOrg: Organization;
   updateField: <K extends keyof Organization>(field: K, value: Organization[K]) => void;
   useCustomInvoice: boolean;
   setUseCustomInvoice: (v: boolean) => void;
   clearCustomInvoice: () => void;
+  organization: Organization;
+  onDelete: () => void;
 }) {
   const fd = editedOrg.financial_details;
   const baseFd = { id: fd?.id ?? '', ...fd };
@@ -378,7 +380,7 @@ function FinancialTab({ editedOrg, updateField, useCustomInvoice, setUseCustomIn
       </MobileField>
 
       {/* Invoice address */}
-      <div className="rounded-2xl border bg-card p-4 shadow-sm space-y-3">
+      <div className="rounded-xl border bg-card p-3 shadow-sm space-y-3">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -436,16 +438,8 @@ function FinancialTab({ editedOrg, updateField, useCustomInvoice, setUseCustomIn
           </div>
         )}
       </div>
-    </div>
-  );
-}
 
-// ── Meta tab ───────────────────────────────────────────────────
-
-function MetaTab({ organization, onDelete }: { organization: Organization; onDelete: () => void }) {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="rounded-xl border bg-card p-3 shadow-sm">
         <EntryMetadata
           createdAt={organization.created_at}
           updatedAt={organization.updated_at}
@@ -456,7 +450,7 @@ function MetaTab({ organization, onDelete }: { organization: Organization; onDel
       <button
         type="button"
         onClick={onDelete}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
       >
         <Trash2 className="h-4 w-4" aria-hidden="true" />
         Delete Organization
@@ -474,8 +468,6 @@ export function OrgMobileDetail({
   updatePerson, updateProject,
   onClose, onDelete, onOpenProject, onOpenPerson,
 }: OrgMobileDetailProps) {
-  const subtitle = editedOrg.jobs?.slice(0, 2).join(' · ') || undefined;
-
   const tabs: MobileSwipeTab[] = [
     {
       value: 'overview',
@@ -520,7 +512,7 @@ export function OrgMobileDetail({
     },
     {
       value: 'financial',
-      label: 'Financial',
+      label: 'Finance',
       content: (
         <FinancialTab
           editedOrg={editedOrg}
@@ -528,20 +520,16 @@ export function OrgMobileDetail({
           useCustomInvoice={useCustomInvoice}
           setUseCustomInvoice={setUseCustomInvoice}
           clearCustomInvoice={clearCustomInvoice}
+          organization={organization}
+          onDelete={onDelete}
         />
       ),
-    },
-    {
-      value: 'meta',
-      label: 'Meta',
-      content: <MetaTab organization={organization} onDelete={onDelete} />,
     },
   ];
 
   return (
     <MobileEntityDetailLayout
       title={editedOrg.name}
-      subtitle={subtitle}
       onBack={onClose}
     >
       <MobileSwipeTabs tabs={tabs} defaultValue="overview" className="h-full" />
