@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 type MobileAppHeaderProps = {
   title: string;
+  titleNode?: React.ReactNode;
   subtitle?: string;
   mode?: 'menu' | 'back';
   onMenu?: () => void;
@@ -16,6 +17,7 @@ type MobileAppHeaderProps = {
 
 export function MobileAppHeader({
   title,
+  titleNode,
   subtitle,
   mode = 'menu',
   onMenu,
@@ -49,7 +51,9 @@ export function MobileAppHeader({
         </button>
 
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-semibold leading-tight">{title}</h1>
+          {titleNode ?? (
+            <h1 className="truncate text-base font-semibold leading-tight">{title}</h1>
+          )}
           {subtitle ? (
             <p className="truncate text-[11px] text-muted-foreground leading-tight">{subtitle}</p>
           ) : null}

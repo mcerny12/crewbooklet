@@ -7,15 +7,21 @@ import { MobileSwipeTabs } from '@/components/mobile/mobile-swipe-tabs';
 import type { MobileSwipeTab } from '@/components/mobile/mobile-swipe-tabs';
 import { MobileField, mobileInputCn, mobileTextareaCn } from '@/components/mobile/mobile-field';
 import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
+import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { InlineDateRangePicker } from '@/components/ui/date-range-picker';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
-import { ChevronDown, Mail, Phone, Trash2, Plus, X, Search, SlidersHorizontal, UserPlus, Building2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { useState, useMemo } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ChevronDown, Mail, Phone, Trash2, X, Search, SlidersHorizontal, UserPlus, Building2 } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 // ── types ──────────────────────────────────────────────────────
 
@@ -51,11 +57,6 @@ function getDisplayName(a: ProjectAssignment, people: { id: string; name: string
     ?? 'Unknown';
 }
 
-function formatDate(s: string | null | undefined) {
-  if (!s) return null;
-  try { return format(new Date(s), 'MMM d, yyyy'); } catch { return null; }
-}
-
 const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
   [AssignmentStatus.Verfuegbar]:   'bg-green-100 text-green-700',
   [AssignmentStatus.Angefragt]:    'bg-yellow-100 text-yellow-700',
@@ -63,7 +64,55 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
   [AssignmentStatus.ErsteOption]:  'bg-purple-100 text-purple-700',
 };
 
-// ── sub-components ─────────────────────────────────────────────
+// ── inline-editable title in header ─────────────────────────────
+
+function EditableHeaderTitle({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!editing) setDraft(value);
+  }, [value, editing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== value) onChange(trimmed);
+    else setDraft(value);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        autoFocus
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') { e.preventDefault(); setDraft(value); setEditing(false); }
+        }}
+        className="w-full bg-transparent text-base font-semibold leading-tight outline-none border-b border-primary/60 focus:border-primary"
+        aria-label="Project name"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      className="block w-full truncate text-left text-base font-semibold leading-tight hover:text-primary transition-colors"
+    >
+      {value}
+    </button>
+  );
+}
+
+// ── crew card ──────────────────────────────────────────────────
 
 function MobileCrewCard({
   assignment, people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment,
@@ -104,7 +153,6 @@ function MobileCrewCard({
             <div className="truncate text-sm font-semibold leading-tight">{displayName}</div>
             <div className="truncate text-xs text-muted-foreground leading-tight mt-0.5">
               {assignment.role ?? '—'}
-              {assignment.department ? ` · ${assignment.department}` : ''}
             </div>
           </div>
           <span className={`inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${ASSIGNMENT_STATUS_COLORS[assignment.availability] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -217,31 +265,6 @@ function OverviewTab({ editedProject, updateField, organizations }: {
 
   return (
     <div className="space-y-4">
-      <MobileField label="Project Name">
-        <Input
-          value={editedProject.name}
-          onChange={e => updateField('name', e.target.value)}
-          className={mobileInputCn}
-          placeholder="Project name"
-        />
-      </MobileField>
-
-      <MobileField label="Status">
-        <Select
-          value={editedProject.status}
-          onValueChange={v => updateField('status', v as ProjectStatus)}
-        >
-          <SelectTrigger className={mobileInputCn}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.values(ProjectStatus).map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </MobileField>
-
       <MobileField label="Client Organization">
         {selectedOrg ? (
           <div className="flex h-9 items-center gap-2 rounded-lg border bg-muted/30 px-2.5 text-sm">
@@ -326,7 +349,7 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
 }: Pick<ProjectMobileDetailProps, 'assignments' | 'filteredAssignments' | 'crewFilter' | 'setCrewFilter' | 'crewDeptFilter' | 'setCrewDeptFilter' | 'people' | 'organizations' | 'jobTypeNames' | 'getDepartmentForJob' | 'updateAssignment' | 'deleteAssignment' | 'onAddCrew' | 'onAddOrg'>) {
   return (
     <div className="space-y-3">
-      {/* Single-row controls: filter + dept + add crew + add org */}
+      {/* Single-row controls: filter input + dept filter + add crew + add org */}
       <div className="flex items-center gap-1.5">
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" aria-hidden="true" />
@@ -338,29 +361,35 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
           />
         </div>
 
-        {/* Dept filter — icon-only trigger */}
-        <Select value={crewDeptFilter} onValueChange={setCrewDeptFilter}>
-          <SelectTrigger
-            className="h-10 w-10 shrink-0 rounded-xl px-0 justify-center border"
-            aria-label="Filter by department"
-          >
-            {crewDeptFilter !== 'all' ? (
-              <span className="text-[9px] font-bold text-primary leading-none">
-                {crewDeptFilter.slice(0, 3).toUpperCase()}
-              </span>
-            ) : (
-              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            )}
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All departments</SelectItem>
+        {/* Dept filter — uses DropdownMenu so the trigger has no chevron */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Filter by department"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              {crewDeptFilter !== 'all' ? (
+                <span className="text-[9px] font-bold text-primary leading-none">
+                  {crewDeptFilter.slice(0, 3).toUpperCase()}
+                </span>
+              ) : (
+                <SlidersHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-80 overflow-y-auto">
+            <DropdownMenuItem onClick={() => setCrewDeptFilter('all')}>
+              All departments
+            </DropdownMenuItem>
             {Object.values(CrewDepartment).map(d => (
-              <SelectItem key={d} value={d}>{d}</SelectItem>
+              <DropdownMenuItem key={d} onClick={() => setCrewDeptFilter(d)}>
+                {d}
+              </DropdownMenuItem>
             ))}
-          </SelectContent>
-        </Select>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        {/* Add crew — icon only */}
         <button
           type="button"
           onClick={onAddCrew}
@@ -370,7 +399,6 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
           <UserPlus className="h-4 w-4" aria-hidden="true" />
         </button>
 
-        {/* Add org — icon only */}
         <button
           type="button"
           onClick={onAddOrg}
@@ -444,6 +472,33 @@ function NotesTab({ editedProject, updateField, project, onDelete }: {
   );
 }
 
+// ── status dropdown in header ───────────────────────────────────
+
+function HeaderStatusDropdown({
+  status, onChange,
+}: { status: ProjectStatus; onChange: (s: ProjectStatus) => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Status: ${status}. Tap to change.`}
+          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md"
+        >
+          <ProjectStatusBadge status={status} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-40">
+        {Object.values(ProjectStatus).map(s => (
+          <DropdownMenuItem key={s} onClick={() => onChange(s as ProjectStatus)}>
+            <ProjectStatusBadge status={s as ProjectStatus} />
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // ── main export ────────────────────────────────────────────────
 
 export function ProjectMobileDetail({
@@ -505,7 +560,20 @@ export function ProjectMobileDetail({
   return (
     <MobileEntityDetailLayout
       title={editedProject.name}
+      titleNode={
+        <EditableHeaderTitle
+          value={editedProject.name}
+          onChange={(v) => updateField('name', v)}
+        />
+      }
+      subtitle={editedProject.project_number || undefined}
       onBack={onClose}
+      rightAction={
+        <HeaderStatusDropdown
+          status={editedProject.status}
+          onChange={(s) => updateField('status', s)}
+        />
+      }
     >
       <MobileSwipeTabs
         tabs={tabs}

@@ -6,6 +6,7 @@ import { MobileAppHeader } from './mobile-app-header';
 
 type MobileEntityDetailLayoutProps = {
   title: string;
+  titleNode?: React.ReactNode;
   subtitle?: string;
   onBack: () => void;
   rightAction?: React.ReactNode;
@@ -16,6 +17,7 @@ type MobileEntityDetailLayoutProps = {
 
 export function MobileEntityDetailLayout({
   title,
+  titleNode,
   subtitle,
   onBack,
   rightAction,
@@ -27,10 +29,11 @@ export function MobileEntityDetailLayout({
   React.useEffect(() => setMounted(true), []);
 
   const content = (
-    <div className="fixed inset-0 z-200 flex flex-col overflow-hidden bg-background lg:hidden">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background lg:hidden">
       <MobileAppHeader
         mode="back"
         title={title}
+        titleNode={titleNode}
         subtitle={subtitle}
         onBack={onBack}
         rightAction={rightAction}
