@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { usePeopleStore } from '@/lib/stores/people-store';
@@ -48,7 +48,21 @@ export default function OrganizationsPage() {
   const fetchPeople = usePeopleStore(state => state.fetchPeople);
   const fetchProjects = useProjectsStore(state => state.fetchProjects);
 
+  const urlParamsReadRef = useRef(false);
+
   useEffect(() => { fetchOrganizations(); fetchPeople(); fetchProjects(); }, [fetchOrganizations, fetchPeople, fetchProjects]);
+
+  // Restore selection from URL on initial load
+  useEffect(() => {
+    if (urlParamsReadRef.current || organizations.length === 0) return;
+    urlParamsReadRef.current = true;
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (id) {
+      const org = organizations.find(o => o.id === id);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (org) setSelectedOrg(org);
+    }
+  }, [organizations]);
 
   const filteredOrganizations = organizations.filter(org =>
     org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,21 +97,6 @@ export default function OrganizationsPage() {
             ) : undefined
           }
         />
-        {/* Mobile search */}
-        {!selectedOrg && (
-          <div className="lg:hidden border-b px-4 py-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input
-                placeholder="Search organizations…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-base"
-                aria-label="Search organizations"
-              />
-            </div>
-          </div>
-        )}
         {/* Desktop header */}
         <div className="hidden lg:block">
           <PageHeader

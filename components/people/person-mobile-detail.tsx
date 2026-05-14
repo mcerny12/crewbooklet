@@ -18,7 +18,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { useJobTypesStore } from '@/lib/stores/job-types-store';
-import { Trash2, Plus, X, ExternalLink, Mail, Phone, Briefcase, Building2 } from 'lucide-react';
+import { Trash2, Plus, X, ExternalLink, Briefcase, Building2 } from 'lucide-react';
 
 export type PersonMobileDetailProps = {
   person: Person;
@@ -32,6 +32,8 @@ export type PersonMobileDetailProps = {
   addAssignment: (data: Partial<ProjectAssignment>) => Promise<unknown>;
   onOpenProject?: (project: Project) => void;
   onOpenOrg?: (org: Organization) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 };
 
 // ── Profile tab ────────────────────────────────────────────────
@@ -63,6 +65,7 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
           onChange={jobs => updateField('jobs', jobs)}
           placeholder="Select jobs…"
           maxSelections={3}
+          className="h-9 min-h-9 text-sm"
         />
       </MobileField>
 
@@ -82,21 +85,19 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
         <Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className={mobileInputCn} />
       </MobileField>
 
-      <div className="grid grid-cols-2 gap-3">
-        <MobileField label="Gender">
-          <Select value={editedPerson.gender || 'none'} onValueChange={v => updateField('gender', v === 'none' ? null : v as Gender)}>
-            <SelectTrigger className={mobileInputCn}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">—</SelectItem>
-              {Object.values(Gender).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </MobileField>
+      <MobileField label="Gender">
+        <Select value={editedPerson.gender || 'none'} onValueChange={v => updateField('gender', v === 'none' ? null : v as Gender)}>
+          <SelectTrigger className={mobileInputCn}><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">—</SelectItem>
+            {Object.values(Gender).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </MobileField>
 
-        <MobileField label="Date of Birth">
-          <Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className={mobileInputCn} />
-        </MobileField>
-      </div>
+      <MobileField label="Date of Birth">
+        <Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className={mobileInputCn} />
+      </MobileField>
 
       <MobileField label="Languages">
         <MultiSelect
@@ -104,6 +105,7 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
           selected={editedPerson.languages || []}
           onChange={langs => updateField('languages', langs as Language[])}
           placeholder="Select languages…"
+          className="h-9 min-h-9 text-sm"
         />
       </MobileField>
 
@@ -320,39 +322,13 @@ function FinancialMetaTab({ editedPerson, updateField, person, onDelete }: {
   );
 }
 
-// ── Summary card ───────────────────────────────────────────────
-
-function PersonSummaryCard({ person }: { person: Person }) {
-  const hasContact = person.email || person.mobile_phone;
-  if (!hasContact && !person.jobs?.length) return null;
-
-  return (
-    <div className="flex flex-wrap items-center gap-3 text-sm">
-      {person.jobs?.length ? (
-        <span className="text-muted-foreground">{person.jobs.slice(0, 2).join(' · ')}</span>
-      ) : null}
-      {person.email && (
-        <a href={`mailto:${person.email}`} className="flex items-center gap-1.5 text-primary hover:underline">
-          <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span className="truncate">{person.email}</span>
-        </a>
-      )}
-      {person.mobile_phone && (
-        <a href={`tel:${person.mobile_phone}`} className="flex items-center gap-1.5 text-primary hover:underline">
-          <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>{person.mobile_phone}</span>
-        </a>
-      )}
-    </div>
-  );
-}
-
 // ── Main export ────────────────────────────────────────────────
 
 export function PersonMobileDetail({
   person, editedPerson, updateField, onClose, onDelete,
   organizations, projects, assignments, addAssignment,
   onOpenProject, onOpenOrg,
+  activeTab, onTabChange,
 }: PersonMobileDetailProps) {
   const tabs: MobileSwipeTab[] = [
     {
@@ -409,9 +385,14 @@ export function PersonMobileDetail({
     <MobileEntityDetailLayout
       title={editedPerson.name}
       onBack={onClose}
-      summary={<PersonSummaryCard person={editedPerson} />}
     >
-      <MobileSwipeTabs tabs={tabs} defaultValue="profile" className="h-full" />
+      <MobileSwipeTabs
+        tabs={tabs}
+        defaultValue="profile"
+        value={activeTab}
+        onValueChange={onTabChange}
+        className="h-full"
+      />
     </MobileEntityDetailLayout>
   );
 }

@@ -21,15 +21,29 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
 export function MobileSwipeTabs({
   tabs,
   defaultValue,
+  value: valueProp,
+  onValueChange,
   className,
 }: {
   tabs: MobileSwipeTab[];
   defaultValue?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
   className?: string;
 }) {
-  const [value, setValue] = React.useState(defaultValue ?? tabs[0]?.value ?? '');
-  const startRef = React.useRef<{ x: number; y: number } | null>(null);
+  const [internalValue, setInternalValue] = React.useState(defaultValue ?? tabs[0]?.value ?? '');
+  const isControlled = valueProp !== undefined;
+  const value = isControlled ? valueProp : internalValue;
 
+  const setValue = React.useCallback(
+    (v: string) => {
+      if (!isControlled) setInternalValue(v);
+      onValueChange?.(v);
+    },
+    [isControlled, onValueChange]
+  );
+
+  const startRef = React.useRef<{ x: number; y: number } | null>(null);
   const currentIndex = Math.max(0, tabs.findIndex((tab) => tab.value === value));
 
   const goToIndex = React.useCallback(
@@ -37,7 +51,7 @@ export function MobileSwipeTabs({
       const next = tabs[Math.min(Math.max(index, 0), tabs.length - 1)];
       if (next) setValue(next.value);
     },
-    [tabs]
+    [tabs, setValue]
   );
 
   const onPointerDown = (event: React.PointerEvent) => {

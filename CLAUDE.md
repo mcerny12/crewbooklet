@@ -50,7 +50,13 @@ Supabase DB → SupabaseService (static class) → Zustand stores → React comp
 - `lib/services/supabase-service.ts` — all DB operations in one static class. Never query Supabase directly from components.
 - `lib/stores/` — one Zustand store per domain (people, projects, organizations, invoices, calendar, project-assignments, job-types, auth). Stores call `SupabaseService` and hold client-side state.
 - `lib/supabase/client.ts` — browser client (used by service layer). `lib/supabase/server.ts` — SSR client (API routes). `lib/supabase/admin.ts` — service-role client (admin API only).
-- `proxy.ts` — Next.js middleware. Enforces authentication on all routes except the auth pages (`/login`, `/signup`, etc.) and the public calendar ICS endpoint (`/api/calendar/**`). Also restricts `/admin` to users with the `admin` role. Runs before every request.
+- `proxy.ts` — Contains middleware logic (auth enforcement, admin-only route guard) **but is NOT active**. The file is named `proxy.ts` (not `middleware.ts`) and exports `proxy` (not `middleware`), so Next.js does not run it automatically. There is no `middleware.ts` at the project root. Auth is enforced client-side by `MainLayout` and `AuthProvider`.
+
+### Admin panel
+
+`/admin` (guarded to `admin` role by `MainLayout`) has two tabs:
+- **Users** — lists all Supabase users, lets admins change roles. Backed by `/api/admin/users` (GET + PATCH), which uses `createSupabaseAdminClient` (service-role key) to read/write `app_metadata.role`.
+- **Job Types** — CRUD for the database-driven job type list via `useJobTypesStore`.
 
 ### Auth & permissions
 
@@ -123,11 +129,16 @@ CSS variables in `:root`:
 - `--ring` — brand blue focus ring (same as `--primary`)
 - `--muted-foreground` — slate-500 secondary text
 
+### Utilities
+
+`cn(...inputs)` from `lib/utils.ts` — `clsx` + `tailwind-merge` class utility. Use for all conditional className construction.
+
 ### Reusable UI components
 
 | Component | File | Purpose |
 |---|---|---|
 | `<PageHeader>` | `components/ui/page-header.tsx` | Title, subtitle/count, search slot, filter slot, actions slot |
+| `<MobilePageHeader>` | `components/layout/mobile-page-header.tsx` | Mobile top bar (hamburger + title + optional right action); use alongside `<PageHeader>` in domain pages — `<PageHeader>` for desktop, `<MobilePageHeader>` for mobile |
 | `<FormSection>` | `components/ui/form-section.tsx` | Section card with styled header for detail pane groupings |
 | `<ProjectStatusBadge>` | `components/ui/status-badge.tsx` | Consistent project status pill |
 | `<InvoiceStatusBadge>` | `components/ui/status-badge.tsx` | Consistent invoice status pill |
@@ -136,6 +147,7 @@ CSS variables in `:root`:
 | `<EntryMetadata>` | `components/ui/entry-metadata.tsx` | Created/updated timestamps at the bottom of detail panes |
 | `<MultiSelect>` | `components/ui/multi-select.tsx` | Badge-style multi-value dropdown for small fixed lists |
 | `<BottomDrawer>` | `components/ui/bottom-drawer.tsx` | Resizable mobile bottom sheet — draggable handle, vh-based height (20–85vh) |
+| `<ResizableBottomPane>` | `components/ui/resizable-bottom-pane.tsx` | Fixed-half-height bottom pane with close chevron; for split-panel layouts |
 
 ### Form fields in detail panels
 

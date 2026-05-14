@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { PageHeader } from '@/components/ui/page-header';
+import { Input } from '@/components/ui/input';
 import { Plus, Search } from 'lucide-react';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { MobilePageHeader } from '@/components/layout/mobile-page-header';
@@ -19,7 +19,6 @@ import type { Person, Project, Organization } from '@/lib/types/models';
 
 type DrillTarget = { type: 'project'; item: Project } | { type: 'org'; item: Organization };
 
-/** Sticky column-header bar shared with list rows */
 function ListHeader() {
   return (
     <div
@@ -41,6 +40,9 @@ export default function PeoplePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
+  const [personActiveTab, setPersonActiveTab] = useState<string>('profile');
+  const savedTabRef = useRef<string>('profile');
+  const urlParamsReadRef = useRef(false);
 
   const people = usePeopleStore(state => state.people);
   const isLoading = usePeopleStore(state => state.isLoading);
@@ -50,6 +52,36 @@ export default function PeoplePage() {
 
   useEffect(() => { fetchPeople(); fetchProjects(); }, [fetchPeople, fetchProjects]);
 
+  // Restore selection from URL on initial load (after data loads)
+  useEffect(() => {
+    if (urlParamsReadRef.current || people.length === 0) return;
+    urlParamsReadRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const tab = params.get('tab') ?? 'profile';
+    if (id) {
+      const person = people.find(p => p.id === id);
+      if (person) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedPerson(person);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPersonActiveTab(tab);
+      }
+    }
+  }, [people]);
+
+  const updateURL = useCallback((personId: string | null, tab: string) => {
+    const url = new URL(window.location.href);
+    if (personId) {
+      url.searchParams.set('id', personId);
+      url.searchParams.set('tab', tab);
+    } else {
+      url.searchParams.delete('id');
+      url.searchParams.delete('tab');
+    }
+    window.history.replaceState(null, '', url.toString());
+  }, []);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     searchPeople(query);
@@ -57,7 +89,35 @@ export default function PeoplePage() {
 
   const handleSelect = (person: Person) => {
     setDrillTarget(null);
-    setSelectedPerson(prev => prev?.id === person.id ? null : person);
+    const next = selectedPerson?.id === person.id ? null : person;
+    setSelectedPerson(next);
+    if (next) {
+      setPersonActiveTab('profile');
+      updateURL(next.id, 'profile');
+    } else {
+      updateURL(null, 'profile');
+    }
+  };
+
+  const handleTabChange = useCallback((tab: string) => {
+    setPersonActiveTab(tab);
+    if (selectedPerson) updateURL(selectedPerson.id, tab);
+  }, [selectedPerson, updateURL]);
+
+  const handleOpenProject = (p: Project) => {
+    savedTabRef.current = personActiveTab;
+    setDrillTarget({ type: 'project', item: p });
+  };
+
+  const handleOpenOrg = (o: Organization) => {
+    savedTabRef.current = personActiveTab;
+    setDrillTarget({ type: 'org', item: o });
+  };
+
+  const handleCloseDrill = () => {
+    setPersonActiveTab(savedTabRef.current);
+    if (selectedPerson) updateURL(selectedPerson.id, savedTabRef.current);
+    setDrillTarget(null);
   };
 
   const selectedPersonId = selectedPerson?.id ?? null;
@@ -82,21 +142,7 @@ export default function PeoplePage() {
             ) : undefined
           }
         />
-        {/* Mobile search */}
-        {!selectedPerson && (
-          <div className="lg:hidden border-b px-4 py-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input
-                placeholder="Search people…"
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-9 h-9 text-base"
-                aria-label="Search people"
-              />
-            </div>
-          </div>
-        )}
+
         {/* Desktop header */}
         <div className="hidden lg:block">
           <PageHeader
@@ -128,18 +174,20 @@ export default function PeoplePage() {
         {selectedPerson && drillTarget ? (
           <div className="flex-1 overflow-hidden">
             {drillTarget.type === 'project' ? (
-              <ProjectDetailPanel project={drillTarget.item} onClose={() => setDrillTarget(null)} />
+              <ProjectDetailPanel project={drillTarget.item} onClose={handleCloseDrill} />
             ) : (
-              <OrgDetailPane organization={drillTarget.item} onClose={() => setDrillTarget(null)} />
+              <OrgDetailPane organization={drillTarget.item} onClose={handleCloseDrill} />
             )}
           </div>
         ) : selectedPerson ? (
           <div className="flex-1 overflow-hidden">
             <PersonDetailPane
               person={selectedPerson}
-              onClose={() => setSelectedPerson(null)}
-              onOpenProject={(p) => setDrillTarget({ type: 'project', item: p })}
-              onOpenOrg={(o) => setDrillTarget({ type: 'org', item: o })}
+              onClose={() => { setSelectedPerson(null); updateURL(null, 'profile'); }}
+              onOpenProject={handleOpenProject}
+              onOpenOrg={handleOpenOrg}
+              activeTab={personActiveTab}
+              onTabChange={handleTabChange}
             />
           </div>
         ) : (

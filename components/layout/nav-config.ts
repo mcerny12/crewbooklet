@@ -6,6 +6,7 @@ import {
   FileText,
   CalendarDays,
   Shield,
+  Search,
 } from 'lucide-react';
 
 export type NavVisibility = 'all' | 'desktop-only' | 'mobile-only';
@@ -25,6 +26,7 @@ export const primaryNavItems: NavItem[] = [
   { href: '/organizations', label: 'Organizations', icon: Building2 },
   { href: '/invoices', label: 'Invoices', icon: FileText, visibility: 'desktop-only' },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/search', label: 'Search', icon: Search, visibility: 'mobile-only' },
 ];
 
 export const adminNavItems: NavItem[] = [

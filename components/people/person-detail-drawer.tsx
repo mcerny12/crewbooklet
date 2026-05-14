@@ -26,9 +26,11 @@ interface PersonDetailContentProps {
   onClose: () => void;
   onOpenProject?: (project: Project) => void;
   onOpenOrg?: (org: Organization) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: PersonDetailContentProps) {
+function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, activeTab, onTabChange }: PersonDetailContentProps) {
   const isMobile = useIsMobile();
   const [editedPerson, setEditedPerson] = useState<Person>(person);
   const [addingOrg, setAddingOrg] = useState(false);
@@ -106,6 +108,8 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg }: Pers
         addAssignment={addAssignment}
         onOpenProject={onOpenProject}
         onOpenOrg={onOpenOrg}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
       />
     );
   }
@@ -366,8 +370,10 @@ interface PersonDetailPaneProps {
   onClose: () => void;
   onOpenProject?: (project: Project) => void;
   onOpenOrg?: (org: Organization) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export function PersonDetailPane({ person, onClose, onOpenProject, onOpenOrg }: PersonDetailPaneProps) {
-  return <PersonDetailContent person={person} onClose={onClose} onOpenProject={onOpenProject} onOpenOrg={onOpenOrg} />;
+export function PersonDetailPane({ person, onClose, onOpenProject, onOpenOrg, activeTab, onTabChange }: PersonDetailPaneProps) {
+  return <PersonDetailContent person={person} onClose={onClose} onOpenProject={onOpenProject} onOpenOrg={onOpenOrg} activeTab={activeTab} onTabChange={onTabChange} />;
 }

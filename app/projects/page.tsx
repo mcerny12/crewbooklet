@@ -91,21 +91,6 @@ export default function ProjectsPage() {
             ) : undefined
           }
         />
-        {/* Mobile search */}
-        {!selectedProject && (
-          <div className="lg:hidden border-b px-4 py-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input
-                placeholder="Search projects…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-base"
-                aria-label="Search projects"
-              />
-            </div>
-          </div>
-        )}
         {/* Desktop header */}
         <div className="hidden lg:block">
           <PageHeader

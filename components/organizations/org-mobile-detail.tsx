@@ -15,6 +15,7 @@ import { MultiSelect } from '@/components/ui/multi-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { OrgLogo } from './org-logo';
+import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { Trash2, Plus, X, ExternalLink, Users, Briefcase } from 'lucide-react';
 
 export type OrgMobileDetailProps = {
@@ -34,6 +35,8 @@ export type OrgMobileDetailProps = {
   onDelete: () => void;
   onOpenProject?: (project: Project) => void;
   onOpenPerson?: (person: Person) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 };
 
 const orgTypeOptions = Object.values(OrganizationJobType).map(t => ({ value: t, label: t }));
@@ -248,19 +251,19 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
   const unlinkable = allProjects.filter(p => (p.client_organization_id ?? null) !== organizationId);
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        {adding ? (
-          <>
-            <SearchableSelect
-              options={unlinkable.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
-              value={newProjectId}
-              onChange={setNewProjectId}
-              placeholder="Search project…"
-              className="flex-1"
-            />
+    <div className="space-y-3">
+      {adding ? (
+        <div className="space-y-2 rounded-xl border bg-card p-3 shadow-sm">
+          <p className="text-sm font-medium">Link project</p>
+          <SearchableSelect
+            options={unlinkable.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
+            value={newProjectId}
+            onChange={setNewProjectId}
+            placeholder="Search project…"
+          />
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setAdding(false); setNewProjectId(null); }} className="flex-1 h-9 rounded-lg">Cancel</Button>
             <Button
-              size="sm"
               disabled={!newProjectId}
               onClick={async () => {
                 if (!newProjectId) return;
@@ -268,26 +271,18 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
                 setNewProjectId(null);
                 setAdding(false);
               }}
-              className="h-9 rounded-lg"
+              className="flex-1 h-9 rounded-lg"
             >
               Link
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => { setAdding(false); setNewProjectId(null); }}
-              className="h-9 rounded-lg"
-            >
-              Cancel
-            </Button>
-          </>
-        ) : (
-          <Button onClick={() => setAdding(true)} variant="outline" className="w-full h-9 rounded-lg gap-2">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Link Project
-          </Button>
-        )}
-      </div>
+          </div>
+        </div>
+      ) : (
+        <Button onClick={() => setAdding(true)} className="w-full h-9 rounded-lg gap-2">
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Link Project
+        </Button>
+      )}
 
       {orgProjects.length === 0 ? (
         <MobileEmptyState
@@ -296,32 +291,35 @@ function ProjectsTab({ orgProjects, allProjects, organizationId, updateProject, 
           description="Link projects to associate them with this organization."
         />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {orgProjects.map(project => (
-            <div key={project.id} className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{project.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{project.project_number} · {project.status}</p>
-              </div>
-              <div className="flex shrink-0 gap-1">
-                {onOpenProject && (
+            <div key={project.id} className="rounded-xl border bg-card p-3 shadow-sm space-y-2">
+              <div className="flex min-w-0 items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{project.name}</p>
+                  <p className="text-xs text-muted-foreground">{project.project_number}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <ProjectStatusBadge status={project.status} />
+                  {onOpenProject && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenProject(project)}
+                      aria-label={`Open ${project.name}`}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    >
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => onOpenProject(project)}
-                    aria-label={`Open ${project.name}`}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    onClick={() => updateProject(project.id, { client_organization_id: null })}
+                    aria-label={`Unlink ${project.name}`}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   >
-                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => updateProject(project.id, { client_organization_id: null })}
-                  aria-label={`Unlink ${project.name}`}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
+                </div>
               </div>
             </div>
           ))}
@@ -467,6 +465,7 @@ export function OrgMobileDetail({
   orgPeople, orgProjects, allPeople, allProjects,
   updatePerson, updateProject,
   onClose, onDelete, onOpenProject, onOpenPerson,
+  activeTab, onTabChange,
 }: OrgMobileDetailProps) {
   const tabs: MobileSwipeTab[] = [
     {
@@ -532,7 +531,13 @@ export function OrgMobileDetail({
       title={editedOrg.name}
       onBack={onClose}
     >
-      <MobileSwipeTabs tabs={tabs} defaultValue="overview" className="h-full" />
+      <MobileSwipeTabs
+        tabs={tabs}
+        defaultValue="overview"
+        value={activeTab}
+        onValueChange={onTabChange}
+        className="h-full"
+      />
     </MobileEntityDetailLayout>
   );
 }

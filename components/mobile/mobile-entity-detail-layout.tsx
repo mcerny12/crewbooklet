@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { MobileAppHeader } from './mobile-app-header';
 
 type MobileEntityDetailLayoutProps = {
@@ -22,8 +23,11 @@ export function MobileEntityDetailLayout({
   children,
   footer,
 }: MobileEntityDetailLayoutProps) {
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background lg:hidden">
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  const content = (
+    <div className="fixed inset-0 z-200 flex flex-col overflow-hidden bg-background lg:hidden">
       <MobileAppHeader
         mode="back"
         title={title}
@@ -53,4 +57,7 @@ export function MobileEntityDetailLayout({
       ) : null}
     </div>
   );
+
+  if (!mounted) return null;
+  return createPortal(content, document.body);
 }

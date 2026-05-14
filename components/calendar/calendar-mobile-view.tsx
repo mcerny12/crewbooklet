@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { format, isToday, isTomorrow, isThisWeek, addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { useState, useMemo, useEffect } from 'react';
+import { format, isToday, isTomorrow, startOfDay, startOfMonth, isSameMonth, addMonths, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
@@ -17,8 +17,7 @@ interface CalendarMobileViewProps {
 
 function eventDateLabel(start: Date, end: Date, isAllDay: boolean): string {
   if (isToday(start)) return isAllDay ? 'Today' : `Today · ${format(start, 'HH:mm')}–${format(end, 'HH:mm')}`;
-  if (isTomorrow(start)) return isAllDay ? 'Tomorrow' : `Tomorrow · ${format(start, 'HH:mm')}–${format(end, 'HH:mm')}`;
-  if (isThisWeek(start)) return isAllDay ? format(start, 'EEEE') : `${format(start, 'EEEE')} · ${format(start, 'HH:mm')}`;
+  if (isTomorrow(start)) return isAllDay ? 'Tomorrow' : `Tomorrow · ${format(start, 'HH:mm')}`;
   return isAllDay ? format(start, 'EEE, MMM d') : `${format(start, 'EEE, MMM d')} · ${format(start, 'HH:mm')}`;
 }
 
@@ -48,20 +47,42 @@ export function CalendarMobileView({ events, calendars, onSelectEvent, onAddEven
     return m;
   }, [calendars]);
 
-  const visibleIds = useMemo(() => new Set(calendars.filter(c => c.is_visible).map(c => c.id)), [calendars]);
-
-  const monthStart = startOfMonth(month);
-  const monthEnd = endOfMonth(month);
-
-  const monthEvents = useMemo(() =>
+  // Show all events (ignore is_visible filter on mobile since there's no sidebar to toggle)
+  // Filter out cancelled, show from today onwards
+  const today = startOfDay(new Date());
+  const upcomingEvents = useMemo(() =>
     events
-      .filter(e => visibleIds.has(e.calendar_id))
-      .filter(e => isWithinInterval(new Date(e.start_date), { start: monthStart, end: monthEnd }))
-      .filter(e => e.status !== 'cancelled'),
-    [events, visibleIds, monthStart, monthEnd]
+      .filter(e => e.status !== 'cancelled')
+      .filter(e => new Date(e.start_date) >= today)
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [events]
+  );
+
+  // Auto-navigate to the month of the next event if current month has none
+  useEffect(() => {
+    if (upcomingEvents.length === 0) return;
+    const currentMonthHasEvents = upcomingEvents.some(e => isSameMonth(new Date(e.start_date), month));
+    if (!currentMonthHasEvents) {
+      setMonth(startOfMonth(new Date(upcomingEvents[0].start_date)));
+    }
+  // Only run when events first load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upcomingEvents.length]);
+
+  // Events visible in the selected month (for month count)
+  const monthEvents = useMemo(() =>
+    upcomingEvents.filter(e => isSameMonth(new Date(e.start_date), month)),
+    [upcomingEvents, month]
   );
 
   const grouped = useMemo(() => groupByDay(monthEvents), [monthEvents]);
+
+  // Find whether adjacent months have events (for navigation hints)
+  const prevMonth = subMonths(month, 1);
+  const nextMonth = addMonths(month, 1);
+  const hasPrevEvents = upcomingEvents.some(e => isSameMonth(new Date(e.start_date), prevMonth));
+  const hasNextEvents = upcomingEvents.some(e => isSameMonth(new Date(e.start_date), nextMonth));
 
   return (
     <div className="flex flex-col h-full">
@@ -71,21 +92,31 @@ export function CalendarMobileView({ events, calendars, onSelectEvent, onAddEven
           type="button"
           onClick={() => setMonth(m => subMonths(m, 1))}
           aria-label="Previous month"
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className={cn(
+            'flex h-10 w-10 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+            hasPrevEvents ? 'text-foreground hover:bg-muted' : 'text-muted-foreground/40 hover:bg-muted/40'
+          )}
         >
           <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </button>
 
         <div className="text-center">
           <p className="text-base font-semibold">{format(month, 'MMMM yyyy')}</p>
-          <p className="text-xs text-muted-foreground">{monthEvents.length} event{monthEvents.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-muted-foreground">
+            {monthEvents.length > 0
+              ? `${monthEvents.length} event${monthEvents.length !== 1 ? 's' : ''}`
+              : upcomingEvents.length > 0 ? 'No events this month' : 'No upcoming events'}
+          </p>
         </div>
 
         <button
           type="button"
           onClick={() => setMonth(m => addMonths(m, 1))}
           aria-label="Next month"
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          className={cn(
+            'flex h-10 w-10 items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+            hasNextEvents ? 'text-foreground hover:bg-muted' : 'text-muted-foreground/40 hover:bg-muted/40'
+          )}
         >
           <ChevronRight className="h-5 w-5" aria-hidden="true" />
         </button>
@@ -95,17 +126,32 @@ export function CalendarMobileView({ events, calendars, onSelectEvent, onAddEven
       <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
         {grouped.length === 0 ? (
           <div className="px-4 py-8">
-            <MobileEmptyState
-              icon={<CalendarDays className="h-10 w-10" />}
-              title={`No events in ${format(month, 'MMMM')}`}
-              description="Tap the button below to add an event."
-              action={
-                <Button onClick={() => onAddEvent(new Date())} className="h-11 rounded-xl gap-2">
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Add Event
+            {upcomingEvents.length > 0 ? (
+              <div className="text-center space-y-3">
+                <CalendarDays className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">No events in {format(month, 'MMMM')}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMonth(startOfMonth(new Date(upcomingEvents[0].start_date)))}
+                  className="h-9 rounded-xl"
+                >
+                  Go to {format(new Date(upcomingEvents[0].start_date), 'MMMM yyyy')}
                 </Button>
-              }
-            />
+              </div>
+            ) : (
+              <MobileEmptyState
+                icon={<CalendarDays className="h-10 w-10" />}
+                title="No upcoming events"
+                description="Tap the button below to add an event."
+                action={
+                  <Button onClick={() => onAddEvent(new Date())} className="h-11 rounded-xl gap-2">
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Add Event
+                  </Button>
+                }
+              />
+            )}
           </div>
         ) : (
           <div className="space-y-4 px-4 py-4">

@@ -1,21 +1,19 @@
 'use client';
 
 import type { Project, Organization, ProjectAssignment, AssignmentStatus as AssignmentStatusType } from '@/lib/types/models';
-import { AssignmentStatus, CrewDepartment, FILM_COUNTRIES } from '@/lib/types/models';
+import { AssignmentStatus, CrewDepartment, FILM_COUNTRIES, ProjectStatus } from '@/lib/types/models';
 import { MobileEntityDetailLayout } from '@/components/mobile/mobile-entity-detail-layout';
 import { MobileSwipeTabs } from '@/components/mobile/mobile-swipe-tabs';
 import type { MobileSwipeTab } from '@/components/mobile/mobile-swipe-tabs';
 import { MobileField, mobileInputCn, mobileTextareaCn } from '@/components/mobile/mobile-field';
 import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
-import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { InlineDateRangePicker } from '@/components/ui/date-range-picker';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
-import { ChevronDown, Mail, Phone, Trash2, Plus, X, Search, CalendarDays, MapPin } from 'lucide-react';
+import { ChevronDown, Mail, Phone, Trash2, Plus, X, Search, SlidersHorizontal, UserPlus, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState, useMemo } from 'react';
 
@@ -41,6 +39,8 @@ export type ProjectMobileDetailProps = {
   deleteAssignment: (id: string) => Promise<void>;
   onAddCrew: () => void;
   onAddOrg: () => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 };
 
 // ── helpers ────────────────────────────────────────────────────
@@ -82,7 +82,6 @@ function MobileCrewCard({
   const email = person?.email ?? null;
   const phone = person?.mobile_phone ?? null;
 
-  // Build role options including any custom value already stored
   const roleOptions = useMemo(() => {
     const opts = jobTypeNames.map(j => ({ id: j, label: j }));
     const currentRole = assignment.role;
@@ -94,7 +93,6 @@ function MobileCrewCard({
 
   return (
     <article className="rounded-xl border bg-card shadow-sm overflow-hidden">
-      {/* Collapsed header — always visible */}
       <div className="flex min-w-0 items-center gap-2 px-3 py-2.5">
         <button
           type="button"
@@ -114,7 +112,6 @@ function MobileCrewCard({
           </span>
         </button>
 
-        {/* Contact icons */}
         <div className="flex shrink-0 items-center gap-0.5">
           {phone ? (
             <a
@@ -147,7 +144,6 @@ function MobileCrewCard({
         </div>
       </div>
 
-      {/* Expanded form */}
       {expanded && (
         <div className="border-t px-3 py-3 space-y-3">
           <MobileField label="Role">
@@ -207,39 +203,6 @@ function MobileCrewCard({
   );
 }
 
-// ── summary card ───────────────────────────────────────────────
-
-function ProjectSummaryCard({ project, clientOrg }: { project: Project; clientOrg: Organization | null }) {
-  return (
-    <div className="rounded-2xl border bg-card px-4 py-2.5 shadow-sm space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium">{project.project_number}</span>
-        <ProjectStatusBadge status={project.status} />
-      </div>
-      <dl className="space-y-1 text-xs">
-        {(project.start_date || project.end_date) && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <dd>
-              {formatDate(project.start_date)}
-              {project.end_date ? ` – ${formatDate(project.end_date)}` : ''}
-            </dd>
-          </div>
-        )}
-        {(project.shooting_location || project.inquiry_country) && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <dd className="truncate">{project.shooting_location ?? project.inquiry_country}</dd>
-          </div>
-        )}
-        {clientOrg && (
-          <dd className="truncate text-muted-foreground">Client: {clientOrg.name}</dd>
-        )}
-      </dl>
-    </div>
-  );
-}
-
 // ── tab panels ─────────────────────────────────────────────────
 
 function OverviewTab({ editedProject, updateField, organizations }: {
@@ -254,9 +217,34 @@ function OverviewTab({ editedProject, updateField, organizations }: {
 
   return (
     <div className="space-y-4">
+      <MobileField label="Project Name">
+        <Input
+          value={editedProject.name}
+          onChange={e => updateField('name', e.target.value)}
+          className={mobileInputCn}
+          placeholder="Project name"
+        />
+      </MobileField>
+
+      <MobileField label="Status">
+        <Select
+          value={editedProject.status}
+          onValueChange={v => updateField('status', v as ProjectStatus)}
+        >
+          <SelectTrigger className={mobileInputCn}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.values(ProjectStatus).map(s => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </MobileField>
+
       <MobileField label="Client Organization">
         {selectedOrg ? (
-          <div className="flex h-11 items-center gap-2 rounded-xl border bg-muted/30 px-3 text-sm">
+          <div className="flex h-9 items-center gap-2 rounded-lg border bg-muted/30 px-2.5 text-sm">
             <span className="min-w-0 flex-1 truncate">{selectedOrg.name}</span>
             <button
               type="button"
@@ -269,7 +257,7 @@ function OverviewTab({ editedProject, updateField, organizations }: {
           </div>
         ) : (
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" aria-hidden="true" />
             <Input
               value={orgQuery}
               onChange={(e) => { setOrgQuery(e.target.value); setOrgOpen(true); }}
@@ -278,7 +266,7 @@ function OverviewTab({ editedProject, updateField, organizations }: {
                 if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) setOrgOpen(false);
               }}
               placeholder="Search organization..."
-              className={`${mobileInputCn} pl-9`}
+              className={`${mobileInputCn} pl-8`}
             />
             {orgOpen && (
               <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border bg-card shadow-lg">
@@ -302,7 +290,7 @@ function OverviewTab({ editedProject, updateField, organizations }: {
       </MobileField>
 
       <MobileField label="Schedule">
-        <div className="rounded-xl border p-3">
+        <div className="rounded-lg border p-3">
           <InlineDateRangePicker
             startDate={editedProject.start_date ?? null}
             endDate={editedProject.end_date ?? null}
@@ -337,21 +325,32 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
   people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment, onAddCrew, onAddOrg,
 }: Pick<ProjectMobileDetailProps, 'assignments' | 'filteredAssignments' | 'crewFilter' | 'setCrewFilter' | 'crewDeptFilter' | 'setCrewDeptFilter' | 'people' | 'organizations' | 'jobTypeNames' | 'getDepartmentForJob' | 'updateAssignment' | 'deleteAssignment' | 'onAddCrew' | 'onAddOrg'>) {
   return (
-    <div className="space-y-4">
-      {/* Filters + add buttons */}
-      <div className="space-y-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+    <div className="space-y-3">
+      {/* Single-row controls: filter + dept + add crew + add org */}
+      <div className="flex items-center gap-1.5">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" aria-hidden="true" />
           <Input
             value={crewFilter}
             onChange={(e) => setCrewFilter(e.target.value)}
-            placeholder="Filter crew..."
-            className="pl-9 h-11 text-base rounded-xl"
+            placeholder="Filter crew…"
+            className="pl-8 h-10 text-sm rounded-xl"
           />
         </div>
+
+        {/* Dept filter — icon-only trigger */}
         <Select value={crewDeptFilter} onValueChange={setCrewDeptFilter}>
-          <SelectTrigger className="h-11 text-base rounded-xl">
-            <SelectValue placeholder="All departments" />
+          <SelectTrigger
+            className="h-10 w-10 shrink-0 rounded-xl px-0 justify-center border"
+            aria-label="Filter by department"
+          >
+            {crewDeptFilter !== 'all' ? (
+              <span className="text-[9px] font-bold text-primary leading-none">
+                {crewDeptFilter.slice(0, 3).toUpperCase()}
+              </span>
+            ) : (
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            )}
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All departments</SelectItem>
@@ -360,22 +359,32 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
             ))}
           </SelectContent>
         </Select>
-        <div className="flex gap-2">
-          <Button onClick={onAddCrew} className="flex-1 h-11 rounded-xl gap-2">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Add Crew
-          </Button>
-          <Button onClick={onAddOrg} variant="outline" className="flex-1 h-11 rounded-xl gap-2">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Add Org
-          </Button>
-        </div>
+
+        {/* Add crew — icon only */}
+        <button
+          type="button"
+          onClick={onAddCrew}
+          aria-label="Add crew member"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
+          <UserPlus className="h-4 w-4" aria-hidden="true" />
+        </button>
+
+        {/* Add org — icon only */}
+        <button
+          type="button"
+          onClick={onAddOrg}
+          aria-label="Add organization"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
+          <Building2 className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
 
       {filteredAssignments.length === 0 ? (
         <MobileEmptyState
           title={assignments.length === 0 ? 'No crew assigned' : 'No crew matches filter'}
-          description={assignments.length === 0 ? 'Tap "Add Crew" to assign someone.' : undefined}
+          description={assignments.length === 0 ? 'Tap the person icon to assign someone.' : undefined}
         />
       ) : (
         <div className="space-y-3">
@@ -396,7 +405,6 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
     </div>
   );
 }
-
 
 function NotesTab({ editedProject, updateField, project, onDelete }: {
   editedProject: Project;
@@ -445,9 +453,8 @@ export function ProjectMobileDetail({
   jobTypeNames, getDepartmentForJob,
   updateAssignment, deleteAssignment,
   onAddCrew, onAddOrg,
+  activeTab, onTabChange,
 }: ProjectMobileDetailProps) {
-  const clientOrg = organizations.find(o => o.id === editedProject.client_organization_id) ?? null;
-
   const tabs: MobileSwipeTab[] = [
     {
       value: 'overview',
@@ -498,12 +505,15 @@ export function ProjectMobileDetail({
   return (
     <MobileEntityDetailLayout
       title={editedProject.name}
-      subtitle={editedProject.project_number || undefined}
       onBack={onClose}
-      rightAction={<ProjectStatusBadge status={editedProject.status} />}
-      summary={<ProjectSummaryCard project={editedProject} clientOrg={clientOrg} />}
     >
-      <MobileSwipeTabs tabs={tabs} defaultValue="overview" className="h-full" />
+      <MobileSwipeTabs
+        tabs={tabs}
+        defaultValue="overview"
+        value={activeTab}
+        onValueChange={onTabChange}
+        className="h-full"
+      />
     </MobileEntityDetailLayout>
   );
 }
