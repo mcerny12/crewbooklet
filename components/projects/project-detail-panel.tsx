@@ -8,6 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { InlineDateRangePicker } from '@/components/ui/date-range-picker';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
@@ -135,6 +141,82 @@ const STATUS_DOT_COLORS: Record<string, string> = {
 function formatDate(dateString: string | null | undefined) {
   if (!dateString) return null;
   try { return format(new Date(dateString), 'MMM d, yyyy'); } catch { return null; }
+}
+
+function DesktopEditableTitle({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!editing) setDraft(value);
+  }, [value, editing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== value) onChange(trimmed);
+    else setDraft(value);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') { e.preventDefault(); setDraft(value); setEditing(false); }
+        }}
+        className="w-full bg-transparent font-semibold text-[15px] outline-none border-b border-primary/60 focus:border-primary"
+        aria-label="Project name"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => { setDraft(value); setEditing(true); }}
+      className="block w-full truncate text-left font-semibold text-[15px] hover:text-primary transition-colors"
+    >
+      {value}
+    </button>
+  );
+}
+
+function DesktopHeaderStatusDropdown({
+  status, onChange,
+}: { status: ProjectStatus; onChange: (s: ProjectStatus) => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Status: ${status}. Click to change.`}
+          className="shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md"
+        >
+          <Badge className={`text-xs px-2 py-0 cursor-pointer hover:opacity-90 ${STATUS_BADGE_COLORS[status] ?? 'bg-gray-100 text-gray-800'}`}>
+            {status}
+          </Badge>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-40">
+        {Object.values(ProjectStatus).map((s) => (
+          <DropdownMenuItem key={s} onClick={() => onChange(s as ProjectStatus)}>
+            <div className="flex items-center gap-1.5">
+              <div className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[s] ?? 'bg-gray-500'}`} />
+              {s}
+            </div>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps) {
@@ -348,16 +430,20 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           </button>
           <div className="flex-1 min-w-0 flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-[15px] truncate">{editedProject.name}</div>
+              <DesktopEditableTitle
+                value={editedProject.name}
+                onChange={(v) => updateField('name', v)}
+              />
               <div className="flex items-center gap-3 mt-0.5 text-[12px] text-muted-foreground">
                 <span>{editedProject.project_number}</span>
                 {editedProject.start_date && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(editedProject.start_date)}</span>}
                 {editedProject.shooting_location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{editedProject.shooting_location}</span>}
               </div>
             </div>
-            <Badge className={`text-xs px-2 py-0 shrink-0 ${STATUS_BADGE_COLORS[editedProject.status] ?? 'bg-gray-100 text-gray-800'}`}>
-              {editedProject.status}
-            </Badge>
+            <DesktopHeaderStatusDropdown
+              status={editedProject.status}
+              onChange={(s) => updateField('status', s)}
+            />
           </div>
         </div>
 
@@ -368,39 +454,6 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           <div className="section-card">
             <div className="section-card-header">Basic Information</div>
             <div className="section-card-body space-y-1 detail-form-fields">
-
-            {/* Name + Status */}
-            <div className="grid grid-cols-[1fr_130px] gap-1.5">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] font-medium text-gray-500">Project Name</Label>
-                <Input
-                  value={editedProject.name}
-                  onChange={(e) => updateField('name', e.target.value)}
-                  className="h-7 text-xs"
-                />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] font-medium text-gray-500">Status</Label>
-                <Select
-                  value={editedProject.status}
-                  onValueChange={(value) => updateField('status', value as ProjectStatus)}
-                >
-                  <SelectTrigger size="xs" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(ProjectStatus).map((s) => (
-                      <SelectItem key={s} value={s}>
-                        <div className="flex items-center gap-1.5">
-                          <div className={`w-2 h-2 rounded-full ${STATUS_DOT_COLORS[s] ?? 'bg-gray-500'}`} />
-                          {s}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
             {/* Client Organization */}
             <div className="space-y-0.5">
