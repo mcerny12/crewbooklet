@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Mail, Phone, Trash2, X, Search, SlidersHorizontal, UserPlus, Building2, User, ArrowUpRight } from 'lucide-react';
+import { ChevronDown, Mail, Phone, Trash2, Search, SlidersHorizontal, UserPlus, Building2, User, ArrowUpRight, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect, useRef } from 'react';
 
@@ -320,14 +320,17 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
           <MobileSectionCard
             className="rounded-xl"
             action={
-              <button
-                type="button"
-                onClick={() => { updateField('client_organization_id', null); }}
-                aria-label="Clear client organization"
-                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-muted"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+              onViewOrganization ? (
+                <button
+                  type="button"
+                  onClick={() => onViewOrganization(selectedOrg.id)}
+                  aria-label="View organization"
+                  className="inline-flex items-center gap-1 rounded-md px-2 h-7 text-xs font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  View
+                </button>
+              ) : null
             }
           >
             <div className="space-y-2">
@@ -337,19 +340,45 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
                   {addressLines.map((line, i) => <div key={i}>{line}</div>)}
                 </div>
               ) : null}
+              {(selectedOrg.contact_email || selectedOrg.contact_phone || selectedOrg.website) ? (
+                <div className="text-xs leading-snug space-y-0.5 pt-1 border-t">
+                  {selectedOrg.contact_email ? (
+                    <a href={`mailto:${selectedOrg.contact_email}`} className="flex items-center gap-1.5 text-muted-foreground hover:text-primary">
+                      <Mail className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{selectedOrg.contact_email}</span>
+                    </a>
+                  ) : null}
+                  {selectedOrg.contact_phone ? (
+                    <a href={`tel:${selectedOrg.contact_phone}`} className="flex items-center gap-1.5 text-muted-foreground hover:text-primary">
+                      <Phone className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{selectedOrg.contact_phone}</span>
+                    </a>
+                  ) : null}
+                  {selectedOrg.website ? (
+                    <a href={selectedOrg.website.startsWith('http') ? selectedOrg.website : `https://${selectedOrg.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-muted-foreground hover:text-primary">
+                      <Globe className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{selectedOrg.website}</span>
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
               {vatNumber ? (
                 <div className="text-xs text-muted-foreground">VAT: {vatNumber}</div>
               ) : null}
-              {onViewOrganization ? (
+              <div className="flex justify-end pt-1">
                 <button
                   type="button"
-                  onClick={() => onViewOrganization(selectedOrg.id)}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg border bg-background px-2.5 h-8 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  onClick={() => {
+                    if (confirm('Remove client organization from this project?')) {
+                      updateField('client_organization_id', null);
+                    }
+                  }}
+                  aria-label="Remove client organization"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
                 >
-                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  View organization
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
-              ) : null}
+              </div>
             </div>
           </MobileSectionCard>
         ) : (

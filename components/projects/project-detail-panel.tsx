@@ -21,7 +21,7 @@ import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectAssignmentsStore } from '@/lib/stores/project-assignments-store';
 import { ProjectStatus, FILM_COUNTRIES, AssignmentStatus, CrewDepartment } from '@/lib/types/models';
 import { useJobTypesStore } from '@/lib/stores/job-types-store';
-import { Trash2, Plus, ExternalLink, X, Search, ChevronLeft, Calendar, MapPin, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, Search, ChevronLeft, Calendar, MapPin, ChevronUp, ChevronDown, ChevronsUpDown, Mail, Phone, Globe } from 'lucide-react';
 import type { ProjectAssignment } from '@/lib/types/models';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { AddCrewDialog } from './add-crew-dialog';
@@ -216,6 +216,83 @@ function DesktopHeaderStatusDropdown({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function ClientOrgCard({
+  org, onView, onClear,
+}: { org: Organization; onView: () => void; onClear: () => void }) {
+  const invoiceName = org.name_invoice && org.name_invoice.trim() ? org.name_invoice : org.name;
+  const hasInvoiceAddress = !!(org.street_invoice || org.street2_invoice || org.zip_invoice || org.city_invoice || org.country_invoice);
+  const addrSource = hasInvoiceAddress
+    ? { street: org.street_invoice, street2: org.street2_invoice, zip: org.zip_invoice, city: org.city_invoice, country: org.country_invoice }
+    : { street: org.street, street2: org.street2, zip: org.zip, city: org.city, country: org.country };
+  const addressLines = [
+    addrSource.street,
+    addrSource.street2,
+    [addrSource.zip, addrSource.city].filter(Boolean).join(' '),
+    addrSource.country,
+  ].map(s => (s ?? '').trim()).filter(Boolean);
+  const vatNumber = org.financial_details?.vat_number?.trim() || null;
+  const hasContact = !!(org.contact_email || org.contact_phone || org.website);
+
+  return (
+    <div className="rounded-md border bg-card text-xs">
+      <div className="flex items-start justify-between gap-2 px-2.5 py-2 border-b">
+        <div className="min-w-0 font-semibold text-[13px] leading-tight truncate">{invoiceName}</div>
+        <button
+          type="button"
+          onClick={onView}
+          aria-label="View organization"
+          className="shrink-0 inline-flex items-center gap-1 rounded px-1.5 h-6 text-[11px] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+        >
+          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          View
+        </button>
+      </div>
+      <div className="px-2.5 py-2 space-y-1.5">
+        {addressLines.length > 0 ? (
+          <div className="text-muted-foreground leading-snug space-y-0.5">
+            {addressLines.map((line, i) => <div key={i}>{line}</div>)}
+          </div>
+        ) : null}
+        {hasContact ? (
+          <div className="space-y-0.5 pt-1 border-t">
+            {org.contact_email ? (
+              <a href={`mailto:${org.contact_email}`} className="flex items-center gap-1.5 text-muted-foreground hover:text-primary">
+                <Mail className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">{org.contact_email}</span>
+              </a>
+            ) : null}
+            {org.contact_phone ? (
+              <a href={`tel:${org.contact_phone}`} className="flex items-center gap-1.5 text-muted-foreground hover:text-primary">
+                <Phone className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">{org.contact_phone}</span>
+              </a>
+            ) : null}
+            {org.website ? (
+              <a href={org.website.startsWith('http') ? org.website : `https://${org.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-muted-foreground hover:text-primary">
+                <Globe className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span className="truncate">{org.website}</span>
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+        {vatNumber ? (
+          <div className="text-muted-foreground">VAT: {vatNumber}</div>
+        ) : null}
+        <div className="flex justify-end pt-1">
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Remove client organization"
+            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+          >
+            <Trash2 className="h-3 w-3" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -459,15 +536,13 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
             <div className="space-y-0.5">
               <Label className="text-[10px] font-medium text-gray-500">Client Organization</Label>
               {selectedOrg ? (
-                <div className="flex items-center gap-1 h-7 px-2 text-xs border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
-                  <span className="flex-1 truncate text-gray-800 dark:text-gray-200">{selectedOrg.name}</span>
-                  <button type="button" onClick={() => setOrgForDetail(selectedOrg)} className="text-gray-400 hover:text-blue-600 transition-colors shrink-0" title="Open organization detail">
-                    <ExternalLink className="h-3 w-3" />
-                  </button>
-                  <button type="button" onClick={handleOrgClear} className="text-gray-400 hover:text-red-500 transition-colors shrink-0" title="Clear">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
+                <ClientOrgCard
+                  org={selectedOrg}
+                  onView={() => setOrgForDetail(selectedOrg)}
+                  onClear={() => {
+                    if (confirm('Remove client organization from this project?')) handleOrgClear();
+                  }}
+                />
               ) : (
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none z-10" />
