@@ -7,6 +7,7 @@ import { MobileSwipeTabs } from '@/components/mobile/mobile-swipe-tabs';
 import type { MobileSwipeTab } from '@/components/mobile/mobile-swipe-tabs';
 import { MobileField, mobileInputCn, mobileTextareaCn } from '@/components/mobile/mobile-field';
 import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
+import { MobileSectionCard } from '@/components/mobile/mobile-section-card';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Mail, Phone, Trash2, X, Search, SlidersHorizontal, UserPlus, Building2 } from 'lucide-react';
+import { ChevronDown, Mail, Phone, Trash2, X, Search, SlidersHorizontal, UserPlus, Building2, User, ArrowUpRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useState, useMemo, useEffect, useRef } from 'react';
 
 // ── types ──────────────────────────────────────────────────────
@@ -47,6 +49,8 @@ export type ProjectMobileDetailProps = {
   onAddOrg: () => void;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  onViewPerson?: (personId: string) => void;
+  onViewOrganization?: (organizationId: string) => void;
 };
 
 // ── helpers ────────────────────────────────────────────────────
@@ -115,7 +119,7 @@ function EditableHeaderTitle({ value, onChange }: { value: string; onChange: (v:
 // ── crew card ──────────────────────────────────────────────────
 
 function MobileCrewCard({
-  assignment, people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment,
+  assignment, people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment, onViewPerson,
 }: {
   assignment: ProjectAssignment;
   people: { id: string; name: string; email?: string | null; mobile_phone?: string | null }[];
@@ -124,6 +128,7 @@ function MobileCrewCard({
   getDepartmentForJob: (name: string) => CrewDepartment | null;
   updateAssignment: (id: string, updates: Partial<ProjectAssignment>) => void;
   deleteAssignment: (id: string) => Promise<void>;
+  onViewPerson?: (personId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const displayName = getDisplayName(assignment, people, organizations);
@@ -193,35 +198,39 @@ function MobileCrewCard({
       </div>
 
       {expanded && (
-        <div className="border-t px-3 py-3 space-y-3">
-          <MobileField label="Role">
-            <SearchableSelect
-              options={roleOptions}
-              value={assignment.role ?? null}
-              onChange={(role) => {
-                const dept = role ? getDepartmentForJob(role) : null;
-                updateAssignment(assignment.id, { role, department: dept ?? undefined });
-              }}
-              placeholder="Search role…"
-              className="h-9 text-sm"
-            />
-          </MobileField>
+        <div className="border-t px-3 py-2.5 space-y-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-0.5 min-w-0">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Role</span>
+              <SearchableSelect
+                options={roleOptions}
+                value={assignment.role ?? null}
+                onChange={(role) => {
+                  const dept = role ? getDepartmentForJob(role) : null;
+                  updateAssignment(assignment.id, { role, department: dept ?? undefined });
+                }}
+                placeholder="Search role…"
+                className="h-8 text-xs"
+              />
+            </div>
 
-          <MobileField label="Availability">
-            <Select
-              value={assignment.availability}
-              onValueChange={(v) => updateAssignment(assignment.id, { availability: v as AssignmentStatusType })}
-            >
-              <SelectTrigger className="h-9 min-h-9 rounded-lg px-2.5 text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(AssignmentStatus).map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </MobileField>
+            <div className="grid gap-0.5 min-w-0">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Availability</span>
+              <Select
+                value={assignment.availability}
+                onValueChange={(v) => updateAssignment(assignment.id, { availability: v as AssignmentStatusType })}
+              >
+                <SelectTrigger className="h-8 min-h-8 rounded-lg px-2 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(AssignmentStatus).map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <MobileField label="Rate / Notes">
             <Textarea
@@ -233,6 +242,17 @@ function MobileCrewCard({
           </MobileField>
 
           <div className="flex gap-2 pt-1">
+            {assignment.person_id && onViewPerson ? (
+              <button
+                type="button"
+                aria-label={`View profile of ${displayName}`}
+                onClick={() => onViewPerson(assignment.person_id!)}
+                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border bg-background text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <User className="h-3.5 w-3.5" aria-hidden="true" />
+                View profile
+              </button>
+            ) : null}
             <button
               type="button"
               aria-label={`Remove ${displayName} from project`}
@@ -253,31 +273,85 @@ function MobileCrewCard({
 
 // ── tab panels ─────────────────────────────────────────────────
 
-function OverviewTab({ editedProject, updateField, organizations }: {
+function OverviewTab({ editedProject, updateField, organizations, onViewOrganization }: {
   editedProject: Project;
   updateField: <K extends keyof Project>(field: K, value: Project[K]) => void;
   organizations: Organization[];
+  onViewOrganization?: (organizationId: string) => void;
 }) {
   const [orgQuery, setOrgQuery] = useState('');
   const [orgOpen, setOrgOpen] = useState(false);
   const selectedOrg = organizations.find(o => o.id === editedProject.client_organization_id) ?? null;
   const filteredOrgs = organizations.filter(o => o.name.toLowerCase().includes(orgQuery.toLowerCase()));
 
+  const invoiceName = selectedOrg ? (selectedOrg.name_invoice && selectedOrg.name_invoice.trim() ? selectedOrg.name_invoice : selectedOrg.name) : null;
+  const hasInvoiceAddress = !!selectedOrg && !!(selectedOrg.street_invoice || selectedOrg.street2_invoice || selectedOrg.zip_invoice || selectedOrg.city_invoice || selectedOrg.country_invoice);
+  const addrSource = selectedOrg
+    ? (hasInvoiceAddress
+        ? {
+            street: selectedOrg.street_invoice,
+            street2: selectedOrg.street2_invoice,
+            zip: selectedOrg.zip_invoice,
+            city: selectedOrg.city_invoice,
+            country: selectedOrg.country_invoice,
+          }
+        : {
+            street: selectedOrg.street,
+            street2: selectedOrg.street2,
+            zip: selectedOrg.zip,
+            city: selectedOrg.city,
+            country: selectedOrg.country,
+          })
+    : null;
+  const addressLines = addrSource
+    ? [
+        addrSource.street,
+        addrSource.street2,
+        [addrSource.zip, addrSource.city].filter(Boolean).join(' '),
+        addrSource.country,
+      ].map(s => (s ?? '').trim()).filter(Boolean)
+    : [];
+  const vatNumber = selectedOrg?.financial_details?.vat_number?.trim() || null;
+
   return (
     <div className="space-y-4">
       <MobileField label="Client Organization">
         {selectedOrg ? (
-          <div className="flex h-9 items-center gap-2 rounded-lg border bg-muted/30 px-2.5 text-sm">
-            <span className="min-w-0 flex-1 truncate">{selectedOrg.name}</span>
-            <button
-              type="button"
-              onClick={() => { updateField('client_organization_id', null); }}
-              aria-label="Clear client organization"
-              className="shrink-0 text-muted-foreground hover:text-destructive"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
+          <MobileSectionCard
+            className="rounded-xl"
+            action={
+              <button
+                type="button"
+                onClick={() => { updateField('client_organization_id', null); }}
+                aria-label="Clear client organization"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-muted"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            }
+          >
+            <div className="space-y-2">
+              <div className="text-sm font-semibold leading-tight">{invoiceName}</div>
+              {addressLines.length > 0 ? (
+                <div className="text-xs text-muted-foreground leading-snug space-y-0.5">
+                  {addressLines.map((line, i) => <div key={i}>{line}</div>)}
+                </div>
+              ) : null}
+              {vatNumber ? (
+                <div className="text-xs text-muted-foreground">VAT: {vatNumber}</div>
+              ) : null}
+              {onViewOrganization ? (
+                <button
+                  type="button"
+                  onClick={() => onViewOrganization(selectedOrg.id)}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg border bg-background px-2.5 h-8 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  View organization
+                </button>
+              ) : null}
+            </div>
+          </MobileSectionCard>
         ) : (
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" aria-hidden="true" />
@@ -289,7 +363,7 @@ function OverviewTab({ editedProject, updateField, organizations }: {
                 if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) setOrgOpen(false);
               }}
               placeholder="Search organization..."
-              className={`${mobileInputCn} pl-8`}
+              className={cn(mobileInputCn, 'pl-8')}
             />
             {orgOpen && (
               <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border bg-card shadow-lg">
@@ -345,8 +419,8 @@ function OverviewTab({ editedProject, updateField, organizations }: {
 }
 
 function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, crewDeptFilter, setCrewDeptFilter,
-  people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment, onAddCrew, onAddOrg,
-}: Pick<ProjectMobileDetailProps, 'assignments' | 'filteredAssignments' | 'crewFilter' | 'setCrewFilter' | 'crewDeptFilter' | 'setCrewDeptFilter' | 'people' | 'organizations' | 'jobTypeNames' | 'getDepartmentForJob' | 'updateAssignment' | 'deleteAssignment' | 'onAddCrew' | 'onAddOrg'>) {
+  people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment, onAddCrew, onAddOrg, onViewPerson,
+}: Pick<ProjectMobileDetailProps, 'assignments' | 'filteredAssignments' | 'crewFilter' | 'setCrewFilter' | 'crewDeptFilter' | 'setCrewDeptFilter' | 'people' | 'organizations' | 'jobTypeNames' | 'getDepartmentForJob' | 'updateAssignment' | 'deleteAssignment' | 'onAddCrew' | 'onAddOrg' | 'onViewPerson'>) {
   return (
     <div className="space-y-3">
       {/* Single-row controls: filter input + dept filter + add crew + add org */}
@@ -426,6 +500,7 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
               getDepartmentForJob={getDepartmentForJob}
               updateAssignment={updateAssignment}
               deleteAssignment={deleteAssignment}
+              onViewPerson={onViewPerson}
             />
           ))}
         </div>
@@ -509,12 +584,13 @@ export function ProjectMobileDetail({
   updateAssignment, deleteAssignment,
   onAddCrew, onAddOrg,
   activeTab, onTabChange,
+  onViewPerson, onViewOrganization,
 }: ProjectMobileDetailProps) {
   const tabs: MobileSwipeTab[] = [
     {
       value: 'overview',
       label: 'Overview',
-      content: <OverviewTab editedProject={editedProject} updateField={updateField} organizations={organizations} />,
+      content: <OverviewTab editedProject={editedProject} updateField={updateField} organizations={organizations} onViewOrganization={onViewOrganization} />,
     },
     {
       value: 'crew',
@@ -540,6 +616,7 @@ export function ProjectMobileDetail({
           deleteAssignment={deleteAssignment}
           onAddCrew={onAddCrew}
           onAddOrg={onAddOrg}
+          onViewPerson={onViewPerson}
         />
       ),
     },

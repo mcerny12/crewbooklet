@@ -22,7 +22,9 @@ interface SearchableSelectProps {
 export function SearchableSelect({ options, value, onChange, placeholder = 'Search...', className }: SearchableSelectProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const selected = value ? options.find(o => o.id === value) : null;
   const filtered = options.filter(o =>
@@ -34,20 +36,39 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setEditing(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  if (selected) {
+  const beginEditing = () => {
+    const initial = selected?.label ?? '';
+    setQuery(initial);
+    setEditing(true);
+    setOpen(true);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
+  };
+
+  if (selected && !editing) {
     return (
-      <div className={cn('ss-root flex items-center gap-2 min-h-9 px-3 text-sm border border-input rounded-lg bg-muted/40', className)}>
-        <span className="flex-1 truncate">{selected.label}</span>
-        {selected.sublabel && <span className="text-muted-foreground shrink-0 text-xs">{selected.sublabel}</span>}
+      <div ref={containerRef} className={cn('ss-root flex items-center gap-2 min-h-9 pr-1 pl-3 text-sm border border-input rounded-lg bg-muted/40', className)}>
         <button
           type="button"
-          onClick={() => { onChange(null); setQuery(''); }}
+          onClick={beginEditing}
+          className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left focus-visible:outline-none"
+          aria-label={`Change selection (current: ${selected.label})`}
+        >
+          <span className="flex-1 truncate">{selected.label}</span>
+          {selected.sublabel && <span className="text-muted-foreground shrink-0 text-xs">{selected.sublabel}</span>}
+        </button>
+        <button
+          type="button"
+          onClick={() => { onChange(null); setQuery(''); setEditing(false); setOpen(false); }}
           className="text-muted-foreground hover:text-destructive transition-colors shrink-0 flex h-6 w-6 items-center justify-center"
           aria-label="Clear selection"
         >
@@ -61,9 +82,11 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
     <div ref={containerRef} className={cn('ss-root relative', className)}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none z-10" />
       <Input
+        ref={inputRef}
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => { if (query.trim().length > 0) setOpen(true); }}
+        onBlur={() => { if (editing && selected) setEditing(false); }}
         placeholder={placeholder}
         className="min-h-9 text-sm pl-8"
       />
@@ -76,7 +99,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
               key={opt.id}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(opt.id); setQuery(''); setOpen(false); }}
+              onClick={() => { onChange(opt.id); setQuery(''); setOpen(false); setEditing(false); }}
               className="w-full text-left text-sm px-3 py-2.5 min-h-10 hover:bg-muted/60 transition-colors flex items-center justify-between gap-2"
             >
               <span className="truncate">{opt.label}</span>

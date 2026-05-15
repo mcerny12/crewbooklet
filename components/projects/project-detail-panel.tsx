@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import type { Project, Organization } from '@/lib/types/models';
+import type { Project, Organization, Person } from '@/lib/types/models';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +21,8 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { AddCrewDialog } from './add-crew-dialog';
 import { AddOrgToProjectDialog } from './add-org-to-project-dialog';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
-import { OrganizationDetailDrawer } from '@/components/organizations/organization-detail-drawer';
+import { OrganizationDetailDrawer, OrgDetailPane } from '@/components/organizations/organization-detail-drawer';
+import { PersonDetailPane } from '@/components/people/person-detail-drawer';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { ProjectMobileDetail } from './project-mobile-detail';
@@ -143,6 +144,9 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
   const [orgForDetail, setOrgForDetail] = useState<Organization | null>(null);
+  const [mobileOrgForDetail, setMobileOrgForDetail] = useState<Organization | null>(null);
+  const [mobilePersonForDetail, setMobilePersonForDetail] = useState<Person | null>(null);
+  const [mobileActiveTab, setMobileActiveTab] = useState<string>('overview');
   const [crewFilter, setCrewFilter] = useState('');
   const [crewDeptFilter, setCrewDeptFilter] = useState<string>('all');
   const [sortCol, setSortCol] = useState<'name' | 'role' | 'department' | 'availability' | 'rate'>('name');
@@ -261,6 +265,21 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
   const isMobile = useIsMobile();
 
   if (isMobile) {
+    const handleViewPerson = (personId: string) => {
+      const p = people.find(pp => pp.id === personId);
+      if (p) {
+        setMobileActiveTab('crew');
+        setMobilePersonForDetail(p);
+      }
+    };
+    const handleViewOrganization = (orgId: string) => {
+      const o = organizations.find(oo => oo.id === orgId);
+      if (o) {
+        setMobileActiveTab('overview');
+        setMobileOrgForDetail(o);
+      }
+    };
+
     return (
       <>
         <ProjectMobileDetail
@@ -283,7 +302,23 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           deleteAssignment={deleteAssignment}
           onAddCrew={() => setShowAddCrewDialog(true)}
           onAddOrg={() => setShowAddOrgDialog(true)}
+          activeTab={mobileActiveTab}
+          onTabChange={setMobileActiveTab}
+          onViewPerson={handleViewPerson}
+          onViewOrganization={handleViewOrganization}
         />
+        {mobilePersonForDetail && (
+          <PersonDetailPane
+            person={mobilePersonForDetail}
+            onClose={() => setMobilePersonForDetail(null)}
+          />
+        )}
+        {mobileOrgForDetail && (
+          <OrgDetailPane
+            organization={mobileOrgForDetail}
+            onClose={() => setMobileOrgForDetail(null)}
+          />
+        )}
         <AddCrewDialog
           projectId={project.id}
           open={showAddCrewDialog}
