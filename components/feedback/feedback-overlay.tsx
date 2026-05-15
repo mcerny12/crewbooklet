@@ -16,8 +16,11 @@ interface HighlightBox {
   height: number;
 }
 
+const TOOLBAR_Z = 2147483000;
+const HIGHLIGHT_Z = TOOLBAR_Z - 1;
+
 export function FeedbackOverlay() {
-  const { available, isActive, setActive, items, clearItems, selectedTarget, setSelectedTarget } = useFeedback();
+  const { isActive, setActive, items, clearItems, selectedTarget, setSelectedTarget } = useFeedback();
   const [highlight, setHighlight] = useState<HighlightBox | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
 
@@ -27,7 +30,7 @@ export function FeedbackOverlay() {
   }, []);
 
   useEffect(() => {
-    if (!available || !isActive) return;
+    if (!isActive) return;
 
     const onMouseOver = (e: MouseEvent) => {
       const target = e.target as Element | null;
@@ -73,10 +76,9 @@ export function FeedbackOverlay() {
       document.removeEventListener('click', onClick, true);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [available, isActive, isOverlayElement, setActive, setSelectedTarget]);
+  }, [isActive, isOverlayElement, setActive, setSelectedTarget]);
 
   useEffect(() => {
-    if (!available) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'f' && e.key !== 'F') return;
       const ae = document.activeElement;
@@ -89,9 +91,7 @@ export function FeedbackOverlay() {
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [available, isActive, setActive]);
-
-  if (!available) return null;
+  }, [isActive, setActive]);
 
   const handleExport = () => {
     if (items.length === 0) {
@@ -120,7 +120,7 @@ export function FeedbackOverlay() {
             height: highlight.height,
             outline: '2px solid #2563eb',
             background: 'rgba(37,99,235,0.08)',
-            zIndex: 9998,
+            zIndex: HIGHLIGHT_Z,
           }}
         />
       )}
@@ -129,8 +129,9 @@ export function FeedbackOverlay() {
         ref={toolbarRef}
         className={cn(
           OVERLAY_CLASS,
-          'fixed bottom-4 right-4 z-9999 flex items-center gap-2 rounded-xl border bg-card p-2 shadow-lg'
+          'fixed bottom-4 right-4 flex items-center gap-2 rounded-xl border bg-card p-2 shadow-lg'
         )}
+        style={{ zIndex: TOOLBAR_Z }}
       >
         <button
           type="button"

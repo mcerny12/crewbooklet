@@ -145,8 +145,7 @@ function UserSummary({
 }
 
 function FeedbackToggleButton({ collapsed }: { collapsed: boolean }) {
-  const { available, isActive, setActive, items } = useFeedback();
-  if (!available) return null;
+  const { isActive, setActive, items } = useFeedback();
 
   const label = `Feedback mode${isActive ? ' (on)' : ''}${items.length ? ` · ${items.length}` : ''}`;
   const baseClass = cn(

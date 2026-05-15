@@ -1,7 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { FeedbackItem, FeedbackTarget } from './element-inspector';
 import { FeedbackOverlay } from './feedback-overlay';
 
@@ -21,7 +20,6 @@ function loadInitialItems(): FeedbackItem[] {
 }
 
 interface FeedbackContextValue {
-  available: boolean;
   isActive: boolean;
   setActive: (active: boolean) => void;
   items: FeedbackItem[];
@@ -39,18 +37,7 @@ export function useFeedback(): FeedbackContextValue {
   return ctx;
 }
 
-function FeedbackAvailabilityProbe({ onAvailable }: { onAvailable: (v: boolean) => void }) {
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    const envFlag = process.env.NEXT_PUBLIC_FEEDBACK_MODE === 'true';
-    const queryFlag = searchParams?.get('feedback') === '1';
-    onAvailable(envFlag || queryFlag);
-  }, [searchParams, onAvailable]);
-  return null;
-}
-
 export function FeedbackProvider({ children }: { children: React.ReactNode }) {
-  const [available, setAvailable] = useState(false);
   const [isActive, setActive] = useState(false);
   const [items, setItems] = useState<FeedbackItem[]>(loadInitialItems);
   const [selectedTarget, setSelectedTarget] = useState<FeedbackTarget | null>(null);
@@ -89,7 +76,6 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<FeedbackContextValue>(
     () => ({
-      available,
       isActive,
       setActive,
       items,
@@ -98,16 +84,13 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
       selectedTarget,
       setSelectedTarget,
     }),
-    [available, isActive, items, addItem, clearItems, selectedTarget]
+    [isActive, items, addItem, clearItems, selectedTarget]
   );
 
   return (
     <FeedbackCtx.Provider value={value}>
-      <Suspense fallback={null}>
-        <FeedbackAvailabilityProbe onAvailable={setAvailable} />
-      </Suspense>
       {children}
-      {available && <FeedbackOverlay />}
+      <FeedbackOverlay />
     </FeedbackCtx.Provider>
   );
 }
