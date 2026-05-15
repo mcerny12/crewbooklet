@@ -29,6 +29,8 @@ export function CompactProjectListItem({ project, onSelect, isSelected }: Compac
           'flex md:hidden flex-col gap-2 px-4 py-3 cursor-pointer border-b transition-colors',
           isSelected ? 'list-row-selected' : 'hover:bg-muted/40',
         )}
+        data-cb-component="CompactProjectListItem"
+        data-cb-entity="project"
       >
         {/* Top row: name + badge */}
         <div className="flex items-start justify-between gap-2">
@@ -74,6 +76,8 @@ export function CompactProjectListItem({ project, onSelect, isSelected }: Compac
             ? 'list-row-selected'
             : 'hover:bg-muted/40',
         )}
+        data-cb-component="CompactProjectListItem"
+        data-cb-entity="project"
       >
         {/* Name & number */}
         <div className="min-w-0">

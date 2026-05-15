@@ -111,6 +111,10 @@ An "aconto" (advance payment) invoice has `is_aconto: true` and its `aconto_invo
 
 `/api/calendar/[token]` is a **public** endpoint (no auth, bypassed in middleware) that serves an ICS file for a shared `ProjectCalendar`. The `share_token` on `ProjectCalendar` acts as the bearer credential.
 
+### Visual feedback overlay
+
+`components/feedback/` provides a designer-style element inspector wired into `app/layout.tsx` via `<FeedbackProvider>`. It is dormant by default and only activates when the URL carries `?feedback=1`. When active, users can click DOM elements, attach notes via `FeedbackDialog`, and export the collected items as XML (`export-feedback.ts`). State persists to `localStorage` under `cb_feedback_items_v1`; sensitive inputs are filtered by `element-inspector.ts`. Only call `useFeedback()` from components rendered beneath this provider.
+
 ### `AssignmentStatus` enum key naming
 
 The enum keys use German words (`Gebucht`, `Angefragt`, etc.) but the values are English display strings (`"Booked"`, `"Inquired"`, etc.). Always use the enum key in code; never hardcode the string value.

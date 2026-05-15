@@ -115,7 +115,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background" data-cb-component="PersonDetailPane">
 
       {/* ── DETAIL HEADER ── */}
       <div className="shrink-0 border-b bg-card px-5 py-3 flex items-center gap-4">
@@ -144,7 +144,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         <div className="section-card">
           <div className="section-card-header">Personal</div>
           <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Full Name</Label><Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="name"><Label className="text-[10px] text-gray-500">Full Name</Label><Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Date of Birth</Label><Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Gender</Label>
@@ -156,8 +156,8 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Email</Label><Input type="email" value={editedPerson.email || ''} onChange={e => updateField('email', e.target.value || null)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Mobile</Label><Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="email"><Label className="text-[10px] text-gray-500">Email</Label><Input type="email" value={editedPerson.email || ''} onChange={e => updateField('email', e.target.value || null)} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="mobile-phone"><Label className="text-[10px] text-gray-500">Mobile</Label><Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Work Phone</Label><Input type="tel" value={editedPerson.work_phone || ''} onChange={e => updateField('work_phone', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Website</Label><Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className="h-7 text-xs" /></div>
           </div>
@@ -206,7 +206,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             <div className="section-card-body space-y-1.5 detail-form-fields">
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">VAT Number</Label><Input value={editedPerson.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', vat_number: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Bank Name</Label><Input value={editedPerson.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', bank_name: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="iban"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">BIC / SWIFT</Label><Input value={editedPerson.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', bic: e.target.value || null })} className="h-7 text-xs" /></div>
             </div>
           </div>

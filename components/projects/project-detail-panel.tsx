@@ -183,6 +183,7 @@ function DesktopEditableTitle({ value, onChange }: { value: string; onChange: (v
       type="button"
       onClick={() => { setDraft(value); setEditing(true); }}
       className="block w-full truncate text-left font-semibold text-[15px] hover:text-primary transition-colors"
+      data-cb-field="project-title"
     >
       {value}
     </button>
@@ -199,6 +200,7 @@ function DesktopHeaderStatusDropdown({
           type="button"
           aria-label={`Status: ${status}. Click to change.`}
           className="shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md"
+          data-cb-field="project-status"
         >
           <Badge className={`text-xs px-2 py-0 cursor-pointer hover:opacity-90 ${STATUS_BADGE_COLORS[status] ?? 'bg-gray-100 text-gray-800'}`}>
             {status}
@@ -237,7 +239,7 @@ function ClientOrgCard({
   const hasContact = !!(org.contact_email || org.contact_phone || org.website);
 
   return (
-    <div className="rounded-md border bg-card text-xs">
+    <div className="rounded-md border bg-card text-xs" data-cb-field="client-organization">
       <div className="flex items-start justify-between gap-2 px-2.5 py-2 border-b">
         <div className="min-w-0 font-semibold text-[13px] leading-tight truncate">{invoiceName}</div>
         <button
@@ -494,10 +496,10 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
   return (
     <>
-      <div className="flex flex-col h-full bg-background">
+      <div className="flex flex-col h-full bg-background" data-cb-component="ProjectDetailPanel">
 
         {/* ── DETAIL HEADER ── */}
-        <div className="shrink-0 border-b bg-card px-4 py-1.5 flex items-center gap-3">
+        <div className="shrink-0 border-b bg-card px-4 py-1.5 flex items-center gap-3" data-cb-area="Header">
           <button
             onClick={onClose}
             aria-label="Back to list"
@@ -528,7 +530,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
         <div className="border-b px-4 py-2 grid grid-cols-1 md:grid-cols-2 gap-2 shrink-0">
 
           {/* Column 1 */}
-          <div className="section-card">
+          <div className="section-card" data-cb-area="BasicInfo">
             <div className="section-card-header">Basic Information</div>
             <div className="section-card-body space-y-1 detail-form-fields">
 
@@ -595,7 +597,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
           {/* Column 2: Schedule + Notes */}
           <div className="space-y-2">
-          <div className="section-card">
+          <div className="section-card" data-cb-area="Schedule">
             <div className="section-card-header">Schedule</div>
             <div className="section-card-body detail-form-fields">
             <InlineDateRangePicker
@@ -606,7 +608,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
             />
             </div>
           </div>
-          <div className="section-card">
+          <div className="section-card" data-cb-area="Notes">
             <div className="section-card-header">Notes</div>
             <div className="section-card-body detail-form-fields">
             <Textarea
@@ -622,7 +624,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
         </div>
 
         {/* ── CREW SECTION — flex-1, independently scrollable ── */}
-        <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex flex-col flex-1 min-h-0" data-cb-area="CrewSection">
 
           {/* Crew header + filters */}
           <div className="px-4 py-2 border-b flex items-center gap-2 shrink-0 bg-card">

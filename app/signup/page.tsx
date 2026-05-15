@@ -82,6 +82,7 @@ export default function SignUpPage() {
                 required
                 minLength={6}
                 disabled={isLoading}
+                data-cb-sensitive="true"
               />
             </div>
             {error && (

@@ -14,6 +14,7 @@ export function MobilePageHeader({ title, subtitle, rightAction }: MobilePageHea
   const { setMobileOpen } = useSidebar();
   return (
     <MobileAppHeader
+      data-cb-component="MobilePageHeader"
       title={title}
       subtitle={subtitle}
       mode="menu"

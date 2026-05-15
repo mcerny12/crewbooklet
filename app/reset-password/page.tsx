@@ -87,6 +87,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
+                  data-cb-sensitive="true"
                 />
               </div>
               <div className="space-y-2">
@@ -99,6 +100,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                   disabled={isLoading}
+                  data-cb-sensitive="true"
                 />
               </div>
               {error && (

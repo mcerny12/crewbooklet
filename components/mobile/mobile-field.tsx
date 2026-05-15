@@ -11,11 +11,11 @@ type MobileFieldProps = {
   error?: string;
   className?: string;
   htmlFor?: string;
-};
+} & { [key: `data-cb-${string}`]: string | undefined };
 
-export function MobileField({ label, children, helper, error, className, htmlFor }: MobileFieldProps) {
+export function MobileField({ label, children, helper, error, className, htmlFor, ...rest }: MobileFieldProps) {
   return (
-    <div className={cn('grid gap-1', className)}>
+    <div className={cn('grid gap-1', className)} {...rest}>
       <Label htmlFor={htmlFor} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>

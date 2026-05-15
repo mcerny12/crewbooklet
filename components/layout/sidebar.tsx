@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import {
-  LogOut, Film, PanelLeftClose, PanelLeftOpen, Menu, X,
+  LogOut, Film, PanelLeftClose, PanelLeftOpen, Menu, X, MessageSquareWarning,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { usePermissions } from '@/lib/hooks/use-permissions';
+import { useFeedback } from '@/components/feedback/feedback-provider';
 import { useSidebar } from './sidebar-context';
 import {
   primaryNavItems,
@@ -40,6 +41,7 @@ function NavItem({
   onNavigate: () => void;
 }) {
   const Icon = item.icon;
+  const navSlug = item.href === '/' ? 'dashboard' : item.href.replace(/^\//, '').replace(/\//g, '-');
   const link = (
     <Link
       href={item.href}
@@ -47,6 +49,8 @@ function NavItem({
       aria-current={active ? 'page' : undefined}
       aria-label={collapsed ? item.label : undefined}
       title={collapsed ? item.label : undefined}
+      data-cb-area="Nav"
+      data-cb-field={`nav-${navSlug}`}
       className={cn(
         'group relative flex h-10 items-center rounded-xl text-sm font-medium transition-colors',
         collapsed ? 'justify-center' : 'gap-3 px-3',
@@ -140,6 +144,59 @@ function UserSummary({
   );
 }
 
+function FeedbackToggleButton({ collapsed }: { collapsed: boolean }) {
+  const { available, isActive, setActive, items } = useFeedback();
+  if (!available) return null;
+
+  const label = `Feedback mode${isActive ? ' (on)' : ''}${items.length ? ` · ${items.length}` : ''}`;
+  const baseClass = cn(
+    'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+    isActive
+      ? 'bg-primary/10 text-primary hover:bg-primary/15'
+      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+  );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => setActive(!isActive)}
+            aria-label={label}
+            aria-pressed={isActive}
+            title={label}
+            className={cn('flex h-10 w-full items-center justify-center rounded-xl', baseClass)}
+          >
+            <MessageSquareWarning className="h-5 w-5 shrink-0" aria-hidden="true" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="center">{label}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setActive(!isActive)}
+      aria-pressed={isActive}
+      className={cn(
+        'flex h-10 w-full items-center gap-3 px-3 rounded-xl text-sm font-medium',
+        baseClass,
+      )}
+    >
+      <MessageSquareWarning className="h-5 w-5 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 flex-1 truncate text-left">Feedback mode</span>
+      {items.length > 0 && (
+        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary tabular-nums">
+          {items.length}
+        </span>
+      )}
+    </button>
+  );
+}
+
 function SignOutButton({ collapsed, onSignOut }: { collapsed: boolean; onSignOut: () => void }) {
   if (collapsed) {
     return (
@@ -206,6 +263,7 @@ function SidebarBody({
     <aside
       id={SIDEBAR_ID}
       data-collapsed={collapsed ? 'true' : 'false'}
+      data-cb-component="Sidebar"
       className={cn(
         'flex h-full flex-col border-r bg-card overflow-hidden',
         isDesktop
@@ -318,6 +376,7 @@ function SidebarBody({
       {/* Footer */}
       <div className={cn('border-t shrink-0 space-y-2', collapsed ? 'p-2' : 'p-3')}>
         <UserSummary collapsed={collapsed} email={session.email} role={session.role} />
+        <FeedbackToggleButton collapsed={collapsed} />
         <SignOutButton collapsed={collapsed} onSignOut={onSignOut} />
       </div>
     </aside>

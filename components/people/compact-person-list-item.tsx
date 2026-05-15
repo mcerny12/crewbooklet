@@ -56,6 +56,8 @@ export function CompactPersonListItem({ person, onSelect, isSelected }: CompactP
           'flex md:hidden items-center gap-3 px-4 py-2.5 cursor-pointer border-b transition-colors',
           isSelected ? 'list-row-selected' : 'hover:bg-muted/40',
         )}
+        data-cb-component="CompactPersonListItem"
+        data-cb-entity="person"
       >
         {/* Avatar */}
         <div
@@ -112,6 +114,8 @@ export function CompactPersonListItem({ person, onSelect, isSelected }: CompactP
           'grid-cols-[32px_2fr_1.5fr_1fr_1fr_1fr]',
           isSelected ? 'list-row-selected' : 'hover:bg-muted/40',
         )}
+        data-cb-component="CompactPersonListItem"
+        data-cb-entity="person"
       >
         <div
           aria-hidden

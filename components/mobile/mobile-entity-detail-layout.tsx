@@ -13,7 +13,7 @@ type MobileEntityDetailLayoutProps = {
   summary?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-};
+} & { [key: `data-cb-${string}`]: string | undefined };
 
 export function MobileEntityDetailLayout({
   title,
@@ -24,12 +24,13 @@ export function MobileEntityDetailLayout({
   summary,
   children,
   footer,
+  ...rest
 }: MobileEntityDetailLayoutProps) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
   const content = (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background lg:hidden">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background lg:hidden" {...rest}>
       <MobileAppHeader
         mode="back"
         title={title}

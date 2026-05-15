@@ -13,7 +13,7 @@ type MobileAppHeaderProps = {
   onBack?: () => void;
   rightAction?: React.ReactNode;
   className?: string;
-};
+} & { [key: `data-cb-${string}`]: string | undefined };
 
 export function MobileAppHeader({
   title,
@@ -24,6 +24,7 @@ export function MobileAppHeader({
   onBack,
   rightAction,
   className,
+  ...rest
 }: MobileAppHeaderProps) {
   const isBack = mode === 'back';
 
@@ -35,6 +36,7 @@ export function MobileAppHeader({
         className
       )}
       style={{ paddingTop: 'max(8px, env(safe-area-inset-top))' }}
+      {...rest}
     >
       <div className="flex min-w-0 items-center gap-2">
         <button

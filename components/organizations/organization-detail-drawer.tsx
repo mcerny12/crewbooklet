@@ -110,7 +110,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background" data-cb-component="OrgDetailPane">
 
       {/* ── DETAIL HEADER ── */}
       <div className="shrink-0 border-b bg-card px-5 py-3 flex items-center gap-3">
@@ -140,7 +140,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         <div className="section-card">
           <div className="section-card-header">Basic Information</div>
           <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" data-cb-field="name">
             <Label className="text-[10px] text-gray-500">Organization Name</Label>
             <div className="flex items-center gap-1.5">
               <OrgLogo organization={editedOrg} size="sm" />
@@ -148,8 +148,8 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           </div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Business Type</Label><MultiSelect options={orgTypeOptions} selected={editedOrg.jobs || []} onChange={jobs => updateField('jobs', jobs as OrganizationJobType[])} placeholder="Select types…" maxSelections={3} /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Email</Label><Input type="email" value={editedOrg.contact_email || ''} onChange={e => updateField('contact_email', e.target.value || null)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Phone</Label><Input type="tel" value={editedOrg.contact_phone || ''} onChange={e => updateField('contact_phone', e.target.value || null)} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="email"><Label className="text-[10px] text-gray-500">Email</Label><Input type="email" value={editedOrg.contact_email || ''} onChange={e => updateField('contact_email', e.target.value || null)} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="phone"><Label className="text-[10px] text-gray-500">Phone</Label><Input type="tel" value={editedOrg.contact_phone || ''} onChange={e => updateField('contact_phone', e.target.value || null)} className="h-7 text-xs" /></div>
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Website</Label>
             <Input value={editedOrg.website || ''} onChange={e => updateField('website', e.target.value || null)} onBlur={() => { const v = (editedOrg.website || '').trim(); if (v && !v.startsWith('http')) updateField('website', 'https://' + v); }} className="h-7 text-xs" />
@@ -201,9 +201,9 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         <div className="section-card">
           <div className="section-card-header">Financial</div>
           <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">VAT Number</Label><Input value={editedOrg.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', vat_number: e.target.value || null })} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="vat"><Label className="text-[10px] text-gray-500">VAT Number</Label><Input value={editedOrg.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', vat_number: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Bank Name</Label><Input value={editedOrg.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', bank_name: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedOrg.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
+          <div className="space-y-0.5" data-cb-field="iban"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedOrg.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
           <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">BIC / SWIFT</Label><Input value={editedOrg.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...editedOrg.financial_details, id: editedOrg.financial_details?.id ?? '', bic: e.target.value || null })} className="h-7 text-xs" /></div>
           </div>
         </div>

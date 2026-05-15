@@ -110,6 +110,8 @@ function EditableHeaderTitle({ value, onChange }: { value: string; onChange: (v:
       type="button"
       onClick={() => { setDraft(value); setEditing(true); }}
       className="block w-full truncate text-left text-base font-semibold leading-tight hover:text-primary transition-colors"
+      data-cb-area="Header"
+      data-cb-field="project-title"
     >
       {value}
     </button>
@@ -146,7 +148,7 @@ function MobileCrewCard({
   }, [jobTypeNames, assignment.role]);
 
   return (
-    <article className="rounded-xl border bg-card shadow-sm overflow-hidden">
+    <article className="rounded-xl border bg-card shadow-sm overflow-hidden" data-cb-entity="project-assignment">
       <div className="flex min-w-0 items-center gap-2 px-3 py-2.5">
         <button
           type="button"
@@ -314,8 +316,8 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
   const vatNumber = selectedOrg?.financial_details?.vat_number?.trim() || null;
 
   return (
-    <div className="space-y-4">
-      <MobileField label="Client Organization">
+    <div className="space-y-4" data-cb-area="OverviewTab">
+      <MobileField label="Client Organization" data-cb-field="client-organization">
         {selectedOrg ? (
           <MobileSectionCard
             className="rounded-xl"
@@ -415,7 +417,7 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
         )}
       </MobileField>
 
-      <MobileField label="Schedule">
+      <MobileField label="Schedule" data-cb-field="schedule">
         <div className="rounded-lg border p-3">
           <InlineDateRangePicker
             startDate={editedProject.start_date ?? null}
@@ -426,7 +428,7 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
         </div>
       </MobileField>
 
-      <MobileField label="Inquiry Country">
+      <MobileField label="Inquiry Country" data-cb-field="inquiry-country">
         <SearchableSelect
           options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
           value={editedProject.inquiry_country || null}
@@ -435,7 +437,7 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
         />
       </MobileField>
 
-      <MobileField label="Shooting Location">
+      <MobileField label="Shooting Location" data-cb-field="shooting-location">
         <Input
           value={editedProject.shooting_location || ''}
           onChange={(e) => updateField('shooting_location', e.target.value || null)}
@@ -451,7 +453,7 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
   people, organizations, jobTypeNames, getDepartmentForJob, updateAssignment, deleteAssignment, onAddCrew, onAddOrg, onViewPerson,
 }: Pick<ProjectMobileDetailProps, 'assignments' | 'filteredAssignments' | 'crewFilter' | 'setCrewFilter' | 'crewDeptFilter' | 'setCrewDeptFilter' | 'people' | 'organizations' | 'jobTypeNames' | 'getDepartmentForJob' | 'updateAssignment' | 'deleteAssignment' | 'onAddCrew' | 'onAddOrg' | 'onViewPerson'>) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-cb-area="CrewTab">
       {/* Single-row controls: filter input + dept filter + add crew + add org */}
       <div className="flex items-center gap-1.5">
         <div className="relative flex-1 min-w-0">
@@ -498,6 +500,7 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
           onClick={onAddCrew}
           aria-label="Add crew member"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          data-cb-action="add-crew"
         >
           <UserPlus className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -507,6 +510,7 @@ function CrewTab({ assignments, filteredAssignments, crewFilter, setCrewFilter, 
           onClick={onAddOrg}
           aria-label="Add organization"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          data-cb-action="add-org"
         >
           <Building2 className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -545,8 +549,8 @@ function NotesTab({ editedProject, updateField, project, onDelete }: {
   onDelete: () => void;
 }) {
   return (
-    <div className="space-y-4">
-      <MobileField label="Notes">
+    <div className="space-y-4" data-cb-area="NotesTab">
+      <MobileField label="Notes" data-cb-field="notes">
         <Textarea
           value={editedProject.notes || ''}
           onChange={(e) => updateField('notes', e.target.value || null)}
@@ -568,6 +572,7 @@ function NotesTab({ editedProject, updateField, project, onDelete }: {
         type="button"
         onClick={onDelete}
         className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+        data-cb-action="delete-project"
       >
         <Trash2 className="h-4 w-4" aria-hidden="true" />
         Delete Project
@@ -588,6 +593,8 @@ function HeaderStatusDropdown({
           type="button"
           aria-label={`Status: ${status}. Tap to change.`}
           className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded-md"
+          data-cb-area="Header"
+          data-cb-field="project-status"
         >
           <ProjectStatusBadge status={status} />
         </button>
@@ -665,6 +672,7 @@ export function ProjectMobileDetail({
 
   return (
     <MobileEntityDetailLayout
+      data-cb-component="ProjectMobileDetail"
       title={editedProject.name}
       titleNode={
         <EditableHeaderTitle

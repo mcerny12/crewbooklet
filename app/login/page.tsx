@@ -81,6 +81,7 @@ export default function LoginPage() {
                 required
                 disabled={isLoading}
                 className="h-10"
+                data-cb-sensitive="true"
               />
             </div>
 

@@ -44,6 +44,8 @@ export function CompactOrganizationListItem({
           'flex md:hidden flex-col gap-2.5 px-4 py-3 cursor-pointer border-b transition-colors',
           isSelected ? 'list-row-selected' : 'hover:bg-muted/40',
         )}
+        data-cb-component="CompactOrganizationListItem"
+        data-cb-entity="organization"
       >
         {/* Top row: logo + name + primaryJob */}
         <div className="flex items-center gap-2.5">
@@ -107,6 +109,8 @@ export function CompactOrganizationListItem({
             ? 'list-row-selected'
             : 'hover:bg-muted/40',
         )}
+        data-cb-component="CompactOrganizationListItem"
+        data-cb-entity="organization"
       >
         {/* Logo */}
         <OrgLogo organization={organization} size="sm" />
