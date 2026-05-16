@@ -2,20 +2,22 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Invoice, InvoiceItem, InvoiceAttachment } from '@/lib/types/models';
-import { InvoiceStatus } from '@/lib/types/models';
+import { InvoiceStatus, InvoiceDocumentType } from '@/lib/types/models';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { InvoiceStatusBadge } from '@/components/ui/status-badge';
 import { useInvoiceStore } from '@/lib/stores/invoice-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronLeft, Trash2, Plus, Printer, X, Paperclip, Download, FileText } from 'lucide-react';
+import { ChevronLeft, Trash2, Plus, Printer, X, Paperclip, Download, FileText, Ban, ExternalLink } from 'lucide-react';
 import { format, addDays } from 'date-fns';
+import { StornoModal } from './storno-modal';
 
 interface InvoiceDetailPanelProps {
   invoice: Invoice;
@@ -88,6 +90,8 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingLabelRef = useRef<string | null>(null);
+
+  const [showStornoModal, setShowStornoModal] = useState(false);
 
   const updateInvoice = useInvoiceStore(state => state.updateInvoice);
   const deleteInvoice = useInvoiceStore(state => state.deleteInvoice);
@@ -263,15 +267,53 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   const acontoDeductionTotal = linkedAcontos.reduce((sum, inv) => sum + (inv.total ?? 0), 0);
   const amountDue = totalAmount - acontoDeductionTotal;
 
-  // Aconto invoices available to link: marked as aconto, same project or recipient, not self
+  // Aconto invoices available to link: marked as aconto, same project or recipient, not self.
+  // Exclude storno / revision documents — only original invoices can be aconto.
   const availableAcontos = allInvoices.filter(inv =>
     inv.is_aconto === true &&
     inv.id !== edited.id &&
+    (inv.document_type ?? InvoiceDocumentType.Invoice) === InvoiceDocumentType.Invoice &&
     (
       (edited.project_id && inv.project_id === edited.project_id) ||
       (edited.recipient_name && inv.recipient_name === edited.recipient_name)
     )
   );
+
+  // Storno / revision chain
+  const docType = (edited.document_type ?? InvoiceDocumentType.Invoice) as InvoiceDocumentType;
+  const isStornoDoc   = docType === InvoiceDocumentType.StornoInvoice;
+  const isRevisionDoc = docType === InvoiceDocumentType.RevisionInvoice;
+  const isOriginalCancelled = edited.status === InvoiceStatus.Cancelled;
+  const isOriginalCorrected = edited.status === InvoiceStatus.Corrected;
+  const readOnly = isStornoDoc || isOriginalCancelled || isOriginalCorrected;
+
+  const linkedStorno   = edited.storno_invoice_id      ? allInvoices.find(i => i.id === edited.storno_invoice_id)      ?? null : null;
+  const linkedRevision = edited.replaced_by_invoice_id ? allInvoices.find(i => i.id === edited.replaced_by_invoice_id) ?? null : null;
+  const correctsInvoice   = edited.corrects_invoice_id    ? allInvoices.find(i => i.id === edited.corrects_invoice_id)    ?? null : null;
+  const revisionOfInvoice = edited.revision_of_invoice_id ? allInvoices.find(i => i.id === edited.revision_of_invoice_id) ?? null : null;
+
+  // Other revisions in the same chain (excluding self)
+  const chainRootId = edited.original_invoice_id ?? edited.id;
+  const chainRevisions = allInvoices.filter(i =>
+    (i.original_invoice_id === chainRootId || i.id === chainRootId) &&
+    (i.document_type ?? InvoiceDocumentType.Invoice) === InvoiceDocumentType.RevisionInvoice &&
+    i.id !== edited.id,
+  );
+
+  const canCreateStorno =
+    !isStornoDoc &&
+    !isOriginalCancelled &&
+    !isOriginalCorrected &&
+    !edited.storno_invoice_id &&
+    edited.status !== InvoiceStatus.Draft &&
+    edited.status !== InvoiceStatus.RevisionDraft;
+
+  const openInvoice = (id: string) => {
+    window.open(`/invoices?selected=${id}`, '_blank');
+  };
+  const openPrint = (id: string) => {
+    window.open(`/invoices/${id}/print`, '_blank');
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
@@ -286,7 +328,12 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
         <Button variant="outline" size="sm" onClick={() => window.open(`/invoices/${edited.id}/print`, '_blank')} className="gap-1.5 h-8 text-[13px]">
           <Printer className="h-3.5 w-3.5" />Print / PDF
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleDelete} className="text-muted-foreground/50 hover:text-destructive gap-1.5 h-8 text-[13px]" aria-label="Delete invoice">
+        {canCreateStorno && (
+          <Button variant="outline" size="sm" onClick={() => setShowStornoModal(true)} className="gap-1.5 h-8 text-[13px]">
+            <Ban className="h-3.5 w-3.5" />Storno / Korrektur
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={readOnly} className="text-muted-foreground/50 hover:text-destructive gap-1.5 h-8 text-[13px]" aria-label="Delete invoice">
           <Trash2 className="h-3.5 w-3.5" />Delete
         </Button>
       </div>
@@ -294,9 +341,80 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto p-5 space-y-5 detail-form-fields">
 
+        {/* Read-only banner (storno docs, cancelled or corrected originals) */}
+        {readOnly && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs flex items-start gap-2">
+            <Ban className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
+            <div className="text-amber-900">
+              {isStornoDoc && (
+                <>Diese Stornorechnung ist final und kann nicht mehr bearbeitet werden.</>
+              )}
+              {isOriginalCorrected && (
+                <>Diese Rechnung wurde durch eine Revisionsrechnung ersetzt und kann nicht mehr bearbeitet werden.</>
+              )}
+              {isOriginalCancelled && !isOriginalCorrected && (
+                <>Diese Rechnung wurde storniert und kann nicht mehr bearbeitet werden.</>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Corrections / Storno linked documents */}
+        {(linkedStorno || linkedRevision || correctsInvoice || revisionOfInvoice || chainRevisions.length > 0) && (
+          <div className="rounded-md border bg-muted/20 px-3 py-2 space-y-1.5">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Korrekturen / Storno
+            </div>
+            {correctsInvoice && (
+              <LinkedDocRow
+                label="Storniert"
+                target={correctsInvoice}
+                onOpen={() => openInvoice(correctsInvoice.id)}
+                onPrint={() => openPrint(correctsInvoice.id)}
+              />
+            )}
+            {revisionOfInvoice && (
+              <LinkedDocRow
+                label="Revision von"
+                target={revisionOfInvoice}
+                onOpen={() => openInvoice(revisionOfInvoice.id)}
+                onPrint={() => openPrint(revisionOfInvoice.id)}
+              />
+            )}
+            {linkedStorno && (
+              <LinkedDocRow
+                label="Stornorechnung"
+                target={linkedStorno}
+                onOpen={() => openInvoice(linkedStorno.id)}
+                onPrint={() => openPrint(linkedStorno.id)}
+              />
+            )}
+            {linkedRevision && (
+              <LinkedDocRow
+                label="Revisionsrechnung"
+                target={linkedRevision}
+                onOpen={() => openInvoice(linkedRevision.id)}
+                onPrint={() => openPrint(linkedRevision.id)}
+              />
+            )}
+            {chainRevisions.map(r => (
+              <LinkedDocRow
+                key={r.id}
+                label="Revision"
+                target={r}
+                onOpen={() => openInvoice(r.id)}
+                onPrint={() => openPrint(r.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        <fieldset disabled={readOnly} className="space-y-5 border-0 p-0 m-0 min-w-0 disabled:opacity-70">
+
         {/* Number + status + aconto flag */}
         <div className="flex items-center gap-4 flex-wrap">
           <h1 className="text-xl font-bold">{edited.invoice_number}</h1>
+          {readOnly && <InvoiceStatusBadge status={edited.status} />}
           <Select value={edited.status} onValueChange={v => handleChange('status', v)}>
             <SelectTrigger className="h-7 w-36 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -549,6 +667,8 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
           )}
         </div>
 
+        </fieldset>
+
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -559,6 +679,59 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
         />
 
       </div>
+
+      {showStornoModal && (
+        <StornoModal
+          invoice={edited}
+          onClose={() => setShowStornoModal(false)}
+          onCompleted={async (result) => {
+            setShowStornoModal(false);
+            await fetchInvoices();
+            if (result.revision) {
+              openInvoice(result.revision.id);
+            } else {
+              openPrint(result.storno.id);
+            }
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function LinkedDocRow({
+  label,
+  target,
+  onOpen,
+  onPrint,
+}: {
+  label: string;
+  target: Invoice;
+  onOpen: () => void;
+  onPrint: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="text-muted-foreground w-28 shrink-0">{label}</span>
+      <span className="font-medium">{target.invoice_number}</span>
+      <InvoiceStatusBadge status={target.status} />
+      <span className="flex-1" />
+      <button
+        type="button"
+        onClick={onPrint}
+        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+        title="PDF öffnen"
+      >
+        <Printer className="h-3 w-3" />PDF
+      </button>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+        title="Detail öffnen"
+      >
+        <ExternalLink className="h-3 w-3" />Öffnen
+      </button>
     </div>
   );
 }

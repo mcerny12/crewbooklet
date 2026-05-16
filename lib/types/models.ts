@@ -770,7 +770,9 @@ export enum InvoiceStatus {
   Sent = "sent",
   Paid = "paid",
   Overdue = "overdue",
-  Cancelled = "cancelled"
+  Cancelled = "cancelled",
+  Corrected = "corrected",
+  RevisionDraft = "revision_draft"
 }
 
 export const InvoiceStatusColors: Record<InvoiceStatus, string> = {
@@ -778,8 +780,33 @@ export const InvoiceStatusColors: Record<InvoiceStatus, string> = {
   [InvoiceStatus.Sent]: "blue",
   [InvoiceStatus.Paid]: "green",
   [InvoiceStatus.Overdue]: "red",
-  [InvoiceStatus.Cancelled]: "orange"
+  [InvoiceStatus.Cancelled]: "orange",
+  [InvoiceStatus.Corrected]: "orange",
+  [InvoiceStatus.RevisionDraft]: "gray"
 };
+
+export enum InvoiceDocumentType {
+  Invoice = "invoice",
+  StornoInvoice = "storno_invoice",
+  RevisionInvoice = "revision_invoice"
+}
+
+export type InvoiceEventType =
+  | "invoice_storno_created"
+  | "invoice_revision_created"
+  | "invoice_cancelled"
+  | "invoice_replaced_by_revision";
+
+export interface InvoiceEvent {
+  id: string;
+  created_at: string;
+  user_id?: string | null;
+  invoice_id: string;
+  related_invoice_id?: string | null;
+  event_type: InvoiceEventType;
+  reason?: string | null;
+  payload?: Record<string, unknown> | null;
+}
 
 export interface Invoice {
   id: string;
@@ -831,6 +858,18 @@ export interface Invoice {
   // Aconto (advance payment) support
   is_aconto?: boolean | null;
   aconto_invoice_ids?: string[] | null;
+
+  // Storno / revision chain
+  document_type?: InvoiceDocumentType | null;
+  original_invoice_id?: string | null;
+  corrects_invoice_id?: string | null;
+  storno_invoice_id?: string | null;
+  revision_of_invoice_id?: string | null;
+  replaced_by_invoice_id?: string | null;
+  revision_sequence?: number | null;
+  storno_reason?: string | null;
+  storno_date?: string | null;
+  pdf_document_label?: string | null;
 
   items?: InvoiceItem[];
 }

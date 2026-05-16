@@ -18,9 +18,12 @@ import type {
   Invoice,
   InvoiceItem,
   InvoiceAttachment,
+  InvoiceEvent,
+  InvoiceEventType,
   ProjectCalendar,
   CalendarEvent,
 } from '@/lib/types/models';
+import { InvoiceDocumentType, InvoiceStatus } from '@/lib/types/models';
 
 export class SupabaseService {
   // MARK: - Person Operations
@@ -762,6 +765,328 @@ export class SupabaseService {
     }
 
     return data || [];
+  }
+
+  // MARK: - Invoice Storno / Revision
+
+  private static stripRevSuffix(invoiceNumber: string): string {
+    return invoiceNumber.replace(/-rev(-\d{2})?$/, '');
+  }
+
+  static async getNextStornoInvoiceNumber(originalNumber: string): Promise<string> {
+    const base = `${originalNumber}-storno`;
+    const { data } = await supabase
+      .from('invoices')
+      .select('invoice_number')
+      .like('invoice_number', `${base}%`);
+    const existing = new Set((data ?? []).map(r => r.invoice_number as string));
+    if (!existing.has(base)) return base;
+    for (let i = 1; i < 100; i++) {
+      const candidate = `${base}-${String(i).padStart(2, '0')}`;
+      if (!existing.has(candidate)) return candidate;
+    }
+    throw new Error('Too many storno numbers for ' + originalNumber);
+  }
+
+  static async getNextRevisionInvoiceNumber(
+    originalNumber: string
+  ): Promise<{ number: string; sequence: number }> {
+    const root = SupabaseService.stripRevSuffix(originalNumber);
+    const { data } = await supabase
+      .from('invoices')
+      .select('invoice_number')
+      .like('invoice_number', `${root}-rev%`);
+    const existing = new Set(
+      (data ?? [])
+        .map(r => r.invoice_number as string)
+        .filter(n => /-rev(-\d{2})?$/.test(n))
+    );
+    const first = `${root}-rev`;
+    if (!existing.has(first)) return { number: first, sequence: 0 };
+    for (let i = 1; i < 100; i++) {
+      const candidate = `${root}-rev-${String(i).padStart(2, '0')}`;
+      if (!existing.has(candidate)) return { number: candidate, sequence: i };
+    }
+    throw new Error('Too many revision numbers for ' + originalNumber);
+  }
+
+  static async logInvoiceEvent(event: {
+    invoice_id: string;
+    related_invoice_id?: string | null;
+    event_type: InvoiceEventType;
+    reason?: string | null;
+    payload?: Record<string, unknown> | null;
+  }): Promise<void> {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user.id ?? null;
+    const { error } = await supabase
+      .from('invoice_events')
+      .insert({
+        invoice_id: event.invoice_id,
+        related_invoice_id: event.related_invoice_id ?? null,
+        event_type: event.event_type,
+        reason: event.reason ?? null,
+        payload: event.payload ?? null,
+        user_id: userId,
+      });
+    if (error) {
+      // Audit log failure must not break the user-facing flow.
+      console.error('[invoice_events] insert failed:', error);
+    }
+  }
+
+  static async fetchInvoiceEvents(invoiceId: string): Promise<InvoiceEvent[]> {
+    const { data, error } = await supabase
+      .from('invoice_events')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Error fetching invoice events:', error);
+      return [];
+    }
+    return data ?? [];
+  }
+
+  private static copyInvoiceHeader(source: Invoice): Partial<Invoice> {
+    return {
+      project_id: source.project_id ?? null,
+      recipient_name: source.recipient_name ?? null,
+      recipient_contact: source.recipient_contact ?? null,
+      recipient_street: source.recipient_street ?? null,
+      recipient_zip: source.recipient_zip ?? null,
+      recipient_city: source.recipient_city ?? null,
+      recipient_country: source.recipient_country ?? null,
+      sender_name: source.sender_name ?? null,
+      sender_address_line: source.sender_address_line ?? null,
+      sender_phone: source.sender_phone ?? null,
+      sender_email: source.sender_email ?? null,
+      service_period_start: source.service_period_start ?? null,
+      service_period_end: source.service_period_end ?? null,
+      uid_recipient: source.uid_recipient ?? null,
+      greeting: source.greeting ?? null,
+      intro: source.intro ?? null,
+      footer_notes: source.footer_notes ?? null,
+      bank_recipient: source.bank_recipient ?? null,
+      iban: source.iban ?? null,
+      bic: source.bic ?? null,
+    };
+  }
+
+  /**
+   * Create a Stornorechnung that fully reverses the given invoice.
+   * Marks the original as Cancelled and links the documents. Does NOT create
+   * a revision invoice — for that, use createStornoAndRevision.
+   */
+  static async createInvoiceStorno(params: {
+    invoiceId: string;
+    documentLabel?: string | null;
+    reason?: string | null;
+    stornoDate?: string | null;
+  }): Promise<Invoice> {
+    const source = await SupabaseService.fetchInvoice(params.invoiceId);
+    if (!source) throw new Error('Invoice not found');
+    if (source.status === InvoiceStatus.Draft) {
+      throw new Error('Draft invoices cannot be cancelled — edit or delete instead.');
+    }
+    if (source.status === InvoiceStatus.Cancelled || source.status === InvoiceStatus.Corrected) {
+      throw new Error('This invoice has already been cancelled or corrected.');
+    }
+    if (source.storno_invoice_id) {
+      throw new Error('A Stornorechnung already exists for this invoice.');
+    }
+
+    const rootOriginalId = source.original_invoice_id ?? source.id;
+    const stornoNumber = await SupabaseService.getNextStornoInvoiceNumber(source.invoice_number);
+    const stornoDate = params.stornoDate ?? new Date().toISOString().slice(0, 10);
+
+    const stornoPayload: Partial<Invoice> = {
+      ...SupabaseService.copyInvoiceHeader(source),
+      invoice_number: stornoNumber,
+      status: InvoiceStatus.Sent,
+      document_type: InvoiceDocumentType.StornoInvoice,
+      original_invoice_id: rootOriginalId,
+      corrects_invoice_id: source.id,
+      pdf_document_label: params.documentLabel ?? 'Stornorechnung',
+      storno_reason: params.reason ?? null,
+      storno_date: stornoDate,
+      date: stornoDate,
+      due_date: stornoDate,
+      reference: source.invoice_number,
+      is_aconto: false,
+      aconto_invoice_ids: [],
+      total: source.total != null ? -source.total : 0,
+    };
+
+    const stornoInvoice = await SupabaseService.addInvoice(stornoPayload);
+    if (!stornoInvoice) throw new Error('Failed to create Stornorechnung');
+
+    try {
+      const items: Omit<InvoiceItem, 'id'>[] = (source.items ?? []).map(it => ({
+        invoice_id: stornoInvoice.id,
+        sort_order: it.sort_order,
+        description: it.description,
+        sub_description: it.sub_description ?? null,
+        quantity: -it.quantity,
+        unit_price: it.unit_price,
+        tax_rate: it.tax_rate,
+        total: -it.total,
+      }));
+      await SupabaseService.replaceInvoiceItems(stornoInvoice.id, items);
+
+      await SupabaseService.updateInvoice(source.id, {
+        status: InvoiceStatus.Cancelled,
+        storno_invoice_id: stornoInvoice.id,
+      });
+
+      await SupabaseService.logInvoiceEvent({
+        invoice_id: source.id,
+        related_invoice_id: stornoInvoice.id,
+        event_type: 'invoice_storno_created',
+        reason: params.reason ?? null,
+      });
+      await SupabaseService.logInvoiceEvent({
+        invoice_id: source.id,
+        event_type: 'invoice_cancelled',
+        reason: params.reason ?? null,
+      });
+
+      return stornoInvoice;
+    } catch (err) {
+      try { await SupabaseService.deleteInvoice(stornoInvoice.id); } catch { /* best effort */ }
+      throw err;
+    }
+  }
+
+  /**
+   * Create a Stornorechnung AND a revision-draft invoice copied from the original.
+   * The original is marked Corrected. The revision is left as RevisionDraft so the
+   * user can adapt line items before sending.
+   */
+  static async createStornoAndRevision(params: {
+    invoiceId: string;
+    documentLabel?: string | null;
+    reason?: string | null;
+    stornoDate?: string | null;
+  }): Promise<{ storno: Invoice; revision: Invoice }> {
+    const source = await SupabaseService.fetchInvoice(params.invoiceId);
+    if (!source) throw new Error('Invoice not found');
+    if (source.status === InvoiceStatus.Draft) {
+      throw new Error('Draft invoices cannot be cancelled — edit them directly.');
+    }
+    if (source.status === InvoiceStatus.Cancelled || source.status === InvoiceStatus.Corrected) {
+      throw new Error('This invoice has already been cancelled or corrected.');
+    }
+    if (source.storno_invoice_id) {
+      throw new Error('A Stornorechnung already exists for this invoice.');
+    }
+
+    const rootOriginalId = source.original_invoice_id ?? source.id;
+    const stornoNumber = await SupabaseService.getNextStornoInvoiceNumber(source.invoice_number);
+    const { number: revisionNumber, sequence: revisionSequence } =
+      await SupabaseService.getNextRevisionInvoiceNumber(source.invoice_number);
+    const stornoDate = params.stornoDate ?? new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+
+    // 1. Create Stornorechnung
+    const stornoPayload: Partial<Invoice> = {
+      ...SupabaseService.copyInvoiceHeader(source),
+      invoice_number: stornoNumber,
+      status: InvoiceStatus.Sent,
+      document_type: InvoiceDocumentType.StornoInvoice,
+      original_invoice_id: rootOriginalId,
+      corrects_invoice_id: source.id,
+      pdf_document_label: params.documentLabel ?? 'Stornorechnung',
+      storno_reason: params.reason ?? null,
+      storno_date: stornoDate,
+      date: stornoDate,
+      due_date: stornoDate,
+      reference: source.invoice_number,
+      is_aconto: false,
+      aconto_invoice_ids: [],
+      total: source.total != null ? -source.total : 0,
+    };
+    const storno = await SupabaseService.addInvoice(stornoPayload);
+    if (!storno) throw new Error('Failed to create Stornorechnung');
+
+    let revision: Invoice | null = null;
+    try {
+      const stornoItems: Omit<InvoiceItem, 'id'>[] = (source.items ?? []).map(it => ({
+        invoice_id: storno.id,
+        sort_order: it.sort_order,
+        description: it.description,
+        sub_description: it.sub_description ?? null,
+        quantity: -it.quantity,
+        unit_price: it.unit_price,
+        tax_rate: it.tax_rate,
+        total: -it.total,
+      }));
+      await SupabaseService.replaceInvoiceItems(storno.id, stornoItems);
+
+      // 2. Create revision-draft invoice with positive line items copied
+      const revisionPayload: Partial<Invoice> = {
+        ...SupabaseService.copyInvoiceHeader(source),
+        invoice_number: revisionNumber,
+        status: InvoiceStatus.RevisionDraft,
+        document_type: InvoiceDocumentType.RevisionInvoice,
+        original_invoice_id: rootOriginalId,
+        revision_of_invoice_id: source.id,
+        revision_sequence: revisionSequence,
+        date: today,
+        due_date: source.due_date ?? null,
+        reference: source.invoice_number,
+        is_aconto: source.is_aconto ?? false,
+        aconto_invoice_ids: source.aconto_invoice_ids ?? [],
+        total: source.total ?? 0,
+      };
+      revision = await SupabaseService.addInvoice(revisionPayload);
+      if (!revision) throw new Error('Failed to create revision invoice');
+
+      const revisionItems: Omit<InvoiceItem, 'id'>[] = (source.items ?? []).map(it => ({
+        invoice_id: revision!.id,
+        sort_order: it.sort_order,
+        description: it.description,
+        sub_description: it.sub_description ?? null,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        tax_rate: it.tax_rate,
+        total: it.total,
+      }));
+      await SupabaseService.replaceInvoiceItems(revision.id, revisionItems);
+
+      // 3. Mark original as Corrected and link both new docs
+      await SupabaseService.updateInvoice(source.id, {
+        status: InvoiceStatus.Corrected,
+        storno_invoice_id: storno.id,
+        replaced_by_invoice_id: revision.id,
+      });
+
+      // 4. Audit log
+      await SupabaseService.logInvoiceEvent({
+        invoice_id: source.id,
+        related_invoice_id: storno.id,
+        event_type: 'invoice_storno_created',
+        reason: params.reason ?? null,
+      });
+      await SupabaseService.logInvoiceEvent({
+        invoice_id: source.id,
+        related_invoice_id: revision.id,
+        event_type: 'invoice_revision_created',
+        reason: params.reason ?? null,
+      });
+      await SupabaseService.logInvoiceEvent({
+        invoice_id: source.id,
+        related_invoice_id: revision.id,
+        event_type: 'invoice_replaced_by_revision',
+        reason: params.reason ?? null,
+      });
+
+      return { storno, revision };
+    } catch (err) {
+      try { if (revision) await SupabaseService.deleteInvoice(revision.id); } catch { /* best effort */ }
+      try { await SupabaseService.deleteInvoice(storno.id); } catch { /* best effort */ }
+      throw err;
+    }
   }
 
   // MARK: - Calendar Operations

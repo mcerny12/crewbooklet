@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import type { Invoice, InvoiceItem } from '@/lib/types/models';
+import { InvoiceDocumentType } from '@/lib/types/models';
 import { format } from 'date-fns';
 
 // ── Formatting ────────────────────────────────────────────────
@@ -315,9 +316,24 @@ function PaymentBlock({ total, dueDate }: { total: number; dueDate: string | nul
   );
 }
 
+function StornoFootnote({ reason }: { reason: string | null | undefined }) {
+  return (
+    <div style={{ marginTop: '3.8mm', fontSize: '9pt', lineHeight: 1.4 }}>
+      <p style={{ marginBottom: 0 }}>
+        Mit dieser Stornorechnung wird die oben genannte Rechnung vollständig aufgehoben. Eine Zahlung ist nicht erforderlich.
+      </p>
+      {reason && (
+        <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>
+          <strong style={{ fontWeight: 700 }}>Stornogrund:</strong> {reason}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── Page frame ────────────────────────────────────────────────
 
-function InvoiceHeader({ invoice, period }: { invoice: Invoice; period: string }) {
+function InvoiceHeader({ invoice, period, docTitle }: { invoice: Invoice; period: string; docTitle: string }) {
   return (
     <div style={{
       position: 'absolute',
@@ -353,7 +369,7 @@ function InvoiceHeader({ invoice, period }: { invoice: Invoice; period: string }
 
       {/* Right: Rechnung + metadata grid */}
       <div style={{ position: 'absolute', top: '33.2mm', left: '113.9mm', right: `${PAD_R_MM}mm` }}>
-        <div style={{ fontSize: '9pt', fontWeight: 700, marginBottom: '2.6mm' }}>Rechnung</div>
+        <div style={{ fontSize: '9pt', fontWeight: 700, marginBottom: '2.6mm' }}>{docTitle}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: '3mm' }}>
           {invoice.date && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Datum</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{fmt(invoice.date)}</span></>}
           <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Nummer</span>
@@ -401,6 +417,36 @@ function InvoiceFooter({ pageNum, totalPages }: { pageNum: number; totalPages: n
   );
 }
 
+// ── Document-type derivation ─────────────────────────────────
+
+function deriveDocMeta(
+  invoice: Invoice,
+  original: Invoice | null,
+  stornoForRevision: Invoice | null
+): { isStorno: boolean; isRevision: boolean; docTitle: string; displayGreeting: string } {
+  const isStorno   = invoice.document_type === InvoiceDocumentType.StornoInvoice;
+  const isRevision = invoice.document_type === InvoiceDocumentType.RevisionInvoice;
+  const docTitle = isStorno
+    ? (invoice.pdf_document_label || 'Stornorechnung')
+    : 'Rechnung';
+
+  let referenceLine = '';
+  if (isStorno && original) {
+    referenceLine = `Diese ${docTitle} bezieht sich auf Rechnung ${original.invoice_number} vom ${fmt(original.date)} und hebt diese vollständig auf.`;
+  } else if (isRevision && original) {
+    const tail = stornoForRevision
+      ? ` Die ursprüngliche Rechnung wurde mit Stornorechnung ${stornoForRevision.invoice_number} aufgehoben.`
+      : '';
+    referenceLine = `Korrigierte Rechnung zu Rechnung ${original.invoice_number} vom ${fmt(original.date)}.${tail}`;
+  }
+
+  const displayGreeting = [referenceLine, invoice.greeting ?? '']
+    .filter(s => s && s.trim().length > 0)
+    .join('\n\n');
+
+  return { isStorno, isRevision, docTitle, displayGreeting };
+}
+
 // ── Component ─────────────────────────────────────────────────
 
 export default function PrintInvoicePage() {
@@ -409,6 +455,8 @@ export default function PrintInvoicePage() {
 
   const [invoice,  setInvoice]  = useState<Invoice | null>(null);
   const [acontos,  setAcontos]  = useState<Invoice[]>([]);
+  const [original, setOriginal] = useState<Invoice | null>(null);
+  const [stornoForRevision, setStornoForRevision] = useState<Invoice | null>(null);
   const [loading,  setLoading]  = useState(true);
   const [pages,    setPages]    = useState<PageData[] | null>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -421,6 +469,19 @@ export default function PrintInvoicePage() {
       if (data?.aconto_invoice_ids?.length) {
         const linked = await SupabaseService.fetchInvoicesByIds(data.aconto_invoice_ids);
         setAcontos(linked);
+      }
+      // For storno/revision docs, fetch the directly-corrected original
+      // so we can render its number and date in the reference line.
+      const targetId = data?.corrects_invoice_id ?? data?.revision_of_invoice_id ?? null;
+      if (targetId) {
+        const orig = await SupabaseService.fetchInvoice(targetId);
+        setOriginal(orig);
+        // For a revision, also fetch the storno that cancelled the original
+        // so we can mention it in the reference text.
+        if (data?.document_type === InvoiceDocumentType.RevisionInvoice && orig?.storno_invoice_id) {
+          const storno = await SupabaseService.fetchInvoice(orig.storno_invoice_id);
+          setStornoForRevision(storno);
+        }
       }
       setLoading(false);
     });
@@ -441,11 +502,12 @@ export default function PrintInvoicePage() {
       const subtotal = invoice.total ?? items.reduce((s, i) => s + i.total, 0);
       const acontoDeductionTotal = acontos.reduce((s, a) => s + (a.total ?? 0), 0);
       const total    = subtotal - acontoDeductionTotal;
+      const { displayGreeting } = deriveDocMeta(invoice, original, stornoForRevision);
 
       // Build measured block list
       const blocks: Block[] = [];
 
-      if (invoice.greeting) {
+      if (displayGreeting) {
         blocks.push({ kind: 'greeting',     id: 'greeting',     heightPx: measure('greeting') });
       }
       const tableHeaderH = measure('tableHeader');
@@ -463,7 +525,7 @@ export default function PrintInvoicePage() {
       setPages(paginate(blocks, tableHeaderH, BODY_H_PX));
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoice, acontos, loading]);
+  }, [invoice, acontos, original, stornoForRevision, loading]);
 
   // ── Step 3: trigger print ──────────────────────────────────
   useEffect(() => {
@@ -483,6 +545,8 @@ export default function PrintInvoicePage() {
   const total    = subtotal - acontoDeductionTotal;
   const period   = fmtPeriod(invoice.service_period_start, invoice.service_period_end);
   const totalPages = pages?.length ?? 1;
+
+  const { isStorno, docTitle, displayGreeting } = deriveDocMeta(invoice, original, stornoForRevision);
 
   return (
     <>
@@ -565,9 +629,9 @@ export default function PrintInvoicePage() {
             color: '#000',
           }}
         >
-          {invoice.greeting && (
+          {displayGreeting && (
             <div data-m="greeting" style={{ whiteSpace: 'pre-line', lineHeight: 1.5, marginBottom: '4mm' }}>
-              {invoice.greeting}
+              {displayGreeting}
             </div>
           )}
 
@@ -590,7 +654,9 @@ export default function PrintInvoicePage() {
           </div>
 
           <div data-m="payment">
-            <PaymentBlock total={total} dueDate={invoice.due_date} />
+            {isStorno
+              ? <StornoFootnote reason={invoice.storno_reason} />
+              : <PaymentBlock total={total} dueDate={invoice.due_date} />}
           </div>
         </div>
       )}
@@ -599,7 +665,7 @@ export default function PrintInvoicePage() {
       {pages && pages.map((page, pageIdx) => (
         <div key={pageIdx} className="invoice-page">
 
-          <InvoiceHeader invoice={invoice} period={period} />
+          <InvoiceHeader invoice={invoice} period={period} docTitle={docTitle} />
 
           <div className="invoice-body">
             {page.blocks.map(block => {
@@ -607,7 +673,7 @@ export default function PrintInvoicePage() {
                 case 'greeting':
                   return (
                     <div key={block.id} style={{ whiteSpace: 'pre-line', lineHeight: 1.5, marginBottom: '4mm' }}>
-                      {invoice.greeting}
+                      {displayGreeting}
                     </div>
                   );
                 case 'tableHeader':
@@ -621,7 +687,9 @@ export default function PrintInvoicePage() {
                 case 'legal':
                   return <LegalNotes key={block.id} />;
                 case 'payment':
-                  return <PaymentBlock key={block.id} total={total} dueDate={invoice.due_date} />;
+                  return isStorno
+                    ? <StornoFootnote key={block.id} reason={invoice.storno_reason} />
+                    : <PaymentBlock key={block.id} total={total} dueDate={invoice.due_date} />;
                 default:
                   return null;
               }

@@ -24,11 +24,23 @@ const PROJECT_STATUS_LABELS: Record<string, string> = {
 // ── Invoice status ───────────────────────────────────────────────────────────
 
 const INVOICE_STATUS_CLASSES: Record<string, string> = {
-  draft:      'bg-slate-100 text-slate-600  border border-slate-200',
-  sent:       'bg-blue-50   text-blue-700   border border-blue-200',
-  paid:       'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  overdue:    'bg-red-50    text-red-600    border border-red-200',
-  cancelled:  'bg-slate-100 text-slate-500  border border-slate-200',
+  draft:           'bg-slate-100  text-slate-600  border border-slate-200',
+  sent:            'bg-blue-50    text-blue-700   border border-blue-200',
+  paid:            'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  overdue:         'bg-red-50     text-red-600    border border-red-200',
+  cancelled:       'bg-slate-100  text-slate-500  border border-slate-200',
+  corrected:       'bg-amber-50   text-amber-700  border border-amber-200',
+  revision_draft:  'bg-slate-100  text-slate-600  border border-slate-200',
+};
+
+const INVOICE_STATUS_LABELS: Record<string, string> = {
+  draft:           'Draft',
+  sent:            'Sent',
+  paid:            'Paid',
+  overdue:         'Overdue',
+  cancelled:       'Storniert',
+  corrected:       'Korrigiert',
+  revision_draft:  'Revision draft',
 };
 
 // ── Assignment / availability status ─────────────────────────────────────────
@@ -78,7 +90,7 @@ export function ProjectStatusBadge({ status }: { status: string }) {
 }
 
 export function InvoiceStatusBadge({ status }: { status: string }) {
-  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  const label = INVOICE_STATUS_LABELS[status] ?? (status.charAt(0).toUpperCase() + status.slice(1));
   return (
     <StatusPill
       label={label}
