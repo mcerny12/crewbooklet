@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Invoice, InvoiceItem, InvoiceAttachment } from '@/lib/types/models';
+import type { Invoice, InvoiceItem, InvoiceAttachment, InvoiceAcontoApplication } from '@/lib/types/models';
 import { InvoiceStatus, InvoiceDocumentType } from '@/lib/types/models';
 import { SupabaseService } from '@/lib/services/supabase-service';
+import { calculateInvoiceTotals } from '@/lib/invoice/totals';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -81,6 +82,10 @@ function AttachmentRow({
 export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetailPanelProps) {
   const [edited, setEdited] = useState<Invoice>({ ...invoice, items: invoice.items ?? [] });
   const [items, setItems] = useState<InvoiceItem[]>(invoice.items ?? []);
+  const [acontoApplications, setAcontoApplications] = useState<InvoiceAcontoApplication[]>(
+    invoice.aconto_applications ?? []
+  );
+  const acontoAmountTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,8 +125,18 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
       lastIdRef.current = invoice.id;
       setEdited({ ...invoice, items: invoice.items ?? [] });
       setItems(invoice.items ?? []);
+      setAcontoApplications(invoice.aconto_applications ?? []);
     }
   }, [invoice.id]);
+
+  // If the invoice prop arrives without applications, fetch them once.
+  useEffect(() => {
+    if (invoice.aconto_applications === undefined) {
+      SupabaseService.fetchInvoiceAcontoApplications(invoice.id)
+        .then(setAcontoApplications)
+        .catch(err => console.error('Failed to load aconto applications:', err));
+    }
+  }, [invoice.id, invoice.aconto_applications]);
 
   const scheduleSave = useCallback((data: Invoice, currentItems: InvoiceItem[]) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -262,22 +277,85 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 
-  const linkedAcontoIds = edited.aconto_invoice_ids ?? [];
-  const linkedAcontos = allInvoices.filter(inv => linkedAcontoIds.includes(inv.id));
-  const acontoDeductionTotal = linkedAcontos.reduce((sum, inv) => sum + (inv.total ?? 0), 0);
-  const amountDue = totalAmount - acontoDeductionTotal;
+  const totals = calculateInvoiceTotals(items, acontoApplications, edited.document_type);
+  const acontoDeductionTotal = totals.acontoDeductionTotal;
+  const amountDue = totals.total;
 
-  // Aconto invoices available to link: marked as aconto, same project or recipient, not self.
-  // Exclude storno / revision documents — only original invoices can be aconto.
+  const linkedAcontoSourceIds = new Set(
+    acontoApplications.map(a => a.source_invoice_id).filter((id): id is string => !!id)
+  );
+
+  // Aconto invoices available to link: marked as aconto, same project or recipient, not self,
+  // not already applied. Exclude storno / revision documents — only original invoices can be aconto.
   const availableAcontos = allInvoices.filter(inv =>
     inv.is_aconto === true &&
     inv.id !== edited.id &&
+    !linkedAcontoSourceIds.has(inv.id) &&
     (inv.document_type ?? InvoiceDocumentType.Invoice) === InvoiceDocumentType.Invoice &&
     (
       (edited.project_id && inv.project_id === edited.project_id) ||
       (edited.recipient_name && inv.recipient_name === edited.recipient_name)
     )
   );
+
+  // During the transition window (until Stage 3 ships and the PDF reads `aconto_applications`
+  // directly), keep the legacy `aconto_invoice_ids` array in sync so the PDF render stays
+  // coherent with whatever the user sees in the editor.
+  const syncLegacyAcontoIds = (apps: InvoiceAcontoApplication[]) => {
+    const ids = apps.map(a => a.source_invoice_id).filter((id): id is string => !!id);
+    const next = { ...edited, aconto_invoice_ids: ids };
+    setEdited(next);
+    scheduleSave(next, items);
+  };
+
+  const handleApplyAconto = async (sourceInvoiceId: string) => {
+    try {
+      const app = await SupabaseService.applyAcontoToInvoice({
+        invoiceId: edited.id,
+        sourceInvoiceId,
+        sortOrder: acontoApplications.length,
+      });
+      const nextApps = [...acontoApplications, app];
+      setAcontoApplications(nextApps);
+      syncLegacyAcontoIds(nextApps);
+    } catch (err) {
+      console.error('Failed to apply aconto:', err);
+      alert(err instanceof Error ? err.message : 'Failed to apply aconto.');
+    }
+  };
+
+  const handleRemoveApplication = async (applicationId: string) => {
+    const previous = acontoApplications;
+    const nextApps = previous.filter(a => a.id !== applicationId);
+    setAcontoApplications(nextApps);
+    syncLegacyAcontoIds(nextApps);
+    try {
+      await SupabaseService.removeAcontoApplication(applicationId);
+    } catch (err) {
+      console.error('Failed to remove aconto application:', err);
+      setAcontoApplications(previous);
+      syncLegacyAcontoIds(previous);
+      alert('Failed to remove aconto deduction.');
+    }
+  };
+
+  const handleAppliedAmountChange = (applicationId: string, value: number) => {
+    setAcontoApplications(prev =>
+      prev.map(a => a.id === applicationId ? { ...a, applied_amount: value } : a)
+    );
+    const existing = acontoAmountTimersRef.current.get(applicationId);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(async () => {
+      try {
+        await SupabaseService.updateAcontoApplication(applicationId, { applied_amount: value });
+      } catch (err) {
+        console.error('Failed to update applied amount:', err);
+      } finally {
+        acontoAmountTimersRef.current.delete(applicationId);
+      }
+    }, 1000);
+    acontoAmountTimersRef.current.set(applicationId, timer);
+  };
 
   // Storno / revision chain
   const docType = (edited.document_type ?? InvoiceDocumentType.Invoice) as InvoiceDocumentType;
@@ -566,25 +644,37 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
 
               <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t">
                 <div className="col-span-4 text-xs font-semibold text-right text-gray-600">
-                  {linkedAcontos.length > 0 ? 'Subtotal' : 'Total'}
+                  {acontoApplications.length > 0 ? 'Subtotal' : 'Total'}
                 </div>
                 <div className="text-sm font-bold text-right">{formatCurrency(totalAmount)}</div>
                 <div />
               </div>
-              {linkedAcontos.map(aconto => (
-                <div key={aconto.id} className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/20 items-center">
+              {acontoApplications.map(app => (
+                <div key={app.id} className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-1 bg-amber-50 dark:bg-amber-950/20 items-center">
                   <div className="col-span-4 text-xs text-right text-amber-700 dark:text-amber-400">
-                    Aconto {aconto.invoice_number}
+                    {app.label} {app.source_invoice_number}
+                    {app.source_invoice_date && (
+                      <span className="text-amber-600/70 ml-1">({app.source_invoice_date})</span>
+                    )}
                   </div>
                   <div className="text-xs font-medium text-right text-amber-700 dark:text-amber-400">
-                    -{formatCurrency(aconto.total ?? 0)}
+                    -{formatCurrency(app.applied_amount ?? 0)}
                   </div>
-                  <div />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-amber-700/60 hover:text-red-600"
+                    onClick={() => handleRemoveApplication(app.id)}
+                    disabled={readOnly}
+                    aria-label="Remove aconto deduction"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
               ))}
-              {linkedAcontos.length > 0 && (
+              {acontoApplications.length > 0 && (
                 <div className="grid grid-cols-[3fr_1fr_1.2fr_0.8fr_1fr_28px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 items-center border-t-2 border-gray-300">
-                  <div className="col-span-4 text-xs font-semibold text-right text-gray-700">Amount Due</div>
+                  <div className="col-span-4 text-xs font-semibold text-right text-gray-700">Restbetrag / Amount Due</div>
                   <div className="text-sm font-bold text-right">{formatCurrency(amountDue)}</div>
                   <div />
                 </div>
@@ -593,39 +683,78 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
           </div>
         </div>
 
-        {/* Aconto deduction linking (only for non-aconto final invoices) */}
+        {/* Applied acontos (advanced section: edit applied amount, add another aconto) */}
         {!edited.is_aconto && (
           <div>
             <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
-              Deduct Aconto Invoices
+              Applied Acontos
             </Label>
-            {availableAcontos.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">
-                No aconto invoices found for this project or recipient. Mark an invoice as &quot;Aconto invoice&quot; first.
-              </p>
-            ) : (
-              <div className="space-y-1.5 border rounded p-3">
-                {availableAcontos.map(aconto => (
-                  <label key={aconto.id} className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={linkedAcontoIds.includes(aconto.id)}
-                      onCheckedChange={checked => {
-                        const newIds = checked
-                          ? [...linkedAcontoIds, aconto.id]
-                          : linkedAcontoIds.filter(id => id !== aconto.id);
-                        handleChange('aconto_invoice_ids', newIds);
-                      }}
-                      className="h-3.5 w-3.5"
-                    />
-                    <span className="text-xs">
-                      {aconto.invoice_number}
-                      {aconto.total != null && (
-                        <span className="text-gray-500 ml-1">— {formatCurrency(aconto.total)}</span>
-                      )}
-                    </span>
-                  </label>
+
+            {acontoApplications.length > 0 && (
+              <div className="space-y-1 mb-2 border rounded">
+                {acontoApplications.map(app => (
+                  <div
+                    key={app.id}
+                    className="flex items-center gap-2 px-3 py-2 border-b last:border-b-0 text-xs"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">
+                        {app.label} {app.source_invoice_number}
+                      </div>
+                      <div className="text-gray-500">
+                        {app.source_invoice_date ?? '—'}
+                        {' · '}gross {formatCurrency(app.gross_amount ?? 0)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">Applied</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={app.applied_amount ?? 0}
+                        onChange={e =>
+                          handleAppliedAmountChange(app.id, parseFloat(e.target.value) || 0)
+                        }
+                        disabled={readOnly}
+                        className="h-7 text-xs w-24 text-right"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-gray-400 hover:text-red-600"
+                      onClick={() => handleRemoveApplication(app.id)}
+                      disabled={readOnly}
+                      aria-label="Remove aconto deduction"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 ))}
               </div>
+            )}
+
+            {!readOnly && (
+              availableAcontos.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">
+                  {acontoApplications.length === 0
+                    ? 'No aconto invoices found for this project or recipient. Mark an earlier invoice as "Aconto invoice" first.'
+                    : 'No further aconto invoices available for this project / recipient.'}
+                </p>
+              ) : (
+                <div className="border rounded p-2">
+                  <SearchableSelect
+                    options={availableAcontos.map(a => ({
+                      id: a.id,
+                      label: a.invoice_number,
+                      sublabel: a.total != null ? formatCurrency(a.total) : undefined,
+                    }))}
+                    value={null}
+                    onChange={v => { if (v) handleApplyAconto(v); }}
+                    placeholder="Add aconto invoice as deduction..."
+                  />
+                </div>
+              )
             )}
           </div>
         )}

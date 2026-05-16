@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Invoice } from '@/lib/types/models';
+import type { Invoice, InvoiceAcontoApplication } from '@/lib/types/models';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,9 @@ export function StornoModal({ invoice, onClose, onCompleted }: StornoModalProps)
   const [stornoDate, setStornoDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [previewStornoNumber, setPreviewStornoNumber] = useState<string>('…');
   const [previewRevisionNumber, setPreviewRevisionNumber] = useState<string>('…');
+  const [appliedAcontos, setAppliedAcontos] = useState<InvoiceAcontoApplication[]>(
+    invoice.aconto_applications ?? []
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +51,19 @@ export function StornoModal({ invoice, onClose, onCompleted }: StornoModalProps)
     })();
     return () => { cancelled = true; };
   }, [invoice.invoice_number]);
+
+  // If the caller didn't pre-load applications, fetch them so the warning section is accurate.
+  useEffect(() => {
+    if (invoice.aconto_applications !== undefined) return;
+    let cancelled = false;
+    SupabaseService.fetchInvoiceAcontoApplications(invoice.id)
+      .then(apps => { if (!cancelled) setAppliedAcontos(apps); })
+      .catch(err => console.error('Failed to fetch aconto applications for storno modal:', err));
+    return () => { cancelled = true; };
+  }, [invoice.id, invoice.aconto_applications]);
+
+  const formatCurrency = (n: number) =>
+    new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 
   const isPaid = invoice.status === 'paid';
 
@@ -101,6 +117,39 @@ export function StornoModal({ invoice, onClose, onCompleted }: StornoModalProps)
               <div>
                 Diese Rechnung ist bereits als <strong>bezahlt</strong> markiert. Eine Storno wird
                 buchhalterisch und ggf. die Rückerstattung an den Empfänger separat behandelt werden müssen.
+              </div>
+            </div>
+          )}
+
+          {appliedAcontos.length > 0 && (
+            <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
+              <div className="space-y-2">
+                <div>
+                  Diese Rechnung enthält Abzüge der folgenden Aconto-/Anzahlungsrechnungen:
+                </div>
+                <ul className="list-disc pl-4 space-y-0.5">
+                  {appliedAcontos.map(app => (
+                    <li key={app.id}>
+                      <strong>{app.source_invoice_number}</strong>
+                      {app.source_invoice_date && ` vom ${app.source_invoice_date}`}
+                      {' — '}
+                      Abzug {formatCurrency(app.applied_amount ?? 0)}
+                    </li>
+                  ))}
+                </ul>
+                <div>
+                  Die Stornorechnung hebt den <em>Abzug</em> dieser Acontos auf der Originalrechnung
+                  auf — die ursprünglichen Aconto-/Anzahlungsrechnungen <strong>selbst bleiben gültig</strong>
+                  und werden nicht automatisch storniert. Falls eine dieser Aconto-Rechnungen
+                  ebenfalls falsch ist, muss sie separat storniert/korrigiert werden.
+                </div>
+                {mode === 'correct_with_revision' && (
+                  <div>
+                    Auf die Revisionsrechnung werden diese Aconto-Abzüge automatisch übernommen.
+                    Du kannst sie dort bearbeiten oder entfernen.
+                  </div>
+                )}
               </div>
             </div>
           )}

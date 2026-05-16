@@ -20,10 +20,11 @@ import type {
   InvoiceAttachment,
   InvoiceEvent,
   InvoiceEventType,
+  InvoiceAcontoApplication,
   ProjectCalendar,
   CalendarEvent,
 } from '@/lib/types/models';
-import { InvoiceDocumentType, InvoiceStatus } from '@/lib/types/models';
+import { InvoiceDocumentType, InvoiceItemType, InvoiceStatus } from '@/lib/types/models';
 
 export class SupabaseService {
   // MARK: - Person Operations
@@ -562,7 +563,7 @@ export class SupabaseService {
   static async fetchInvoice(id: string): Promise<Invoice | null> {
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, items:invoice_items(*)')
+      .select('*, items:invoice_items(*), aconto_applications:invoice_aconto_applications(*)')
       .eq('id', id)
       .single();
 
@@ -604,7 +605,11 @@ export class SupabaseService {
   static async addInvoice(invoice: Partial<Invoice>): Promise<Invoice | null> {
     const { data: session } = await supabase.auth.getSession();
     const userId = session.session?.user.id;
-    const { items: _items, ...invoiceData } = invoice as Record<string, unknown>;
+    const {
+      items: _items,
+      aconto_applications: _acontoApps,
+      ...invoiceData
+    } = invoice as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('invoices')
@@ -621,7 +626,12 @@ export class SupabaseService {
   }
 
   static async updateInvoice(id: string, updates: Partial<Invoice>): Promise<Invoice | null> {
-    const { user_id: _uid5, items: _items2, ...cleanUpdates } = updates as Record<string, unknown>;
+    const {
+      user_id: _uid5,
+      items: _items2,
+      aconto_applications: _acontoApps2,
+      ...cleanUpdates
+    } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('invoices')
@@ -767,6 +777,139 @@ export class SupabaseService {
     return data || [];
   }
 
+  // MARK: - Invoice Aconto Applications
+  //
+  // An aconto application is "this final/revision invoice deducts that earlier aconto invoice".
+  // Source of truth for deduction amounts (snapshotted at apply-time so display stays stable
+  // even if the source aconto invoice is later edited).
+
+  static async fetchInvoiceAcontoApplications(invoiceId: string): Promise<InvoiceAcontoApplication[]> {
+    const { data, error } = await supabase
+      .from('invoice_aconto_applications')
+      .select('*')
+      .eq('invoice_id', invoiceId)
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Error fetching aconto applications:', error);
+      return [];
+    }
+    return data ?? [];
+  }
+
+  /**
+   * Snapshot a source aconto invoice and link it as a deduction on the given target invoice.
+   * Defaults applied_amount/gross_amount/net_amount to the source's current total (gross).
+   * Throws if the same source is already applied to this target.
+   */
+  static async applyAcontoToInvoice(params: {
+    invoiceId: string;
+    sourceInvoiceId: string;
+    label?: string;
+    appliedAmount?: number;
+    sortOrder?: number;
+  }): Promise<InvoiceAcontoApplication> {
+    const source = await SupabaseService.fetchInvoice(params.sourceInvoiceId);
+    if (!source) throw new Error('Source aconto invoice not found');
+    if (source.id === params.invoiceId) {
+      throw new Error('An invoice cannot deduct itself as an aconto.');
+    }
+
+    const gross = source.total ?? 0;
+    const applied = params.appliedAmount ?? gross;
+
+    const { data, error } = await supabase
+      .from('invoice_aconto_applications')
+      .insert({
+        invoice_id: params.invoiceId,
+        source_invoice_id: source.id,
+        source_invoice_number: source.invoice_number,
+        source_invoice_date: source.date ?? null,
+        label: params.label ?? 'Aconto',
+        net_amount: gross,
+        tax_amount: null,
+        gross_amount: gross,
+        applied_amount: applied,
+        sort_order: params.sortOrder ?? 0,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // 23505 = unique_violation (uq_invoice_aconto_applications_invoice_source).
+      if ((error as { code?: string }).code === '23505') {
+        throw new Error(
+          `Aconto invoice ${source.invoice_number} is already applied to this invoice.`
+        );
+      }
+      console.error('Error applying aconto:', error);
+      throw error;
+    }
+    return data;
+  }
+
+  static async updateAcontoApplication(
+    id: string,
+    updates: Partial<Pick<InvoiceAcontoApplication, 'applied_amount' | 'label' | 'sort_order'>>
+  ): Promise<InvoiceAcontoApplication | null> {
+    const { data, error } = await supabase
+      .from('invoice_aconto_applications')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      console.error('Error updating aconto application:', error);
+      throw error;
+    }
+    return data;
+  }
+
+  static async removeAcontoApplication(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('invoice_aconto_applications')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error('Error removing aconto application:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Copy snapshot rows (not foreign-key clones) from one invoice to another.
+   * Used when a revision is created from an original invoice: the revision inherits
+   * the same applied acontos, with the same snapshot values.
+   */
+  static async copyAppliedAcontosToInvoice(
+    sourceInvoiceId: string,
+    targetInvoiceId: string
+  ): Promise<InvoiceAcontoApplication[]> {
+    const existing = await SupabaseService.fetchInvoiceAcontoApplications(sourceInvoiceId);
+    if (existing.length === 0) return [];
+    const rows = existing.map(app => ({
+      invoice_id: targetInvoiceId,
+      source_invoice_id: app.source_invoice_id ?? null,
+      source_invoice_number: app.source_invoice_number,
+      source_invoice_date: app.source_invoice_date ?? null,
+      label: app.label,
+      net_amount: app.net_amount,
+      tax_amount: app.tax_amount ?? null,
+      gross_amount: app.gross_amount,
+      applied_amount: app.applied_amount,
+      sort_order: app.sort_order,
+    }));
+    const { data, error } = await supabase
+      .from('invoice_aconto_applications')
+      .insert(rows)
+      .select();
+    if (error) {
+      console.error('Error copying aconto applications:', error);
+      throw error;
+    }
+    return data ?? [];
+  }
+
   // MARK: - Invoice Storno / Revision
 
   private static stripRevSuffix(invoiceNumber: string): string {
@@ -874,9 +1017,61 @@ export class SupabaseService {
   }
 
   /**
+   * Build the line items that fully reverse a source invoice on its Stornorechnung.
+   *
+   * - Service / expense / other line items are mirrored with negated quantity and total
+   *   (so the storno PDF shows minus the original positions).
+   * - Each aconto application on the source becomes a positive `correction_reversal`
+   *   line on the storno (so the previously-deducted aconto is added back).
+   *
+   * Invariant: sum(storno items) === -(source.total).
+   */
+  private static buildStornoLineItems(
+    source: Invoice,
+    stornoInvoiceId: string
+  ): Omit<InvoiceItem, 'id'>[] {
+    const negated: Omit<InvoiceItem, 'id'>[] = (source.items ?? []).map(it => ({
+      invoice_id: stornoInvoiceId,
+      sort_order: it.sort_order,
+      description: it.description,
+      sub_description: it.sub_description ?? null,
+      quantity: -it.quantity,
+      unit_price: it.unit_price,
+      tax_rate: it.tax_rate,
+      total: -it.total,
+      item_type: it.item_type ?? InvoiceItemType.Service,
+      source_invoice_id: it.source_invoice_id ?? null,
+    }));
+
+    const apps = source.aconto_applications ?? [];
+    const baseSort = negated.reduce((max, it) => Math.max(max, it.sort_order), -1) + 1;
+    const acontoReversals: Omit<InvoiceItem, 'id'>[] = apps.map((app, idx) => ({
+      invoice_id: stornoInvoiceId,
+      sort_order: baseSort + idx,
+      description: `Aufhebung des Abzugs aus Aconto-Rechnung ${app.source_invoice_number}`,
+      sub_description: app.source_invoice_date
+        ? `vom ${app.source_invoice_date}`
+        : null,
+      quantity: 1,
+      unit_price: app.applied_amount,
+      tax_rate: 0,
+      total: app.applied_amount,
+      item_type: InvoiceItemType.CorrectionReversal,
+      source_invoice_id: app.source_invoice_id ?? null,
+    }));
+
+    return [...negated, ...acontoReversals];
+  }
+
+  /**
    * Create a Stornorechnung that fully reverses the given invoice.
    * Marks the original as Cancelled and links the documents. Does NOT create
    * a revision invoice — for that, use createStornoAndRevision.
+   *
+   * Note: this storno reverses ONLY the selected invoice. Any earlier aconto
+   * invoices linked via aconto_applications are NOT cancelled here — their own
+   * invoices remain valid. The storno carries an explicit `correction_reversal`
+   * line per applied aconto so the storno math reconciles to `-(source.total)`.
    */
   static async createInvoiceStorno(params: {
     invoiceId: string;
@@ -922,16 +1117,7 @@ export class SupabaseService {
     if (!stornoInvoice) throw new Error('Failed to create Stornorechnung');
 
     try {
-      const items: Omit<InvoiceItem, 'id'>[] = (source.items ?? []).map(it => ({
-        invoice_id: stornoInvoice.id,
-        sort_order: it.sort_order,
-        description: it.description,
-        sub_description: it.sub_description ?? null,
-        quantity: -it.quantity,
-        unit_price: it.unit_price,
-        tax_rate: it.tax_rate,
-        total: -it.total,
-      }));
+      const items = SupabaseService.buildStornoLineItems(source, stornoInvoice.id);
       await SupabaseService.replaceInvoiceItems(stornoInvoice.id, items);
 
       await SupabaseService.updateInvoice(source.id, {
@@ -1011,16 +1197,7 @@ export class SupabaseService {
 
     let revision: Invoice | null = null;
     try {
-      const stornoItems: Omit<InvoiceItem, 'id'>[] = (source.items ?? []).map(it => ({
-        invoice_id: storno.id,
-        sort_order: it.sort_order,
-        description: it.description,
-        sub_description: it.sub_description ?? null,
-        quantity: -it.quantity,
-        unit_price: it.unit_price,
-        tax_rate: it.tax_rate,
-        total: -it.total,
-      }));
+      const stornoItems = SupabaseService.buildStornoLineItems(source, storno.id);
       await SupabaseService.replaceInvoiceItems(storno.id, stornoItems);
 
       // 2. Create revision-draft invoice with positive line items copied
@@ -1051,8 +1228,14 @@ export class SupabaseService {
         unit_price: it.unit_price,
         tax_rate: it.tax_rate,
         total: it.total,
+        item_type: it.item_type ?? InvoiceItemType.Service,
+        source_invoice_id: it.source_invoice_id ?? null,
       }));
       await SupabaseService.replaceInvoiceItems(revision.id, revisionItems);
+
+      // Copy applied aconto deductions onto the revision so it inherits the
+      // same financial picture as the original until the user edits it.
+      await SupabaseService.copyAppliedAcontosToInvoice(source.id, revision.id);
 
       // 3. Mark original as Corrected and link both new docs
       await SupabaseService.updateInvoice(source.id, {

@@ -270,3 +270,10 @@ body {
 .tab-panel-safe {
   padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
 }
+
+/* Never print the dev-only feedback inspector overlay, toolbar, or dialog. */
+@media print {
+  .cb-feedback-overlay {
+    display: none !important;
+  }
+}

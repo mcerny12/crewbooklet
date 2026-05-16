@@ -13,18 +13,27 @@ npm run lint       # ESLint
 
 No test suite exists. Validate changes by running `npm run typecheck` and `npm run lint`.
 
-### Database setup (first time)
+### Database migrations
 
-Run migration files in this order in Supabase Dashboard → SQL Editor:
+The project uses the Supabase CLI workflow. `supabase/migrations/` is the source of truth — the remote tracker (`supabase_migrations.schema_migrations`) is in sync with the file timestamps via `supabase db pull` / `db push`.
 
-1. `migration-2026-03-19.sql` — base schema
-2. `migration-attachments.sql`
-3. `migration-calendar.sql`
-4. `migration-invoices.sql`
-5. `migration-roles.sql` — RBAC
-6. `migration-job-types.sql`
-7. `migration-aconto.sql`
-8. `migration-fix-invoice-numbers.sql`
+```bash
+# Auth (one-time per machine — env var or `npx supabase login`)
+export SUPABASE_ACCESS_TOKEN=<personal access token>
+export SUPABASE_DB_PASSWORD=<project db password>
+npx supabase link --project-ref ijrcjiziezunjaakmtln
+
+# Adding a new schema change
+npx supabase migration new <slug>           # creates supabase/migrations/<ts>_<slug>.sql
+# edit the SQL, then:
+npx supabase db push --dry-run              # shows what will run
+npx supabase db push                        # production — get explicit approval first
+npx supabase migration list                 # confirm local == remote
+```
+
+Do **not** run SQL directly in the Supabase Dashboard once a migration is needed — it bypasses tracking and creates drift. If a remote change has already happened manually, use `npx supabase db pull` to capture it as a baseline migration before adding new files on top.
+
+Historical pre-CLI migration files live in `_legacy-migrations/` for reference only — they were applied via Dashboard before the CLI workflow was adopted and are now baked into the first `supabase/migrations/` file. **Do not re-run them.**
 
 ### Environment variables (`.env.local`)
 

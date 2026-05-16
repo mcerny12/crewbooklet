@@ -857,7 +857,9 @@ export interface Invoice {
 
   // Aconto (advance payment) support
   is_aconto?: boolean | null;
+  /** @deprecated Use `aconto_applications` (invoice_aconto_applications table) instead. Kept for one release for legacy reads. */
   aconto_invoice_ids?: string[] | null;
+  aconto_applications?: InvoiceAcontoApplication[];
 
   // Storno / revision chain
   document_type?: InvoiceDocumentType | null;
@@ -874,6 +876,14 @@ export interface Invoice {
   items?: InvoiceItem[];
 }
 
+export enum InvoiceItemType {
+  Service = "service",
+  Expense = "expense",
+  AcontoDeduction = "aconto_deduction",
+  CorrectionReversal = "correction_reversal",
+  Other = "other"
+}
+
 export interface InvoiceItem {
   id: string;
   invoice_id: string;
@@ -884,6 +894,30 @@ export interface InvoiceItem {
   unit_price: number;
   tax_rate: number;
   total: number;
+  /** Defaults to `service` for legacy rows. */
+  item_type?: InvoiceItemType | null;
+  /** Set on `correction_reversal` lines that reverse an aconto deduction, and (optionally) on `aconto_deduction` mirrors. */
+  source_invoice_id?: string | null;
+}
+
+/**
+ * A linked deduction: this `invoice_id` deducts the earlier `source_invoice_id`
+ * (an aconto / Anzahlungs- / Teilrechnung). Snapshots source amount + number + date
+ * so display stays stable even if the source invoice is later edited.
+ */
+export interface InvoiceAcontoApplication {
+  id: string;
+  created_at: string;
+  invoice_id: string;
+  source_invoice_id?: string | null;
+  source_invoice_number: string;
+  source_invoice_date?: string | null;
+  label: string;
+  net_amount: number;
+  tax_amount?: number | null;
+  gross_amount: number;
+  applied_amount: number;
+  sort_order: number;
 }
 
 export interface InvoiceAttachment {

@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { SupabaseService } from '@/lib/services/supabase-service';
-import type { Invoice, InvoiceItem } from '@/lib/types/models';
-import { InvoiceDocumentType } from '@/lib/types/models';
+import type { Invoice, InvoiceItem, InvoiceAcontoApplication } from '@/lib/types/models';
+import { InvoiceDocumentType, InvoiceItemType } from '@/lib/types/models';
+import { calculateInvoiceTotals } from '@/lib/invoice/totals';
 import { format } from 'date-fns';
 
 // ── Formatting ────────────────────────────────────────────────
@@ -259,28 +260,44 @@ function ItemRow({ item }: { item: InvoiceItem }) {
   );
 }
 
-function TotalsBlock({ subtotal, acontos, total }: { subtotal: number; acontos: Invoice[]; total: number }) {
+function TotalsBlock({
+  subtotal,
+  applications,
+  total,
+}: {
+  subtotal: number;
+  applications: InvoiceAcontoApplication[];
+  total: number;
+}) {
   const BORDER_TOP: React.CSSProperties = { borderTop: '0.75pt solid #000', paddingTop: '2.5mm', paddingBottom: '2mm' };
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', fontWeight: 400 }}>
       <tbody>
-        {acontos.length > 0 ? (
+        {applications.length > 0 ? (
           <>
             <tr>
               <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm' }}>Zwischensumme</td>
               <td style={{ ...BORDER_TOP, ...COL.c5 }}>{fmtCurrency(subtotal)}</td>
             </tr>
-            {acontos.map(a => (
-              <tr key={a.id}>
+            <tr>
+              <td colSpan={5} style={{ paddingTop: '2mm', paddingBottom: '1mm', fontWeight: 700 }}>
+                Abzüglich bereits verrechnete Acontos / Anzahlungen
+              </td>
+            </tr>
+            {applications.map(app => (
+              <tr key={app.id}>
                 <td colSpan={4} style={{ paddingBottom: '2mm', textAlign: 'right', paddingRight: '4mm' }}>
-                  Abzgl. Akonto {a.invoice_number}
+                  Abzüglich {app.label} {app.source_invoice_number}
+                  {app.source_invoice_date && ` vom ${fmt(app.source_invoice_date)}`}
                 </td>
-                <td style={{ paddingBottom: '2mm', ...COL.c5 }}>-{fmtCurrency(a.total ?? 0)}</td>
+                <td style={{ paddingBottom: '2mm', ...COL.c5 }}>-{fmtCurrency(app.applied_amount ?? 0)}</td>
               </tr>
             ))}
             <tr>
-              <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm' }}>Gesamtbetrag</td>
-              <td style={{ ...BORDER_TOP, ...COL.c5 }}>{fmtCurrency(total)}</td>
+              <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm', fontWeight: 700 }}>
+                Restbetrag / noch zu zahlen
+              </td>
+              <td style={{ ...BORDER_TOP, ...COL.c5, fontWeight: 700 }}>{fmtCurrency(total)}</td>
             </tr>
           </>
         ) : (
@@ -316,12 +333,27 @@ function PaymentBlock({ total, dueDate }: { total: number; dueDate: string | nul
   );
 }
 
-function StornoFootnote({ reason }: { reason: string | null | undefined }) {
+function StornoFootnote({
+  reason,
+  hasAcontoReversals,
+  originalInvoiceNumber,
+}: {
+  reason: string | null | undefined;
+  hasAcontoReversals: boolean;
+  originalInvoiceNumber: string | null | undefined;
+}) {
   return (
     <div style={{ marginTop: '3.8mm', fontSize: '9pt', lineHeight: 1.4 }}>
       <p style={{ marginBottom: 0 }}>
-        Mit dieser Stornorechnung wird die oben genannte Rechnung vollständig aufgehoben. Eine Zahlung ist nicht erforderlich.
+        Mit dieser Stornorechnung wird die oben genannte Rechnung
+        {originalInvoiceNumber ? ` ${originalInvoiceNumber}` : ''} vollständig aufgehoben. Eine Zahlung ist nicht erforderlich.
       </p>
+      {hasAcontoReversals && (
+        <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>
+          Bereits ausgestellte Aconto-/Anzahlungsrechnungen werden dadurch <strong>nicht</strong> automatisch
+          storniert und bleiben weiterhin gültig.
+        </p>
+      )}
       {reason && (
         <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>
           <strong style={{ fontWeight: 700 }}>Stornogrund:</strong> {reason}
@@ -454,7 +486,7 @@ export default function PrintInvoicePage() {
   const id     = params?.id as string;
 
   const [invoice,  setInvoice]  = useState<Invoice | null>(null);
-  const [acontos,  setAcontos]  = useState<Invoice[]>([]);
+  const [applications, setApplications] = useState<InvoiceAcontoApplication[]>([]);
   const [original, setOriginal] = useState<Invoice | null>(null);
   const [stornoForRevision, setStornoForRevision] = useState<Invoice | null>(null);
   const [loading,  setLoading]  = useState(true);
@@ -466,9 +498,32 @@ export default function PrintInvoicePage() {
     if (!id) return;
     SupabaseService.fetchInvoice(id).then(async data => {
       setInvoice(data);
-      if (data?.aconto_invoice_ids?.length) {
-        const linked = await SupabaseService.fetchInvoicesByIds(data.aconto_invoice_ids);
-        setAcontos(linked);
+      // Prefer the new snapshotted applications. Fall back to fetching by legacy
+      // aconto_invoice_ids[] only if applications haven't been backfilled yet
+      // (i.e. the migration hasn't run against this database).
+      if (data?.aconto_applications && data.aconto_applications.length > 0) {
+        setApplications(data.aconto_applications);
+      } else if (data?.aconto_invoice_ids?.length) {
+        const apps = await SupabaseService.fetchInvoiceAcontoApplications(data.id);
+        if (apps.length > 0) {
+          setApplications(apps);
+        } else {
+          const linked = await SupabaseService.fetchInvoicesByIds(data.aconto_invoice_ids);
+          setApplications(linked.map((inv, idx) => ({
+            id: `legacy-${inv.id}`,
+            created_at: new Date().toISOString(),
+            invoice_id: data.id,
+            source_invoice_id: inv.id,
+            source_invoice_number: inv.invoice_number,
+            source_invoice_date: inv.date ?? null,
+            label: 'Aconto',
+            net_amount: inv.total ?? 0,
+            tax_amount: null,
+            gross_amount: inv.total ?? 0,
+            applied_amount: inv.total ?? 0,
+            sort_order: idx,
+          })));
+        }
       }
       // For storno/revision docs, fetch the directly-corrected original
       // so we can render its number and date in the reference line.
@@ -499,9 +554,6 @@ export default function PrintInvoicePage() {
 
     document.fonts.ready.then(() => {
       const items    = invoice.items ?? [];
-      const subtotal = invoice.total ?? items.reduce((s, i) => s + i.total, 0);
-      const acontoDeductionTotal = acontos.reduce((s, a) => s + (a.total ?? 0), 0);
-      const total    = subtotal - acontoDeductionTotal;
       const { displayGreeting } = deriveDocMeta(invoice, original, stornoForRevision);
 
       // Build measured block list
@@ -520,12 +572,9 @@ export default function PrintInvoicePage() {
       blocks.push({ kind: 'legal',   id: 'legal',   heightPx: measure('legal')   });
       blocks.push({ kind: 'payment', id: 'payment', heightPx: measure('payment') });
 
-      void total; // used inside measurement divs below
-
       setPages(paginate(blocks, tableHeaderH, BODY_H_PX));
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [invoice, acontos, original, stornoForRevision, loading]);
+  }, [invoice, applications, original, stornoForRevision, loading]);
 
   // ── Step 3: trigger print ──────────────────────────────────
   useEffect(() => {
@@ -540,13 +589,15 @@ export default function PrintInvoicePage() {
     return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>Loading…</div>;
 
   const items    = invoice.items ?? [];
-  const subtotal = invoice.total ?? items.reduce((s, i) => s + i.total, 0);
-  const acontoDeductionTotal = acontos.reduce((s, a) => s + (a.total ?? 0), 0);
-  const total    = subtotal - acontoDeductionTotal;
+  const computed = calculateInvoiceTotals(items, applications, invoice.document_type);
+  const subtotal = computed.subtotal;
+  const total    = computed.total;
   const period   = fmtPeriod(invoice.service_period_start, invoice.service_period_end);
   const totalPages = pages?.length ?? 1;
 
   const { isStorno, docTitle, displayGreeting } = deriveDocMeta(invoice, original, stornoForRevision);
+  const hasAcontoReversals = items.some(it => it.item_type === InvoiceItemType.CorrectionReversal);
+  const stornoOriginalNumber = original?.invoice_number ?? invoice.reference ?? null;
 
   return (
     <>
@@ -646,7 +697,7 @@ export default function PrintInvoicePage() {
           ))}
 
           <div data-m="totals">
-            <TotalsBlock subtotal={subtotal} acontos={acontos} total={total} />
+            <TotalsBlock subtotal={subtotal} applications={isStorno ? [] : applications} total={total} />
           </div>
 
           <div data-m="legal">
@@ -655,7 +706,11 @@ export default function PrintInvoicePage() {
 
           <div data-m="payment">
             {isStorno
-              ? <StornoFootnote reason={invoice.storno_reason} />
+              ? <StornoFootnote
+                  reason={invoice.storno_reason}
+                  hasAcontoReversals={hasAcontoReversals}
+                  originalInvoiceNumber={stornoOriginalNumber}
+                />
               : <PaymentBlock total={total} dueDate={invoice.due_date} />}
           </div>
         </div>
@@ -683,12 +738,17 @@ export default function PrintInvoicePage() {
                   return <ItemRow key={block.id} item={item} />;
                 }
                 case 'totals':
-                  return <TotalsBlock key={block.id} subtotal={subtotal} acontos={acontos} total={total} />;
+                  return <TotalsBlock key={block.id} subtotal={subtotal} applications={isStorno ? [] : applications} total={total} />;
                 case 'legal':
                   return <LegalNotes key={block.id} />;
                 case 'payment':
                   return isStorno
-                    ? <StornoFootnote key={block.id} reason={invoice.storno_reason} />
+                    ? <StornoFootnote
+                        key={block.id}
+                        reason={invoice.storno_reason}
+                        hasAcontoReversals={hasAcontoReversals}
+                        originalInvoiceNumber={stornoOriginalNumber}
+                      />
                     : <PaymentBlock key={block.id} total={total} dueDate={invoice.due_date} />;
                 default:
                   return null;
