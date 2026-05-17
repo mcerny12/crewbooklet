@@ -20,6 +20,8 @@ import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, Building2, ExternalLink
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { PersonMobileDetail } from './person-mobile-detail';
+import { DetailFrame, DetailFrameRow } from '@/components/detail';
+import { ProjectStatusBadge } from '@/components/ui/status-badge';
 
 interface PersonDetailContentProps {
   person: Person;
@@ -114,6 +116,8 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
     );
   }
 
+  const fdBase = { id: editedPerson.financial_details?.id ?? '', ...editedPerson.financial_details };
+
   return (
     <div className="flex flex-col h-full bg-background" data-cb-component="PersonDetailPane">
 
@@ -137,147 +141,212 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         </div>
       </div>
 
-      {/* ── INFO SECTION ── */}
-      <div className="border-b px-4 py-3 grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
+      {/* ── HORIZONTAL FRAME ROW: Basic info groups ── */}
+      <div className="shrink-0 h-80 border-b">
+        <DetailFrameRow ariaLabel="Person information sections">
 
-        {/* Personal */}
-        <div className="section-card">
-          <div className="section-card-header">Personal</div>
-          <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5" data-cb-field="name"><Label className="text-[10px] text-gray-500">Full Name</Label><Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Date of Birth</Label><Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5">
-            <Label className="text-[10px] text-gray-500">Gender</Label>
-            <Select value={editedPerson.gender || 'none'} onValueChange={v => updateField('gender', v === 'none' ? null : v as Gender)}>
-              <SelectTrigger size="xs" className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">—</SelectItem>
-                {Object.values(Gender).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-0.5" data-cb-field="email"><Label className="text-[10px] text-gray-500">Email</Label><Input type="email" value={editedPerson.email || ''} onChange={e => updateField('email', e.target.value || null)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5" data-cb-field="mobile-phone"><Label className="text-[10px] text-gray-500">Mobile</Label><Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Work Phone</Label><Input type="tel" value={editedPerson.work_phone || ''} onChange={e => updateField('work_phone', e.target.value || null)} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Website</Label><Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className="h-7 text-xs" /></div>
-          </div>
-        </div>
-
-        {/* Address */}
-        <div className="section-card">
-          <div className="section-card-header">Address</div>
-          <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Street</Label><Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Street 2</Label><Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="grid grid-cols-[70px_1fr] gap-1">
-            <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">ZIP</Label><Input value={editedPerson.address?.zip || ''} onChange={e => updateField('address', { ...editedPerson.address, zip: e.target.value || null })} className="h-7 text-xs" /></div>
-            <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">City</Label><Input value={editedPerson.address?.city || ''} onChange={e => updateField('address', { ...editedPerson.address, city: e.target.value || null })} className="h-7 text-xs" /></div>
-          </div>
-          <div className="space-y-0.5">
-            <Label className="text-[10px] text-gray-500">Country</Label>
-            <SearchableSelect
-              options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
-              value={editedPerson.address?.country || null}
-              onChange={v => updateField('address', { ...editedPerson.address, country: v })}
-              placeholder="Search country..."
-            />
-          </div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Notes</Label><Textarea value={editedPerson.notes || ''} onChange={e => updateField('notes', e.target.value || null)} rows={3} className="text-xs resize-none" /></div>
-          </div>
-        </div>
-
-        {/* Professional + Financial */}
-        <div className="space-y-3">
-          <div className="section-card">
-            <div className="section-card-header">Professional</div>
-            <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5">
-            <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
-            <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)}placeholder="Select jobs…" maxSelections={3} />
-          </div>
-          <div className="space-y-0.5">
-            <Label className="text-[10px] text-gray-500">Languages</Label>
-            <MultiSelect options={languageOptions} selected={editedPerson.languages || []} onChange={langs => updateField('languages', langs as Language[])} placeholder="Select languages…" />
-          </div>
+          <DetailFrame title="Basic Information" className="w-80 shrink-0">
+            <div className="space-y-2 detail-form-fields">
+              <div className="space-y-0.5" data-cb-field="name">
+                <Label className="text-[10px] text-gray-500">Full Name</Label>
+                <Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
+                <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)} placeholder="Select jobs…" maxSelections={3} />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Gender</Label>
+                <Select value={editedPerson.gender || 'none'} onValueChange={v => updateField('gender', v === 'none' ? null : v as Gender)}>
+                  <SelectTrigger size="xs" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">—</SelectItem>
+                    {Object.values(Gender).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Date of Birth</Label>
+                <Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Languages</Label>
+                <MultiSelect options={languageOptions} selected={editedPerson.languages || []} onChange={langs => updateField('languages', langs as Language[])} placeholder="Select languages…" />
+              </div>
             </div>
-          </div>
-          <div className="section-card">
-            <div className="section-card-header">Financial</div>
-            <div className="section-card-body space-y-1.5 detail-form-fields">
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">VAT Number</Label><Input value={editedPerson.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', vat_number: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">Bank Name</Label><Input value={editedPerson.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', bank_name: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5" data-cb-field="iban"><Label className="text-[10px] text-gray-500">IBAN</Label><Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', iban: e.target.value || null })} className="h-7 text-xs" /></div>
-          <div className="space-y-0.5"><Label className="text-[10px] text-gray-500">BIC / SWIFT</Label><Input value={editedPerson.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...editedPerson.financial_details, id: editedPerson.financial_details?.id ?? '', bic: e.target.value || null })} className="h-7 text-xs" /></div>
+          </DetailFrame>
+
+          <DetailFrame title="Contact" className="w-75 shrink-0">
+            <div className="space-y-2 detail-form-fields">
+              <div className="space-y-0.5" data-cb-field="email">
+                <Label className="text-[10px] text-gray-500">Email</Label>
+                <Input type="email" value={editedPerson.email || ''} onChange={e => updateField('email', e.target.value || null)} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5" data-cb-field="mobile-phone">
+                <Label className="text-[10px] text-gray-500">Mobile</Label>
+                <Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Work Phone</Label>
+                <Input type="tel" value={editedPerson.work_phone || ''} onChange={e => updateField('work_phone', e.target.value || null)} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Website</Label>
+                <Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className="h-7 text-xs" />
+              </div>
             </div>
-          </div>
-        </div>
+          </DetailFrame>
+
+          <DetailFrame title="Address" className="w-80 shrink-0">
+            <div className="space-y-2 detail-form-fields">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Street</Label>
+                <Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Street 2</Label>
+                <Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+              <div className="grid grid-cols-[70px_1fr] gap-1">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-gray-500">ZIP</Label>
+                  <Input value={editedPerson.address?.zip || ''} onChange={e => updateField('address', { ...editedPerson.address, zip: e.target.value || null })} className="h-7 text-xs" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-gray-500">City</Label>
+                  <Input value={editedPerson.address?.city || ''} onChange={e => updateField('address', { ...editedPerson.address, city: e.target.value || null })} className="h-7 text-xs" />
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Country</Label>
+                <SearchableSelect
+                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
+                  value={editedPerson.address?.country || null}
+                  onChange={v => updateField('address', { ...editedPerson.address, country: v })}
+                  placeholder="Search country..."
+                />
+              </div>
+            </div>
+          </DetailFrame>
+
+          <DetailFrame
+            title="Organization"
+            className="w-80 shrink-0"
+            action={!connectedOrg && !addingOrg ? (
+              <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
+                <Plus className="h-3 w-3 mr-1" />Link
+              </Button>
+            ) : null}
+          >
+            {addingOrg ? (
+              <div className="space-y-2">
+                <SearchableSelect
+                  options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
+                  value={newOrgId}
+                  onChange={setNewOrgId}
+                  placeholder="Search organization…"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>
+                  <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Link</Button>
+                </div>
+              </div>
+            ) : !connectedOrg ? (
+              <p className="text-xs text-gray-400 py-1">Not connected to any organization.</p>
+            ) : (
+              <div className="flex items-center gap-2 p-2 border rounded bg-muted/30 text-xs">
+                {getFaviconUrl(connectedOrg.website) && (
+                  <img src={getFaviconUrl(connectedOrg.website)!} alt="" className="h-5 w-5 rounded shrink-0" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{connectedOrg.name}</div>
+                  {connectedOrg.jobs?.length ? <div className="text-muted-foreground truncate">{connectedOrg.jobs.join(', ')}</div> : null}
+                </div>
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                {onOpenOrg && (
+                  <button type="button" onClick={() => onOpenOrg(connectedOrg)} className="text-muted-foreground hover:text-primary shrink-0" title="Open detail">
+                    <ExternalLink className="h-3 w-3" />
+                  </button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => updateField('organization_id', null)} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0">
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+          </DetailFrame>
+
+          <DetailFrame title="Financial" className="w-75 shrink-0">
+            <div className="space-y-2 detail-form-fields">
+              <div className="space-y-0.5" data-cb-field="vat">
+                <Label className="text-[10px] text-gray-500">VAT Number</Label>
+                <Input value={editedPerson.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...fdBase, vat_number: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Bank Name</Label>
+                <Input value={editedPerson.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...fdBase, bank_name: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5" data-cb-field="iban">
+                <Label className="text-[10px] text-gray-500">IBAN</Label>
+                <Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...fdBase, iban: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">BIC / SWIFT</Label>
+                <Input value={editedPerson.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...fdBase, bic: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+            </div>
+          </DetailFrame>
+
+          <DetailFrame
+            title="Notes / Metadata"
+            className="w-85 shrink-0"
+            action={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleDelete}
+                className="h-6 w-6 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+                aria-label="Delete person"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            }
+          >
+            <div className="flex h-full flex-col gap-3 detail-form-fields">
+              <div className="space-y-0.5 flex-1 min-h-0 flex flex-col">
+                <Label className="text-[10px] text-gray-500">Notes</Label>
+                <Textarea
+                  value={editedPerson.notes || ''}
+                  onChange={e => updateField('notes', e.target.value || null)}
+                  className="flex-1 text-xs resize-none min-h-20"
+                />
+              </div>
+              <div className="border-t pt-2">
+                <EntryMetadata createdAt={person.created_at} updatedAt={person.updated_at} userId={person.user_id} />
+              </div>
+            </div>
+          </DetailFrame>
+
+        </DetailFrameRow>
       </div>
 
-      {/* ── BOTTOM SECTIONS (scrollable) ── */}
-      <div className="flex-1 overflow-y-auto">
-
-        {/* Organization */}
-        <div className="px-4 py-2 border-b flex items-center justify-between">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Organization</span>
-          {!connectedOrg && !addingOrg && (
-            <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
-              <Plus className="h-3 w-3 mr-1" />Add Organization
-            </Button>
-          )}
-        </div>
-        <div className="px-4 py-2 border-b">
-          {addingOrg && (
-            <div className="flex gap-2 items-center mb-2">
-              <SearchableSelect
-                options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
-                value={newOrgId}
-                onChange={setNewOrgId}
-                placeholder="Search organization…"
-                className="flex-1"
-              />
-              <Button size="sm" onClick={() => { if (newOrgId) { updateField('organization_id', newOrgId); } setAddingOrg(false); setNewOrgId(null); }} className="h-7 text-xs" disabled={!newOrgId}>Add</Button>
-              <Button size="sm" variant="ghost" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="h-7 text-xs">Cancel</Button>
-            </div>
-          )}
-          {!connectedOrg ? (
-            <p className="text-xs text-gray-400 py-1">Not connected to any organization.</p>
-          ) : (
-            <div className="flex items-center gap-2 p-2 border rounded bg-gray-50 dark:bg-gray-800 text-xs">
-              {getFaviconUrl(connectedOrg.website) && (
-                <img src={getFaviconUrl(connectedOrg.website)!} alt="" className="h-5 w-5 rounded shrink-0" onError={e => { e.currentTarget.style.display = 'none'; }} />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{connectedOrg.name}</div>
-                {connectedOrg.jobs?.length ? <div className="text-gray-400 truncate">{connectedOrg.jobs.join(', ')}</div> : null}
-              </div>
-              <Building2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-              {onOpenOrg && (
-                <button type="button" onClick={() => onOpenOrg(connectedOrg)} className="text-gray-400 hover:text-blue-600 shrink-0" title="Open detail">
-                  <ExternalLink className="h-3 w-3" />
-                </button>
-              )}
-              <Button variant="ghost" size="sm" onClick={() => updateField('organization_id', null)} className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 shrink-0">
-                <X className="h-3 w-3" />
+      {/* ── PROJECTS WIDE FRAME ── */}
+      <div className="flex-1 min-h-0 px-3 py-3">
+        <DetailFrame
+          title="Projects"
+          description={assignments.length > 0 ? `${assignments.length} assignment${assignments.length === 1 ? '' : 's'}` : undefined}
+          action={
+            !addingToProject ? (
+              <Button size="sm" variant="ghost" onClick={() => setAddingToProject(true)} className="h-7 text-xs px-2">
+                <Plus className="h-3 w-3 mr-1" />Assign to Project
               </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Projects */}
-        <div className="px-4 py-2 border-b flex items-center justify-between shrink-0">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Projects</span>
-          {!addingToProject && (
-            <Button size="sm" variant="ghost" onClick={() => setAddingToProject(true)} className="h-6 text-xs px-2">
-              <Plus className="h-3 w-3 mr-1" />Assign to Project
-            </Button>
-          )}
-        </div>
-
-        <div className="px-4 py-2">
+            ) : null
+          }
+          className="h-full"
+        >
           {addingToProject && (
-            <div className="border rounded p-3 space-y-2 bg-gray-50 dark:bg-gray-800 mb-2">
+            <div className="mb-3 rounded-lg border bg-muted/30 p-3 space-y-2">
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Project *</Label>
+                <Label className="text-[10px] text-gray-500">Project</Label>
                 <SearchableSelect
                   options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
                   value={newProjectId}
@@ -287,61 +356,64 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => { setAddingToProject(false); setNewProjectId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>
-                <Button size="sm" onClick={async () => {
+                <Button size="sm" disabled={!newProjectId} onClick={async () => {
                   if (!newProjectId) return;
                   const primaryJob = editedPerson.jobs?.[0] ?? null;
                   const getDept = useJobTypesStore.getState().getDepartmentForJob;
                   await addAssignment({ project_id: newProjectId, person_id: person.id, organization_id: null, role: primaryJob, department: primaryJob ? getDept(primaryJob) : null, availability: AssignmentStatus.Anfragen, notes: null });
                   setAddingToProject(false); setNewProjectId(null);
-                }} className="flex-1 h-7 text-xs" disabled={!newProjectId}>Assign</Button>
+                }} className="flex-1 h-7 text-xs">Assign</Button>
               </div>
             </div>
           )}
 
           {assignments.length === 0 ? (
-            <p className="text-xs text-gray-400 py-2">Not assigned to any projects yet.</p>
+            <p className="text-xs text-muted-foreground py-3 text-center">Not assigned to any projects yet.</p>
           ) : (
             <div className="space-y-1">
+              {/* header row */}
+              <div className="grid grid-cols-[2fr_0.8fr_1.2fr_1fr_1fr_1.4fr_auto] gap-2 px-2 py-1 border-b text-[10px] font-semibold uppercase text-muted-foreground">
+                <div>Project</div>
+                <div>Number</div>
+                <div>Role</div>
+                <div>Dept</div>
+                <div>Status</div>
+                <div>Availability</div>
+                <div />
+              </div>
               {assignments.map(a => {
                 const project = projects.find(p => p.id === a.project_id);
                 if (!project) return null;
                 return (
-                  <div key={a.id} className="p-2 border rounded text-xs hover:bg-gray-50 dark:hover:bg-gray-800 flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">{project.name}</div>
-                      <div className="text-gray-500">{project.project_number} · {project.status}</div>
-                      <div className="text-gray-400 flex flex-wrap gap-x-2 mt-0.5">
-                        {a.role && <span>{a.role}</span>}
-                        {a.department && <span>· {a.department}</span>}
-                        <span className="font-medium">· {a.availability}</span>
-                        {a.notes && <span>· {a.notes}</span>}
-                      </div>
+                  <div key={a.id} className="grid grid-cols-[2fr_0.8fr_1.2fr_1fr_1fr_1.4fr_auto] gap-2 px-2 py-1.5 border rounded text-xs items-center hover:bg-muted/30">
+                    <div className="font-medium truncate" title={project.name}>{project.name}</div>
+                    <div className="text-muted-foreground truncate">{project.project_number}</div>
+                    <div className="truncate" title={a.role ?? undefined}>{a.role || <span className="text-muted-foreground">—</span>}</div>
+                    <div className="truncate text-muted-foreground">{a.department || <span>—</span>}</div>
+                    <div><ProjectStatusBadge status={project.status} /></div>
+                    <div className="truncate" title={a.notes ?? undefined}>
+                      <span className="font-medium">{a.availability}</span>
+                      {a.notes ? <span className="text-muted-foreground"> · {a.notes}</span> : null}
                     </div>
-                    {onOpenProject && (
-                      <button type="button" onClick={() => onOpenProject(project)} className="text-gray-400 hover:text-blue-600 shrink-0 mt-0.5" title="Open project detail">
-                        <ExternalLink className="h-3 w-3" />
-                      </button>
-                    )}
+                    <div className="flex justify-end">
+                      {onOpenProject && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenProject(project)}
+                          className="text-muted-foreground hover:text-primary"
+                          title="Open project detail"
+                          aria-label={`Open ${project.name}`}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* ── FOOTER ── */}
-      <div className="border-t bg-muted/40 px-5 py-2 flex items-center justify-between shrink-0">
-        <EntryMetadata createdAt={person.created_at} updatedAt={person.updated_at} userId={person.user_id} />
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleDelete}
-          className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
-          aria-label="Delete person"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        </DetailFrame>
       </div>
     </div>
   );

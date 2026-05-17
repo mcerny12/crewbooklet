@@ -24,12 +24,16 @@ export function MobileSwipeTabs({
   value: valueProp,
   onValueChange,
   className,
+  contentClassName,
+  flushContent = false,
 }: {
   tabs: MobileSwipeTab[];
   defaultValue?: string;
   value?: string;
   onValueChange?: (value: string) => void;
   className?: string;
+  contentClassName?: string;
+  flushContent?: boolean;
 }) {
   const [internalValue, setInternalValue] = React.useState(defaultValue ?? tabs[0]?.value ?? '');
   const isControlled = valueProp !== undefined;
@@ -105,14 +109,18 @@ export function MobileSwipeTabs({
 
       <div
         className="min-h-0 flex-1 overflow-hidden"
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
+        onPointerDown={flushContent ? undefined : onPointerDown}
+        onPointerUp={flushContent ? undefined : onPointerUp}
       >
         {tabs.map((tab) => (
           <TabsPrimitive.Content
             key={tab.value}
             value={tab.value}
-            className="h-full min-h-0 overflow-y-auto px-3 py-3 focus-visible:outline-none"
+            className={cn(
+              'h-full min-h-0 focus-visible:outline-none',
+              flushContent ? 'overflow-hidden' : 'overflow-y-auto px-3 py-3',
+              contentClassName
+            )}
           >
             {tab.content}
           </TabsPrimitive.Content>

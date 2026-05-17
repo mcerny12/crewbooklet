@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,7 +33,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selected = value ? options.find(o => o.id === value) : null;
@@ -41,16 +42,13 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
     (o.sublabel ?? '').toLowerCase().includes(query.toLowerCase())
   );
 
+  const shouldShowDropdown = open && (showOptionsWhenEmpty || query.trim().length > 0);
+
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setEditing(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    if (!shouldShowDropdown) return;
+    // Re-focus the input after the popover opens so typing continues to flow.
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [shouldShowDropdown]);
 
   const beginEditing = () => {
     const initial = selected?.label ?? '';
@@ -65,7 +63,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
 
   if (selected && !editing) {
     return (
-      <div ref={containerRef} className={cn('ss-root flex items-center gap-2 min-h-9 pr-1 pl-3 text-sm border border-input rounded-lg bg-muted/40', className)}>
+      <div className={cn('ss-root flex items-center gap-2 min-h-9 pr-1 pl-3 text-sm border border-input rounded-lg bg-muted/40', className)}>
         <button
           type="button"
           onClick={beginEditing}
@@ -88,21 +86,32 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
   }
 
   return (
-    <div ref={containerRef} className={cn('ss-root relative', className)}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none z-10" />
-      <Input
-        ref={inputRef}
-        value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => {
-          if (showOptionsWhenEmpty || query.trim().length > 0) setOpen(true);
-        }}
-        onBlur={() => { if (editing && selected) setEditing(false); }}
-        placeholder={placeholder}
-        className="min-h-9 text-sm pl-8"
-      />
-      {open && (showOptionsWhenEmpty || query.trim().length > 0) && (
-        <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg max-h-56 overflow-y-auto">
+    <PopoverPrimitive.Root open={shouldShowDropdown} onOpenChange={(next) => { if (!next) { setOpen(false); setEditing(false); } }}>
+      <PopoverPrimitive.Anchor asChild>
+        <div ref={anchorRef} className={cn('ss-root relative', className)}>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none z-10" />
+          <Input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => {
+              if (showOptionsWhenEmpty || query.trim().length > 0) setOpen(true);
+            }}
+            onBlur={() => { if (editing && selected) setEditing(false); }}
+            placeholder={placeholder}
+            className="min-h-9 text-sm pl-8"
+          />
+        </div>
+      </PopoverPrimitive.Anchor>
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          side="bottom"
+          align="start"
+          sideOffset={4}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          className="z-50 max-h-56 w-(--radix-popover-trigger-width) min-w-(--radix-popover-trigger-width) overflow-y-auto rounded-xl border border-border bg-popover shadow-lg"
+        >
           {filtered.length === 0 ? (
             <div className="text-sm text-muted-foreground px-3 py-2.5">No results found</div>
           ) : filtered.map((opt) => (
@@ -117,8 +126,8 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
               {opt.sublabel && <span className="text-muted-foreground shrink-0 text-xs">{opt.sublabel}</span>}
             </button>
           ))}
-        </div>
-      )}
-    </div>
+        </PopoverPrimitive.Content>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
   );
 }
