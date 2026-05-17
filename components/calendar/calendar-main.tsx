@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Calendar, dateFnsLocalizer, Views, type View, type SlotInfo } from 'react-big-calendar';
 import { Printer } from 'lucide-react';
 import withDragAndDrop, { type EventInteractionArgs } from 'react-big-calendar/lib/addons/dragAndDrop';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
+import { de } from 'date-fns/locale/de';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
@@ -25,7 +27,7 @@ const localizer = dateFnsLocalizer({
   parse,
   startOfWeek: (d: Date) => startOfWeek(d, { weekStartsOn: 1 }),
   getDay,
-  locales: { 'en-US': enUS },
+  locales: { 'en-US': enUS, 'de': de },
 });
 
 interface RBCEvent {
@@ -39,6 +41,9 @@ interface RBCEvent {
 }
 
 export function CalendarMain() {
+  const t = useTranslations('calendar');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
   const isMobile = useIsMobile();
   const { calendars, events, isLoading, error, fetchAll, createCalendar, updateCalendar, deleteCalendar, createEvent, updateEvent, deleteEvent } = useCalendarStore();
   const { projects, fetchProjects } = useProjectsStore();
@@ -140,21 +145,37 @@ export function CalendarMain() {
   const handleShareCalendar = (cal: ProjectCalendar) => {
     const url = `${window.location.origin}/api/calendar/${cal.share_token}`;
     navigator.clipboard.writeText(url).then(() => {
-      setShareMsg(`ICS link copied for "${cal.name}"`);
+      setShareMsg(t('shareLinkCopied'));
       setTimeout(() => setShareMsg(null), 3000);
     });
   };
 
+  const rbcMessages = useMemo(() => ({
+    today: t('today'),
+    month: t('month'),
+    week: t('week'),
+    day: t('day'),
+    agenda: t('agenda'),
+    previous: tCommon('back'),
+    next: tCommon('open'),
+    date: t('fields.startDate'),
+    time: t('fields.startDate'),
+    event: t('newEvent'),
+    allDay: t('fields.allDay'),
+    noEventsInRange: t('noEvents'),
+    showMore: (n: number) => `+${n}`,
+  }), [t, tCommon]);
+
   if (isLoading) {
-    return <div className="flex h-full items-center justify-center text-gray-400 text-sm">Loading calendars…</div>;
+    return <div className="flex h-full items-center justify-center text-gray-400 text-sm">{tCommon('loading')}</div>;
   }
 
   if (error) {
     return (
       <div className="flex h-full items-center justify-center flex-col gap-2">
-        <p className="text-sm text-red-600 font-medium">Failed to load calendar data</p>
+        <p className="text-sm text-red-600 font-medium">{tCommon('error')}</p>
         <p className="text-xs text-gray-500 max-w-md text-center">{error}</p>
-        <button onClick={() => fetchAll()} className="text-xs text-blue-600 underline mt-1">Retry</button>
+        <button onClick={() => fetchAll()} className="text-xs text-blue-600 underline mt-1">{tCommon('tryAgain')}</button>
       </div>
     );
   }
@@ -205,7 +226,7 @@ export function CalendarMain() {
             onClick={() => setPrintOpen(true)}
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 border rounded px-2.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <Printer className="h-3.5 w-3.5" />Print
+            <Printer className="h-3.5 w-3.5" />{tCommon('print')}
           </button>
         </div>
         <div className="flex-1 overflow-hidden">
@@ -226,6 +247,8 @@ export function CalendarMain() {
 
         <DnDCalendar
           localizer={localizer}
+          culture={locale === 'de' ? 'de' : 'en-US'}
+          messages={rbcMessages}
           events={rbcEvents}
           view={view}
           date={date}

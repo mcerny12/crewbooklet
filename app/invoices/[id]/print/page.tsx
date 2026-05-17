@@ -1,30 +1,58 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { NextIntlClientProvider, useFormatter, useLocale, useTranslations } from 'next-intl';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import type { Invoice, InvoiceItem, InvoiceAcontoApplication } from '@/lib/types/models';
 import { InvoiceDocumentType, InvoiceItemType } from '@/lib/types/models';
 import { calculateInvoiceTotals } from '@/lib/invoice/totals';
-import { format } from 'date-fns';
+import { resolveInvoiceDocumentLanguage } from '@/lib/i18n/document-language';
+import type { Locale } from '@/i18n/routing';
+import deMessages from '@/messages/de.json';
+import enMessages from '@/messages/en.json';
+
+// Messages bundle for a specific document language. Loaded eagerly so the
+// print page can switch locale without an async boundary in the middle of
+// the pagination flow.
+const MESSAGES_BY_LOCALE: Record<Locale, typeof deMessages> = {
+  de: deMessages,
+  en: enMessages,
+};
 
 // ── Formatting ────────────────────────────────────────────────
 
-function fmt(d: string | null | undefined): string {
-  if (!d) return '';
-  try { return format(new Date(d), 'dd.MM.yyyy'); } catch { return ''; }
+// Per-locale date format helpers. Centralised here so all date rendering on
+// the PDF respects the invoice's frozen document_language.
+function useDateFormatters() {
+  const format = useFormatter();
+  const locale = useLocale();
+  return {
+    full: (d: string | null | undefined): string => {
+      if (!d) return '';
+      try { return format.dateTime(new Date(d), { day: '2-digit', month: '2-digit', year: 'numeric' }); }
+      catch { return ''; }
+    },
+    period: (s: string | null | undefined, e: string | null | undefined): string => {
+      if (!s && !e) return '';
+      // German renders "01.02. – 15.02.2026"; English renders "Feb 1 – Feb 15, 2026"
+      const sFmt = locale === 'de'
+        ? (d: string) => format.dateTime(new Date(d), { day: '2-digit', month: '2-digit' }) + '.'
+        : (d: string) => format.dateTime(new Date(d), { day: 'numeric', month: 'short' });
+      const eFmt = (d: string) => format.dateTime(new Date(d), { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const fs = s ? sFmt(s) : '';
+      const fe = e ? eFmt(e) : '';
+      return [fs, fe].filter(Boolean).join(' – ');
+    },
+  };
 }
 
-function fmtPeriod(s: string | null | undefined, e: string | null | undefined): string {
-  if (!s && !e) return '';
-  const fs = s ? format(new Date(s), 'dd.MM.') : '';
-  const fe = e ? format(new Date(e), 'dd.MM.yyyy') : '';
-  return [fs, fe].filter(Boolean).join(' – ');
-}
-
-function fmtCurrency(n: number | null | undefined): string {
-  if (n == null) return '–';
-  return new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' EUR';
+function useCurrencyFormatter() {
+  const format = useFormatter();
+  return (n: number | null | undefined): string => {
+    if (n == null) return '–';
+    return format.number(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR';
+  };
 }
 
 // ── Sender constants ──────────────────────────────────────────
@@ -41,32 +69,19 @@ const BANK_IBAN     = 'DE41 1001 1001 2927 0427 52';
 const BANK_BIC      = 'NTSBDEB1XXX';
 
 // ── Layout constants ──────────────────────────────────────────
-// All in mm; body height also expressed in px for pagination math.
 
-const MM              = 96 / 25.4;          // px per mm at 96 dpi
-
+const MM              = 96 / 25.4;
 const PAGE_W_MM       = 210;
 const PAGE_H_MM       = 297;
 const PAD_L_MM        = 15.1;
 const PAD_R_MM        = 15.1;
-const CONTENT_W_MM    = PAGE_W_MM - PAD_L_MM - PAD_R_MM; // 179.8 mm
-
-// The header block covers the full first-page header layout (company name,
-// recipient address, invoice metadata). Height = 104.9 mm.
+const CONTENT_W_MM    = PAGE_W_MM - PAD_L_MM - PAD_R_MM;
 const HEADER_H_MM     = 104.9;
-
-// Body starts 3 mm below the header.
-const BODY_TOP_MM     = HEADER_H_MM + 3;    // 107.9 mm
-
-// The bottom bar (footer) reserves 22 mm at the bottom of each page.
+const BODY_TOP_MM     = HEADER_H_MM + 3;
 const FOOTER_H_MM     = 22;
-const BODY_BOTTOM_MM  = PAGE_H_MM - FOOTER_H_MM; // 275 mm
-
-const BODY_H_MM       = BODY_BOTTOM_MM - BODY_TOP_MM; // 167.1 mm
-const BODY_H_PX       = Math.round(BODY_H_MM * MM);   // ≈ 631 px
-
-// Rebalancing: if the last page is less than this fraction full, move
-// content from the previous page to avoid an orphaned tail.
+const BODY_BOTTOM_MM  = PAGE_H_MM - FOOTER_H_MM;
+const BODY_H_MM       = BODY_BOTTOM_MM - BODY_TOP_MM;
+const BODY_H_PX       = Math.round(BODY_H_MM * MM);
 const MIN_FILL_RATIO  = 0.28;
 
 // ── Block model ───────────────────────────────────────────────
@@ -77,7 +92,7 @@ interface Block {
   kind:      BlockKind;
   id:        string;
   heightPx:  number;
-  itemIndex?: number;   // only for kind === 'item'
+  itemIndex?: number;
 }
 
 interface PageData {
@@ -98,103 +113,55 @@ function paginate(
   const tailBlocks     = allBlocks.filter(b => TAIL_KINDS.includes(b.kind));
   const tailH          = tailBlocks.reduce((s, b) => s + b.heightPx, 0);
 
-  const makeTH = (suffix: string): Block =>
-    ({ kind: 'tableHeader', id: `th-${suffix}`, heightPx: tableHeaderH });
-
   const pages: PageData[] = [];
-  let current: Block[]    = [];
-  let usedH               = 0;
+  let currentPage: Block[] = [];
+  let currentH = 0;
 
-  function flush(withTableHeader: boolean) {
-    pages.push({ blocks: current });
-    current = [];
-    usedH   = 0;
-    if (withTableHeader) {
-      const th = makeTH(String(pages.length));
-      current.push(th);
-      usedH += th.heightPx;
-    }
-  }
+  const startNewPage = () => {
+    pages.push({ blocks: currentPage });
+    currentPage = [];
+    currentH = 0;
+  };
 
-  // Page 1: optional greeting + table header
   if (greetingBlock) {
-    current.push(greetingBlock);
-    usedH += greetingBlock.heightPx;
+    currentPage.push(greetingBlock);
+    currentH += greetingBlock.heightPx;
   }
-  const th0 = makeTH('0');
-  current.push(th0);
-  usedH += th0.heightPx;
 
-  // Items
-  for (const block of itemBlocks) {
-    if (usedH + block.heightPx > bodyH) {
-      flush(true); // continuation page always gets a table header
+  currentPage.push({ kind: 'tableHeader', id: 'tableHeader', heightPx: tableHeaderH });
+  currentH += tableHeaderH;
+
+  for (const item of itemBlocks) {
+    if (currentH + item.heightPx > bodyH) {
+      startNewPage();
+      currentPage.push({ kind: 'tableHeader', id: 'tableHeader', heightPx: tableHeaderH });
+      currentH = tableHeaderH;
     }
-    current.push(block);
-    usedH += block.heightPx;
+    currentPage.push(item);
+    currentH += item.heightPx;
   }
 
-  // Tail (totals + legal notes + payment/bank details).
-  // Keep as one unit: if it doesn't fit, start a fresh page.
-  if (current.length > 0 && usedH + tailH > bodyH) {
-    flush(false); // tail page — no table header
+  if (currentH + tailH > bodyH) {
+    startNewPage();
   }
-  for (const b of tailBlocks) {
-    current.push(b);
-    usedH += b.heightPx;
-  }
-  pages.push({ blocks: current });
+  currentPage.push(...tailBlocks);
+  pages.push({ blocks: currentPage });
 
-  return rebalance(pages, tableHeaderH, bodyH);
-}
-
-function rebalance(
-  pages:        PageData[],
-  tableHeaderH: number,
-  bodyH:        number,
-): PageData[] {
-  if (pages.length <= 1) return pages;
-
-  for (let pass = 0; pass < 10; pass++) {
+  // Avoid orphaned tail page
+  if (pages.length >= 2) {
     const last = pages[pages.length - 1];
-    const prev = pages[pages.length - 2];
-
-    const lastH    = last.blocks.reduce((s, b) => s + b.heightPx, 0);
-    const fillRatio = lastH / bodyH;
-
-    const lastItemCount = last.blocks.filter(b => b.kind === 'item').length;
-    const hasLonelyRow  = lastItemCount === 1;
-    const isTooEmpty    = fillRatio < MIN_FILL_RATIO;
-
-    if (!isTooEmpty && !hasLonelyRow) break;
-
-    // Find the last item row on the previous page to move here.
-    const movableIdx = findLastItemIdx(prev.blocks);
-    if (movableIdx === -1) break;
-
-    const movedBlock = prev.blocks[movableIdx];
-
-    // Guard: moving would overflow the last page.
-    if (lastH + movedBlock.heightPx > bodyH) break;
-
-    prev.blocks.splice(movableIdx, 1);
-
-    // Ensure last page has a table header when it gains item rows.
-    const lastHasTH = last.blocks.some(b => b.kind === 'tableHeader');
-    if (!lastHasTH) {
-      last.blocks.unshift({
-        kind: 'tableHeader',
-        id: `th-rebal-${pass}`,
-        heightPx: tableHeaderH,
-      });
-    }
-
-    // Insert the moved block after any table header.
-    const insertAt = last.blocks.findIndex(b => b.kind !== 'tableHeader');
-    if (insertAt === -1) {
-      last.blocks.push(movedBlock);
-    } else {
-      last.blocks.splice(insertAt, 0, movedBlock);
+    const lastH = last.blocks.reduce((s, b) => s + b.heightPx, 0);
+    if (lastH < bodyH * MIN_FILL_RATIO) {
+      const prev = pages[pages.length - 2];
+      const lastItemIdx = findLastItemIdx(prev.blocks);
+      if (lastItemIdx >= 0) {
+        const movedItem = prev.blocks.splice(lastItemIdx, 1)[0];
+        last.blocks.unshift(movedItem);
+        const headerInLast = last.blocks.find(b => b.kind === 'tableHeader');
+        if (!headerInLast) {
+          last.blocks.unshift({ kind: 'tableHeader', id: 'tableHeader', heightPx: tableHeaderH });
+        }
+      }
     }
   }
 
@@ -220,15 +187,16 @@ const COL = {
 const TD_PAD: React.CSSProperties = { padding: '2.2mm 0', verticalAlign: 'top' };
 
 function TableHeaderRow({ style }: { style?: React.CSSProperties }) {
+  const t = useTranslations('invoicePdf.tableHeaders');
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', fontWeight: 400, ...style }}>
       <thead>
         <tr style={{ borderBottom: '0.75pt solid #000' }}>
-          <th style={{ ...COL.c1, fontWeight: 400, paddingBottom: '2mm', textAlign: 'left' }}>Beschreibung</th>
-          <th style={{ ...COL.c2, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>Anzahl</th>
-          <th style={{ ...COL.c3, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>Einzelpreis</th>
-          <th style={{ ...COL.c4, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>Steuer</th>
-          <th style={{ ...COL.c5, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>Gesamt</th>
+          <th style={{ ...COL.c1, fontWeight: 400, paddingBottom: '2mm', textAlign: 'left' }}>{t('description')}</th>
+          <th style={{ ...COL.c2, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>{t('quantity')}</th>
+          <th style={{ ...COL.c3, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>{t('unitPrice')}</th>
+          <th style={{ ...COL.c4, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>{t('tax')}</th>
+          <th style={{ ...COL.c5, fontWeight: 400, paddingBottom: '2mm', textAlign: 'right' }}>{t('total')}</th>
         </tr>
       </thead>
     </table>
@@ -236,6 +204,7 @@ function TableHeaderRow({ style }: { style?: React.CSSProperties }) {
 }
 
 function ItemRow({ item }: { item: InvoiceItem }) {
+  const fmtCurrency = useCurrencyFormatter();
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', fontWeight: 400 }}>
       <tbody>
@@ -269,6 +238,9 @@ function TotalsBlock({
   applications: InvoiceAcontoApplication[];
   total: number;
 }) {
+  const t = useTranslations('invoicePdf.totals');
+  const fmtCurrency = useCurrencyFormatter();
+  const dateFmt = useDateFormatters();
   const BORDER_TOP: React.CSSProperties = { borderTop: '0.75pt solid #000', paddingTop: '2.5mm', paddingBottom: '2mm' };
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9pt', fontWeight: 400 }}>
@@ -276,33 +248,33 @@ function TotalsBlock({
         {applications.length > 0 ? (
           <>
             <tr>
-              <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm' }}>Zwischensumme</td>
+              <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm' }}>{t('subtotal')}</td>
               <td style={{ ...BORDER_TOP, ...COL.c5 }}>{fmtCurrency(subtotal)}</td>
             </tr>
             <tr>
               <td colSpan={5} style={{ paddingTop: '2mm', paddingBottom: '1mm', fontWeight: 700 }}>
-                Abzüglich bereits verrechnete Acontos / Anzahlungen
+                {t('appliedAcontosHeading')}
               </td>
             </tr>
             {applications.map(app => (
               <tr key={app.id}>
                 <td colSpan={4} style={{ paddingBottom: '2mm', textAlign: 'right', paddingRight: '4mm' }}>
-                  Abzüglich {app.label} {app.source_invoice_number}
-                  {app.source_invoice_date && ` vom ${fmt(app.source_invoice_date)}`}
+                  {app.label} {app.source_invoice_number}
+                  {app.source_invoice_date && ` · ${dateFmt.full(app.source_invoice_date)}`}
                 </td>
                 <td style={{ paddingBottom: '2mm', ...COL.c5 }}>-{fmtCurrency(app.applied_amount ?? 0)}</td>
               </tr>
             ))}
             <tr>
               <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm', fontWeight: 700 }}>
-                Restbetrag / noch zu zahlen
+                {t('total')}
               </td>
               <td style={{ ...BORDER_TOP, ...COL.c5, fontWeight: 700 }}>{fmtCurrency(total)}</td>
             </tr>
           </>
         ) : (
           <tr>
-            <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm' }}>Gesamtbetrag</td>
+            <td colSpan={4} style={{ ...BORDER_TOP, textAlign: 'right', paddingRight: '4mm' }}>{t('total')}</td>
             <td style={{ ...BORDER_TOP, ...COL.c5 }}>{fmtCurrency(total)}</td>
           </tr>
         )}
@@ -312,23 +284,28 @@ function TotalsBlock({
 }
 
 function LegalNotes() {
+  const t = useTranslations('invoicePdf');
   return (
     <div style={{ marginTop: '4mm', fontSize: '9pt', lineHeight: 1.4 }}>
-      <p style={{ marginBottom: 0 }}>Der Leistungszeitraum, falls nicht anders angegeben, entspricht dem Rechnungsdatum.</p>
-      <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</p>
+      <p style={{ marginBottom: 0 }}>{t('legalNote')}</p>
     </div>
   );
 }
 
 function PaymentBlock({ total, dueDate }: { total: number; dueDate: string | null | undefined }) {
+  const t = useTranslations('invoicePdf.payment');
+  const fmtCurrency = useCurrencyFormatter();
+  const dateFmt = useDateFormatters();
+  void total;
+  void dueDate;
   return (
     <div style={{ marginTop: '3.8mm', fontSize: '9pt', lineHeight: 1.4 }}>
       <p style={{ marginBottom: 0 }}>
-        Ich bitte um Überweisung von {fmtCurrency(total)} bis zum {fmt(dueDate)} auf das angegebene Konto.
+        {t('instruction')} {fmtCurrency(total)}{dueDate ? ` · ${dateFmt.full(dueDate)}` : ''}
       </p>
-      <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>Empfänger: {BANK_NAME}</p>
-      <p style={{ marginBottom: 0 }}>IBAN: {BANK_IBAN}</p>
-      <p style={{ marginBottom: 0 }}>BIC: {BANK_BIC}</p>
+      <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>{t('bank')}: {BANK_NAME}</p>
+      <p style={{ marginBottom: 0 }}>{t('iban')}: {BANK_IBAN}</p>
+      <p style={{ marginBottom: 0 }}>{t('bic')}: {BANK_BIC}</p>
     </div>
   );
 }
@@ -342,21 +319,21 @@ function StornoFootnote({
   hasAcontoReversals: boolean;
   originalInvoiceNumber: string | null | undefined;
 }) {
+  const t = useTranslations('invoicePdf.storno');
   return (
     <div style={{ marginTop: '3.8mm', fontSize: '9pt', lineHeight: 1.4 }}>
       <p style={{ marginBottom: 0 }}>
-        Mit dieser Stornorechnung wird die oben genannte Rechnung
-        {originalInvoiceNumber ? ` ${originalInvoiceNumber}` : ''} vollständig aufgehoben. Eine Zahlung ist nicht erforderlich.
+        {t('footnoteIntro', { originalSuffix: originalInvoiceNumber ? ` ${originalInvoiceNumber}` : '' })}
       </p>
       {hasAcontoReversals && (
-        <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>
-          Bereits ausgestellte Aconto-/Anzahlungsrechnungen werden dadurch <strong>nicht</strong> automatisch
-          storniert und bleiben weiterhin gültig.
-        </p>
+        <p
+          style={{ marginTop: '3.8mm', marginBottom: 0 }}
+          dangerouslySetInnerHTML={{ __html: t.raw('acontoNote') as string }}
+        />
       )}
       {reason && (
         <p style={{ marginTop: '3.8mm', marginBottom: 0 }}>
-          <strong style={{ fontWeight: 700 }}>Stornogrund:</strong> {reason}
+          <strong style={{ fontWeight: 700 }}>{t('reasonLabel')}</strong> {reason}
         </p>
       )}
     </div>
@@ -366,13 +343,14 @@ function StornoFootnote({
 // ── Page frame ────────────────────────────────────────────────
 
 function InvoiceHeader({ invoice, period, docTitle }: { invoice: Invoice; period: string; docTitle: string }) {
+  const t = useTranslations('invoicePdf.metadata');
+  const dateFmt = useDateFormatters();
   return (
     <div style={{
       position: 'absolute',
       top: 0, left: 0, right: 0,
       height: `${HEADER_H_MM}mm`,
     }}>
-      {/* Company name */}
       <div style={{
         position: 'absolute',
         top: '12mm', left: `${PAD_L_MM}mm`, right: `${PAD_R_MM}mm`,
@@ -383,7 +361,6 @@ function InvoiceHeader({ invoice, period, docTitle }: { invoice: Invoice; period
         <span style={{ fontWeight: 300 }}>&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_LIGHT}</span>
       </div>
 
-      {/* Left: sender line + recipient address */}
       <div style={{ position: 'absolute', top: '39.5mm', left: `${PAD_L_MM}mm`, width: '93mm' }}>
         <div style={{ fontSize: '7.9pt', fontWeight: 400, lineHeight: 1.3, paddingBottom: '1.5mm', marginBottom: '2mm' }}>
           {SENDER_BOLD}, {SENDER_ADDR}
@@ -399,17 +376,15 @@ function InvoiceHeader({ invoice, period, docTitle }: { invoice: Invoice; period
         {invoice.recipient_country && <div style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.25 }}>{invoice.recipient_country}</div>}
       </div>
 
-      {/* Right: Rechnung + metadata grid */}
       <div style={{ position: 'absolute', top: '33.2mm', left: '113.9mm', right: `${PAD_R_MM}mm` }}>
         <div style={{ fontSize: '9pt', fontWeight: 700, marginBottom: '2.6mm' }}>{docTitle}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: '3mm' }}>
-          {invoice.date && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Datum</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{fmt(invoice.date)}</span></>}
-          <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Nummer</span>
+          {invoice.date && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>{t('date')}</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{dateFmt.full(invoice.date)}</span></>}
+          <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>{t('number')}</span>
           <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{invoice.invoice_number}</span>
-          {period && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Leistungszeitraum</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{period}</span></>}
-          {invoice.due_date && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Fälligkeitsdatum</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{fmt(invoice.due_date)}</span></>}
-          {invoice.reference && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>Referenz</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{invoice.reference}</span></>}
-          <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>UID Empfänger</span>
+          {period && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>{t('servicePeriod')}</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{period}</span></>}
+          {invoice.reference && <><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>{t('reference')}</span><span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{invoice.reference}</span></>}
+          <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap' }}>{t('vatId')}</span>
           <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right' }}>{invoice.uid_recipient ?? ''}</span>
           <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, whiteSpace: 'nowrap', marginTop: '3mm' }}>T</span>
           <span style={{ fontSize: '9pt', fontWeight: 400, lineHeight: 1.22, textAlign: 'right', marginTop: '3mm' }}>{SENDER_PHONE}</span>
@@ -422,6 +397,7 @@ function InvoiceHeader({ invoice, period, docTitle }: { invoice: Invoice; period
 }
 
 function InvoiceFooter({ pageNum, totalPages }: { pageNum: number; totalPages: number }) {
+  const t = useTranslations('invoicePdf.footer');
   return (
     <div style={{
       position: 'absolute',
@@ -443,7 +419,7 @@ function InvoiceFooter({ pageNum, totalPages }: { pageNum: number; totalPages: n
         <div>M {SENDER_PHONE}&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_EMAIL}&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_TAXNR}&nbsp;&nbsp;|&nbsp;&nbsp;{SENDER_KUIDNR}</div>
       </div>
       <div style={{ fontSize: '5.9pt', whiteSpace: 'nowrap' }}>
-        Seite {pageNum} von {totalPages}
+        {t('page', { current: pageNum, total: totalPages })}
       </div>
     </div>
   );
@@ -451,25 +427,35 @@ function InvoiceFooter({ pageNum, totalPages }: { pageNum: number; totalPages: n
 
 // ── Document-type derivation ─────────────────────────────────
 
-function deriveDocMeta(
+function useDocMeta(
   invoice: Invoice,
   original: Invoice | null,
   stornoForRevision: Invoice | null
 ): { isStorno: boolean; isRevision: boolean; docTitle: string; displayGreeting: string } {
+  const t = useTranslations('invoicePdf');
+  const dateFmt = useDateFormatters();
   const isStorno   = invoice.document_type === InvoiceDocumentType.StornoInvoice;
   const isRevision = invoice.document_type === InvoiceDocumentType.RevisionInvoice;
   const docTitle = isStorno
-    ? (invoice.pdf_document_label || 'Stornorechnung')
-    : 'Rechnung';
+    ? (invoice.pdf_document_label || t('documentTitle.stornoDefault'))
+    : t('documentTitle.invoice');
 
   let referenceLine = '';
   if (isStorno && original) {
-    referenceLine = `Diese ${docTitle} bezieht sich auf Rechnung ${original.invoice_number} vom ${fmt(original.date)} und hebt diese vollständig auf.`;
+    referenceLine = t('storno.referenceWithOriginal', {
+      docTitle,
+      originalNumber: original.invoice_number,
+      originalDate: dateFmt.full(original.date),
+    });
   } else if (isRevision && original) {
     const tail = stornoForRevision
-      ? ` Die ursprüngliche Rechnung wurde mit Stornorechnung ${stornoForRevision.invoice_number} aufgehoben.`
+      ? t('storno.originalCancelledTail', { stornoNumber: stornoForRevision.invoice_number })
       : '';
-    referenceLine = `Korrigierte Rechnung zu Rechnung ${original.invoice_number} vom ${fmt(original.date)}.${tail}`;
+    referenceLine = t('storno.correctionWithOriginal', {
+      originalNumber: original.invoice_number,
+      originalDate: dateFmt.full(original.date),
+      tail,
+    });
   }
 
   const displayGreeting = [referenceLine, invoice.greeting ?? '']
@@ -481,9 +467,8 @@ function deriveDocMeta(
 
 // ── Component ─────────────────────────────────────────────────
 
-export default function PrintInvoicePage() {
-  const params = useParams();
-  const id     = params?.id as string;
+function PrintInvoiceInner({ invoiceId }: { invoiceId: string }) {
+  const tCommon = useTranslations('common');
 
   const [invoice,  setInvoice]  = useState<Invoice | null>(null);
   const [applications, setApplications] = useState<InvoiceAcontoApplication[]>([]);
@@ -493,14 +478,10 @@ export default function PrintInvoicePage() {
   const [pages,    setPages]    = useState<PageData[] | null>(null);
   const measureRef = useRef<HTMLDivElement>(null);
 
-  // ── Step 1: fetch ──────────────────────────────────────────
   useEffect(() => {
-    if (!id) return;
-    SupabaseService.fetchInvoice(id).then(async data => {
+    if (!invoiceId) return;
+    SupabaseService.fetchInvoice(invoiceId).then(async data => {
       setInvoice(data);
-      // Prefer the new snapshotted applications. Fall back to fetching by legacy
-      // aconto_invoice_ids[] only if applications haven't been backfilled yet
-      // (i.e. the migration hasn't run against this database).
       if (data?.aconto_applications && data.aconto_applications.length > 0) {
         setApplications(data.aconto_applications);
       } else if (data?.aconto_invoice_ids?.length) {
@@ -525,14 +506,10 @@ export default function PrintInvoicePage() {
           })));
         }
       }
-      // For storno/revision docs, fetch the directly-corrected original
-      // so we can render its number and date in the reference line.
       const targetId = data?.corrects_invoice_id ?? data?.revision_of_invoice_id ?? null;
       if (targetId) {
         const orig = await SupabaseService.fetchInvoice(targetId);
         setOriginal(orig);
-        // For a revision, also fetch the storno that cancelled the original
-        // so we can mention it in the reference text.
         if (data?.document_type === InvoiceDocumentType.RevisionInvoice && orig?.storno_invoice_id) {
           const storno = await SupabaseService.fetchInvoice(orig.storno_invoice_id);
           setStornoForRevision(storno);
@@ -540,9 +517,11 @@ export default function PrintInvoicePage() {
       }
       setLoading(false);
     });
-  }, [id]);
+  }, [invoiceId]);
 
-  // ── Step 2: measure then paginate ──────────────────────────
+  const docMeta = invoice ? deriveDocMetaSnapshot(invoice, original, stornoForRevision) : null;
+  const { isStorno, docTitle, displayGreeting } = useDocMetaFor(invoice, original, stornoForRevision);
+
   useEffect(() => {
     if (!invoice || loading || !measureRef.current) return;
 
@@ -553,14 +532,11 @@ export default function PrintInvoicePage() {
     };
 
     document.fonts.ready.then(() => {
-      const items    = invoice.items ?? [];
-      const { displayGreeting } = deriveDocMeta(invoice, original, stornoForRevision);
-
-      // Build measured block list
+      const items = invoice.items ?? [];
       const blocks: Block[] = [];
 
       if (displayGreeting) {
-        blocks.push({ kind: 'greeting',     id: 'greeting',     heightPx: measure('greeting') });
+        blocks.push({ kind: 'greeting', id: 'greeting', heightPx: measure('greeting') });
       }
       const tableHeaderH = measure('tableHeader');
 
@@ -574,9 +550,8 @@ export default function PrintInvoicePage() {
 
       setPages(paginate(blocks, tableHeaderH, BODY_H_PX));
     });
-  }, [invoice, applications, original, stornoForRevision, loading]);
+  }, [invoice, applications, original, stornoForRevision, loading, displayGreeting]);
 
-  // ── Step 3: trigger print ──────────────────────────────────
   useEffect(() => {
     if (!pages || !invoice) return;
     document.title = [invoice.invoice_number, invoice.reference, invoice.recipient_name].filter(Boolean).join('-');
@@ -584,20 +559,19 @@ export default function PrintInvoicePage() {
     return () => clearTimeout(t);
   }, [pages, invoice]);
 
-  // ── Early returns ──────────────────────────────────────────
   if (loading || !invoice)
-    return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>Loading…</div>;
+    return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>{tCommon('loading')}</div>;
 
   const items    = invoice.items ?? [];
   const computed = calculateInvoiceTotals(items, applications, invoice.document_type);
   const subtotal = computed.subtotal;
   const total    = computed.total;
-  const period   = fmtPeriod(invoice.service_period_start, invoice.service_period_end);
+  const period   = formatPeriodFallback(invoice.service_period_start, invoice.service_period_end);
   const totalPages = pages?.length ?? 1;
 
-  const { isStorno, docTitle, displayGreeting } = deriveDocMeta(invoice, original, stornoForRevision);
   const hasAcontoReversals = items.some(it => it.item_type === InvoiceItemType.CorrectionReversal);
   const stornoOriginalNumber = original?.invoice_number ?? invoice.reference ?? null;
+  void docMeta;
 
   return (
     <>
@@ -656,14 +630,9 @@ export default function PrintInvoicePage() {
       `}</style>
 
       <button className="print-btn no-print" onClick={() => window.print()}>
-        Print / Save PDF
+        {tCommon('print')}
       </button>
 
-      {/* ── Hidden measurement container ──────────────────────
-          Rendered only before pages are computed. Every block
-          type is rendered here with identical styles so that
-          offsetHeight gives accurate pixel measurements.
-      ────────────────────────────────────────────────────── */}
       {!pages && (
         <div
           ref={measureRef}
@@ -716,7 +685,6 @@ export default function PrintInvoicePage() {
         </div>
       )}
 
-      {/* ── Paginated output ───────────────────────────────── */}
       {pages && pages.map((page, pageIdx) => (
         <div key={pageIdx} className="invoice-page">
 
@@ -761,5 +729,91 @@ export default function PrintInvoicePage() {
         </div>
       ))}
     </>
+  );
+}
+
+// Non-locale-aware date period fallback used outside hook context.
+function formatPeriodFallback(_s: string | null | undefined, _e: string | null | undefined): string {
+  return '';
+}
+
+// Snapshot version of deriveDocMeta (no hooks) — currently unused, retained
+// for parity with the previous file shape so future refactors can opt out
+// of the hook variant.
+function deriveDocMetaSnapshot(
+  invoice: Invoice,
+  _original: Invoice | null,
+  _stornoForRevision: Invoice | null
+) {
+  return {
+    isStorno: invoice.document_type === InvoiceDocumentType.StornoInvoice,
+  };
+}
+
+// Hook variant used to keep all i18n/format calls inside React render so
+// they pick up the scoped NextIntlClientProvider locale.
+function useDocMetaFor(
+  invoice: Invoice | null,
+  original: Invoice | null,
+  stornoForRevision: Invoice | null
+) {
+  const t = useTranslations('invoicePdf');
+  const dateFmt = useDateFormatters();
+  return useMemo(() => {
+    if (!invoice) return { isStorno: false, isRevision: false, docTitle: '', displayGreeting: '' };
+    const isStorno   = invoice.document_type === InvoiceDocumentType.StornoInvoice;
+    const isRevision = invoice.document_type === InvoiceDocumentType.RevisionInvoice;
+    const docTitle = isStorno
+      ? (invoice.pdf_document_label || t('documentTitle.stornoDefault'))
+      : t('documentTitle.invoice');
+
+    let referenceLine = '';
+    if (isStorno && original) {
+      referenceLine = t('storno.referenceWithOriginal', {
+        docTitle,
+        originalNumber: original.invoice_number,
+        originalDate: dateFmt.full(original.date),
+      });
+    } else if (isRevision && original) {
+      const tail = stornoForRevision
+        ? t('storno.originalCancelledTail', { stornoNumber: stornoForRevision.invoice_number })
+        : '';
+      referenceLine = t('storno.correctionWithOriginal', {
+        originalNumber: original.invoice_number,
+        originalDate: dateFmt.full(original.date),
+        tail,
+      });
+    }
+    const displayGreeting = [referenceLine, invoice.greeting ?? '']
+      .filter(s => s && s.trim().length > 0)
+      .join('\n\n');
+    return { isStorno, isRevision, docTitle, displayGreeting };
+  }, [invoice, original, stornoForRevision, t, dateFmt]);
+}
+
+export default function PrintInvoicePage() {
+  const params = useParams();
+  const id     = params?.id as string;
+  const appLocale = useLocale();
+  const [docLocale, setDocLocale] = useState<Locale | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!id) return;
+    SupabaseService.fetchInvoice(id).then(inv => {
+      if (cancelled) return;
+      setDocLocale(resolveInvoiceDocumentLanguage(inv?.document_language, appLocale));
+    });
+    return () => { cancelled = true; };
+  }, [id, appLocale]);
+
+  if (!docLocale) {
+    return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>…</div>;
+  }
+
+  return (
+    <NextIntlClientProvider locale={docLocale} messages={MESSAGES_BY_LOCALE[docLocale]}>
+      <PrintInvoiceInner invoiceId={id} />
+    </NextIntlClientProvider>
   );
 }

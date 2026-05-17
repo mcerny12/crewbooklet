@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ interface AddOrganizationDialogProps {
 }
 
 export function AddOrganizationDialog({ open, onOpenChange }: AddOrganizationDialogProps) {
+  const t = useTranslations('organizations');
+  const tCommon = useTranslations('common');
   const [name, setName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -67,44 +70,40 @@ export function AddOrganizationDialog({ open, onOpenChange }: AddOrganizationDia
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent className="w-full max-w-lg sm:max-w-2xl p-0 gap-0">
         <DialogHeader className="px-4 pt-4 pb-3 border-b">
-          <DialogTitle className="text-sm font-semibold">Add Organization</DialogTitle>
+          <DialogTitle className="text-sm font-semibold">{t('newOrganization')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col max-h-[80vh]">
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
-            {/* Name — full width */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Organization Name *</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Production Company Inc." required disabled={isSubmitting} className="h-9 text-sm" />
+              <label className="text-xs font-medium text-muted-foreground">{t('fields.name')} *</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('fields.namePlaceholder')} required disabled={isSubmitting} className="h-9 text-sm" />
             </div>
 
-            {/* Type — full width (SearchableSelect) */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Type</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('fields.jobs')}</label>
               <SearchableSelect
                 options={Object.values(OrganizationJobType).map(t => ({ id: t, label: t }))}
                 value={jobType || null}
                 onChange={(v) => setJobType(v ?? '')}
-                placeholder="Search type..."
+                placeholder={`${tCommon('search')}…`}
               />
             </div>
 
-            {/* Email + Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Email</label>
-                <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} type="email" placeholder="contact@company.com" disabled={isSubmitting} className="h-9 text-sm" />
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.contactEmail')}</label>
+                <Input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} type="email" placeholder={t('fields.contactEmail')} disabled={isSubmitting} className="h-9 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Phone</label>
-                <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} type="tel" placeholder="+1 234 567 8900" disabled={isSubmitting} className="h-9 text-sm" />
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.contactPhone')}</label>
+                <Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} type="tel" placeholder={t('fields.contactPhone')} disabled={isSubmitting} className="h-9 text-sm" />
               </div>
             </div>
 
-            {/* Website */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Website</label>
+              <label className="text-xs font-medium text-muted-foreground">{t('fields.website')}</label>
               <Input
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
@@ -114,44 +113,41 @@ export function AddOrganizationDialog({ open, onOpenChange }: AddOrganizationDia
                     setWebsite('https://' + v);
                   }
                 }}
-                placeholder="www.company.com"
+                placeholder={t('fields.website')}
                 disabled={isSubmitting}
                 className="h-9 text-sm"
               />
             </div>
 
-            {/* City + Country */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">City</label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Los Angeles" disabled={isSubmitting} className="h-9 text-sm" />
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.city')}</label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('fields.city')} disabled={isSubmitting} className="h-9 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Country</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.country')}</label>
                 <SearchableSelect
                   options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
                   value={country || null}
                   onChange={(v) => setCountry(v ?? '')}
-                  placeholder="Search country..."
+                  placeholder={`${tCommon('search')}…`}
                 />
               </div>
             </div>
 
-            {/* Notes */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Notes</label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes…" rows={2} disabled={isSubmitting} className="text-sm resize-none rounded-lg" />
+              <label className="text-xs font-medium text-muted-foreground">{t('fields.notes')}</label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('fields.notes')} rows={2} disabled={isSubmitting} className="text-sm resize-none rounded-lg" />
             </div>
 
           </div>
 
-          {/* Sticky footer */}
           <div className="shrink-0 flex justify-end gap-2 px-4 py-3 border-t bg-background">
             <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { resetForm(); onOpenChange(false); }} disabled={isSubmitting}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" size="sm" className="h-9" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? 'Adding…' : 'Add Organization'}
+              {isSubmitting ? tCommon('saving') : t('addOrganization')}
             </Button>
           </div>
         </form>

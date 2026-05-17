@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { supabase } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,17 +17,16 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
   const router = useRouter();
+  const t = useTranslations('auth');
+  const tCommon = useTranslations('common');
 
   useEffect(() => {
-    // Supabase puts the recovery session in the URL hash or as a code param.
-    // onAuthStateChange fires with PASSWORD_RECOVERY when the link is clicked.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsReady(true);
       }
     });
 
-    // Also check if there's already an active session from the link
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setIsReady(true);
     });
@@ -39,11 +39,11 @@ export default function ResetPasswordPage() {
     setError('');
 
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError(t('passwordsDoNotMatch'));
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('passwordTooShort'));
       return;
     }
 
@@ -63,26 +63,26 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Set new password</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('resetPassword')}</CardTitle>
           <CardDescription>
-            Choose a new password for your account
+            {t('updatePassword')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {done ? (
             <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">
-              Password updated — redirecting you to the app…
+              {t('passwordUpdated')}
             </p>
           ) : !isReady ? (
-            <p className="text-sm text-gray-500">Verifying reset link…</p>
+            <p className="text-sm text-gray-500">{tCommon('loading')}</p>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">New password</Label>
+                <Label htmlFor="password">{t('newPassword')}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="At least 8 characters"
+                  placeholder={t('newPassword')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -91,11 +91,11 @@ export default function ResetPasswordPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm password</Label>
+                <Label htmlFor="confirm">{t('confirmPassword')}</Label>
                 <Input
                   id="confirm"
                   type="password"
-                  placeholder="Repeat your new password"
+                  placeholder={t('confirmPassword')}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
@@ -107,7 +107,7 @@ export default function ResetPasswordPage() {
                 <p className="text-sm text-red-600">{error}</p>
               )}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Saving…' : 'Update password'}
+                {isLoading ? t('updatingPassword') : t('updatePassword')}
               </Button>
             </form>
           )}

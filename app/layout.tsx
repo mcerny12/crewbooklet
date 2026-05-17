@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { SidebarProvider } from "@/components/layout/sidebar-context";
@@ -20,21 +22,26 @@ export const metadata: Metadata = {
   description: "Film production crew management system",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <SidebarProvider>
-            <FeedbackProvider>{children}</FeedbackProvider>
-          </SidebarProvider>
-        </AuthProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <AuthProvider>
+            <SidebarProvider>
+              <FeedbackProvider>{children}</FeedbackProvider>
+            </SidebarProvider>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

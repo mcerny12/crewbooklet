@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/main-layout';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
@@ -20,6 +21,8 @@ import type { Person, Project, Organization } from '@/lib/types/models';
 type DrillTarget = { type: 'project'; item: Project } | { type: 'org'; item: Organization };
 
 function ListHeader() {
+  const t = useTranslations('people.columns');
+  const cols = ['nameAndPosition', 'email', 'phone', 'city', 'country'] as const;
   return (
     <div
       aria-hidden
@@ -27,14 +30,16 @@ function ListHeader() {
       style={{ gridTemplateColumns: '32px 2fr 1.5fr 1fr 1fr 1fr' }}
     >
       <div />
-      {['Name & Position', 'Email', 'Phone', 'City', 'Country'].map(col => (
-        <div key={col} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{col}</div>
+      {cols.map(col => (
+        <div key={col} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{t(col)}</div>
       ))}
     </div>
   );
 }
 
 export default function PeoplePage() {
+  const t = useTranslations('people');
+  const tCommon = useTranslations('common');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { canCreate } = usePermissions();
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,14 +132,14 @@ export default function PeoplePage() {
       <div className="flex h-full flex-col">
         {/* Mobile header */}
         <MobilePageHeader
-          title="People"
-          subtitle={people.length > 0 ? `${people.length} crew members` : undefined}
+          title={t('title')}
+          subtitle={people.length > 0 ? t('count', { count: people.length }) : undefined}
           rightAction={
             canCreate && !selectedPerson ? (
               <button
                 type="button"
                 onClick={() => setIsAddDialogOpen(true)}
-                aria-label="Add person"
+                aria-label={t('actions.addPerson')}
                 className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <Plus className="h-5 w-5" aria-hidden />
@@ -146,17 +151,17 @@ export default function PeoplePage() {
         {/* Desktop header */}
         <div className="hidden lg:block">
           <PageHeader
-            title="People"
-            subtitle={people.length > 0 ? `${people.length} crew members` : undefined}
+            title={t('title')}
+            subtitle={people.length > 0 ? t('count', { count: people.length }) : undefined}
             search={
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
                 <Input
-                  placeholder="Search people…"
+                  placeholder={t('searchPeople')}
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   className="pl-9 h-9"
-                  aria-label="Search people"
+                  aria-label={t('searchPeople')}
                 />
               </div>
             }
@@ -164,7 +169,7 @@ export default function PeoplePage() {
               canCreate ? (
                 <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
                   <Plus className="h-4 w-4" aria-hidden />
-                  Add Person
+                  {t('addPerson')}
                 </Button>
               ) : undefined
             }
@@ -193,14 +198,14 @@ export default function PeoplePage() {
         ) : (
           <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
-              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">{tCommon('loading')}</div>
             ) : people.length === 0 ? (
               <div className="flex h-40 flex-col items-center justify-center gap-3">
-                <p className="text-sm text-muted-foreground">No people found</p>
+                <p className="text-sm text-muted-foreground">{t('noPeopleFound')}</p>
                 {canCreate && (
                   <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                    Add your first person
+                    {t('addFirstPerson')}
                   </Button>
                 )}
               </div>

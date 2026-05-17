@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/main-layout';
 import { MobilePageHeader } from '@/components/layout/mobile-page-header';
 import { usePeopleStore } from '@/lib/stores/people-store';
@@ -34,6 +35,8 @@ function initials(name: string): string {
 
 export default function SearchPage() {
   const router = useRouter();
+  const t = useTranslations('search');
+  const tNav = useTranslations('navigation');
   const [query, setQuery] = useState('');
 
   const people = usePeopleStore(s => s.people);
@@ -80,7 +83,7 @@ export default function SearchPage() {
   return (
     <MainLayout>
       <div className="flex h-full flex-col">
-        <MobilePageHeader title="Search" />
+        <MobilePageHeader title={t('title')} />
 
         {/* Search input */}
         <div className="shrink-0 border-b px-4 py-3">
@@ -88,11 +91,11 @@ export default function SearchPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" aria-hidden />
             <Input
               autoFocus
-              placeholder="Search people, projects, organizations…"
+              placeholder={t('placeholder')}
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="pl-9 h-11 text-base rounded-xl"
-              aria-label="Search"
+              aria-label={t('title')}
             />
           </div>
         </div>
@@ -101,12 +104,12 @@ export default function SearchPage() {
           {!q ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 px-8 text-center">
               <Search className="h-12 w-12 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">Type to search across people, projects, and organizations</p>
+              <p className="text-sm text-muted-foreground">{t('startTyping')}</p>
             </div>
           ) : totalCount === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16 px-8 text-center">
-              <p className="text-sm font-medium">No results for &ldquo;{query}&rdquo;</p>
-              <p className="text-xs text-muted-foreground">Try a different search term</p>
+              <p className="text-sm font-medium">{t('noResults')}</p>
+              <p className="text-xs text-muted-foreground">&ldquo;{query}&rdquo;</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -116,7 +119,7 @@ export default function SearchPage() {
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40">
                     <Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      People · {results!.people.length}
+                      {tNav('people')} · {results!.people.length}
                     </span>
                   </div>
                   {results!.people.map(person => (
@@ -150,7 +153,7 @@ export default function SearchPage() {
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40">
                     <Briefcase className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Projects · {results!.projects.length}
+                      {tNav('projects')} · {results!.projects.length}
                     </span>
                   </div>
                   {results!.projects.map(project => (
@@ -180,7 +183,7 @@ export default function SearchPage() {
                   <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40">
                     <Building2 className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Organizations · {results!.organizations.length}
+                      {tNav('organizations')} · {results!.organizations.length}
                     </span>
                   </div>
                   {results!.organizations.map(org => (

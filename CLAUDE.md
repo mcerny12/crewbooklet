@@ -120,6 +120,38 @@ An "aconto" (advance payment) invoice has `is_aconto: true` and its `aconto_invo
 
 `/api/calendar/[token]` is a **public** endpoint (no auth, bypassed in middleware) that serves an ICS file for a shared `ProjectCalendar`. The `share_token` on `ProjectCalendar` acts as the bearer credential.
 
+### Internationalisation (i18n)
+
+The app ships in German (default) and English via [`next-intl`](https://next-intl.dev). Locale is **cookie-based** (`cb_locale`) — no `/de` / `/en` route segments — so existing URLs stay stable across languages.
+
+- **Config:** [`i18n/routing.ts`](i18n/routing.ts) (locale list, cookie name, default) + [`i18n/request.ts`](i18n/request.ts) (reads the cookie server-side, loads `messages/<locale>.json`).
+- **Provider:** [`app/layout.tsx`](app/layout.tsx) is now an async server component that fetches the locale and wraps everything in `<NextIntlClientProvider>`. All client components below can `useTranslations(...)` directly.
+- **Switcher:** [`components/i18n/language-switcher.tsx`](components/i18n/language-switcher.tsx). Sits in the sidebar footer above feedback / sign-out. Writes the cookie and triggers a `window.location.reload()` so the server-rendered messages refresh (next-intl reads the cookie at render time).
+- **Translation files:** [`messages/de.json`](messages/de.json) and [`messages/en.json`](messages/en.json). Keys are organised by domain (`common`, `navigation`, `auth`, `dashboard`, `people`, `projects`, `organizations`, `invoices`, `invoicePdf`, `calendar`, `admin`, `search`, plus enum dictionaries `assignmentStatus`, `departments`, `gender`, `languages`, `roles`). Both files must keep the same key shape.
+- **Status badges** in [`components/ui/status-badge.tsx`](components/ui/status-badge.tsx) translate their *labels* but keep the colour classes keyed on the raw enum value, so colours never change across locales.
+
+#### Jobs / roles are data, not UI
+
+Job titles, custom job names, person/org/project names, addresses, IBANs etc. are **never** translated — they're stored exactly as the user entered them. Only the surrounding labels (`Job`, `Add job`, `No job assigned`, `Department`, …) come from the dictionary. Status enums follow the same rule: stored values (`PRODUCTION`, `paid`, `Booked`, …) are unchanged; their displayed labels live under `projects.status.*`, `invoices.status.*`, `assignmentStatus.*`.
+
+#### Invoice PDFs: `document_language` is frozen at finalization
+
+The invoice PDF route ([`app/invoices/[id]/print/page.tsx`](app/invoices/[id]/print/page.tsx)) does **not** use the current app locale. It resolves [`invoice.document_language`](lib/i18n/document-language.ts) (added by migration [`20260517071611_invoice_document_language.sql`](supabase/migrations/20260517071611_invoice_document_language.sql)) and wraps the print render in its own `<NextIntlClientProvider locale={docLocale} messages={…}>`. This is so issued PDFs don't silently change language when a user switches the app later.
+
+- New drafts pick up the current app locale (set by [`AddInvoiceDialog`](components/invoices/add-invoice-dialog.tsx)).
+- Drafts with `document_language` still NULL fall back to the current app locale via [`resolveInvoiceDocumentLanguage`](lib/i18n/document-language.ts).
+- Once an invoice is finalised, its language is part of the audit trail and should not be rewritten.
+
+The PDF-specific labels live under the `invoicePdf` namespace in the messages files — keep them separated from the regular UI namespace so PDF terminology can drift without affecting the live app strings.
+
+#### Date / number / currency formatting
+
+Use `useFormatter()` from `next-intl` (it picks up the current locale automatically). `react-big-calendar` is wired to both English and German `date-fns` locales in [`components/calendar/calendar-main.tsx`](components/calendar/calendar-main.tsx); its toolbar labels come from a `messages` prop derived from the `calendar` namespace.
+
+#### Audit script
+
+`node scripts/audit-i18n-hardcoded-strings.mjs` ([`scripts/audit-i18n-hardcoded-strings.mjs`](scripts/audit-i18n-hardcoded-strings.mjs)) scans `app/`, `components/`, and `lib/` for likely-untranslated JSX text and attributes. It's a tripwire, not a proof — but is useful before merging any PR that adds UI strings.
+
 ### Visual feedback overlay
 
 `components/feedback/` provides a designer-style element inspector wired into `app/layout.tsx` via `<FeedbackProvider>`. It is dormant by default and only activates when the URL carries `?feedback=1`. When active, users can click DOM elements, attach notes via `FeedbackDialog`, and export the collected items as XML (`export-feedback.ts`). State persists to `localStorage` under `cb_feedback_items_v1`; sensitive inputs are filtered by `element-inspector.ts`. Only call `useFeedback()` from components rendered beneath this provider.

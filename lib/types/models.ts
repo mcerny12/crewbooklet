@@ -861,6 +861,11 @@ export interface Invoice {
   aconto_invoice_ids?: string[] | null;
   aconto_applications?: InvoiceAcontoApplication[];
 
+  // Document rendering language. Frozen at finalization so PDFs do not
+  // silently change when the app locale is switched later. NULL on drafts
+  // (the print page falls back to the current app locale until set).
+  document_language?: 'de' | 'en' | null;
+
   // Storno / revision chain
   document_type?: InvoiceDocumentType | null;
   original_invoice_id?: string | null;

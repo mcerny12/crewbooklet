@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Film } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const router = useRouter();
   const signIn = useAuthStore(state => state.signIn);
   const isLoading = useAuthStore(state => state.isLoading);
+  const t = useTranslations('auth');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export default function LoginPage() {
       await signIn(email, password);
       router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      setError(err instanceof Error ? err.message : t('failedToSignIn'));
     }
   };
 
@@ -38,22 +40,22 @@ export default function LoginPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">CrewBooklet</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Crew, projects, calendars, and invoices in one place.
+              {t('tagline')}
             </p>
           </div>
         </div>
 
         {/* Card */}
         <div className="rounded-2xl border bg-card p-7 shadow-sm">
-          <h2 className="mb-5 text-base font-semibold">Sign in to your account</h2>
+          <h2 className="mb-5 text-base font-semibold">{t('signInToYourAccount')}</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-[13px]">Email address</Label>
+              <Label htmlFor="email" className="text-[13px]">{t('email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -64,18 +66,18 @@ export default function LoginPage() {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-[13px]">Password</Label>
+                <Label htmlFor="password" className="text-[13px]">{t('password')}</Label>
                 <a
                   href="/forgot-password"
                   className="text-[12px] text-primary hover:underline"
                 >
-                  Forgot password?
+                  {t('forgotPassword')}
                 </a>
               </div>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -96,14 +98,14 @@ export default function LoginPage() {
               className="mt-1 w-full h-10"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in…' : 'Sign in'}
+              {isLoading ? t('signingIn') : t('signIn')}
             </Button>
           </form>
 
           <p className="mt-5 text-center text-[13px] text-muted-foreground">
-            Don&apos;t have an account?{' '}
+            {t('noAccount')}{' '}
             <a href="/signup" className="text-primary hover:underline font-medium">
-              Create one
+              {t('createOne')}
             </a>
           </p>
         </div>

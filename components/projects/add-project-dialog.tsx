@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { SupabaseService } from '@/lib/services/supabase-service';
@@ -22,6 +23,9 @@ interface AddProjectDialogProps {
 }
 
 export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) {
+  const t = useTranslations('projects');
+  const tCommon = useTranslations('common');
+  const tOrgs = useTranslations('organizations');
   const [name, setName] = useState('');
   const [status, setStatus] = useState<ProjectStatus>(ProjectStatus.Inquiry);
   const [notes, setNotes] = useState('');
@@ -124,7 +128,7 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
       <DialogContent className="max-w-2xl">
         <DialogHeader className="pb-1">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-sm font-semibold">Add Project</DialogTitle>
+            <DialogTitle className="text-sm font-semibold">{t('newProject')}</DialogTitle>
             <span className="text-xs font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
               {nextProjectNumber}
             </span>
@@ -136,27 +140,26 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
             {/* Left column: fields */}
             <div className="space-y-2">
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Project Name *</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Project name" required disabled={isSubmitting} className="h-7 text-xs" />
+                <Label className="text-[10px] text-gray-500">{t('fields.name')} *</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('fields.namePlaceholder')} required disabled={isSubmitting} className="h-7 text-xs" />
               </div>
 
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Status</Label>
+                <Label className="text-[10px] text-gray-500">{t('fields.status')}</Label>
                 <Select value={status} onValueChange={(v) => setStatus(v as ProjectStatus)} disabled={isSubmitting}>
                   <SelectTrigger size="xs" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.values(ProjectStatus).map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                      <SelectItem key={s} value={s}>{t(`status.${s}`)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Client Organization */}
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Client Organization</Label>
+                <Label className="text-[10px] text-gray-500">{t('fields.clientOrganization')}</Label>
                 {selectedOrg ? (
                   <div className="flex items-center gap-1 h-7 px-2 text-xs border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
                     <span className="flex-1 truncate">{selectedOrg.name}</span>
@@ -178,14 +181,14 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
                               setOrgDropdownOpen(false);
                             }
                           }}
-                          placeholder="Search organization…"
+                          placeholder={`${tOrgs('searchOrganizations')}`}
                           disabled={isSubmitting}
                           className="h-7 text-xs pl-6"
                         />
                         {orgDropdownOpen && (
                           <div className="absolute top-full left-0 right-0 mt-0.5 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-48 overflow-y-auto">
                             {filteredOrgs.length === 0 ? (
-                              <div className="text-xs text-gray-400 px-2 py-1.5">No organizations found</div>
+                              <div className="text-xs text-gray-400 px-2 py-1.5">{tOrgs('noOrganizationsMatch')}</div>
                             ) : filteredOrgs.map((org) => (
                               <button key={org.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { setClientOrgId(org.id); setOrgSearchQuery(''); setOrgDropdownOpen(false); }} className="w-full text-left text-xs px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">{org.name}</button>
                             ))}
@@ -193,22 +196,22 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
                         )}
                       </div>
                       <Button type="button" variant="outline" size="sm" className="h-7 text-xs px-2 shrink-0" onClick={() => setShowOrgCreate(!showOrgCreate)} disabled={isSubmitting}>
-                        <Plus className="h-3 w-3 mr-1" />New
+                        <Plus className="h-3 w-3 mr-1" />{tCommon('create')}
                       </Button>
                     </div>
                     {showOrgCreate && (
                       <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded p-2 space-y-1.5 bg-gray-50 dark:bg-gray-800/50">
-                        <p className="text-[10px] font-medium text-gray-500 uppercase">New Organization</p>
-                        <Input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name *" className="h-7 text-xs" disabled={isCreatingOrg} autoFocus />
+                        <p className="text-[10px] font-medium text-gray-500 uppercase">{tOrgs('newOrganization')}</p>
+                        <Input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder={tOrgs('fields.namePlaceholder')} className="h-7 text-xs" disabled={isCreatingOrg} autoFocus />
                         <SearchableSelect
                           options={Object.values(OrganizationJobType).map(t => ({ id: t, label: t }))}
                           value={newOrgType || null}
                           onChange={(v) => setNewOrgType(v ?? '')}
-                          placeholder="Search type..."
+                          placeholder={`${tCommon('search')}…`}
                         />
                         <div className="flex gap-1">
-                          <Button type="button" size="sm" className="h-6 text-xs flex-1" onClick={handleCreateOrg} disabled={!newOrgName.trim() || isCreatingOrg}>{isCreatingOrg ? 'Creating…' : 'Create & Select'}</Button>
-                          <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setShowOrgCreate(false); setNewOrgName(''); setNewOrgType(''); }} disabled={isCreatingOrg}>Cancel</Button>
+                          <Button type="button" size="sm" className="h-6 text-xs flex-1" onClick={handleCreateOrg} disabled={!newOrgName.trim() || isCreatingOrg}>{isCreatingOrg ? tCommon('saving') : tCommon('create')}</Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { setShowOrgCreate(false); setNewOrgName(''); setNewOrgType(''); }} disabled={isCreatingOrg}>{tCommon('cancel')}</Button>
                         </div>
                       </div>
                     )}
@@ -217,29 +220,28 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
               </div>
 
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Inquiry Country</Label>
+                <Label className="text-[10px] text-gray-500">{t('fields.inquiryCountry')}</Label>
                 <SearchableSelect
                   options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
                   value={inquiryCountry || null}
                   onChange={(v) => setInquiryCountry(v ?? '')}
-                  placeholder="Search country..."
+                  placeholder={`${tCommon('search')}…`}
                 />
               </div>
 
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Shooting Location</Label>
-                <Input value={shootingLocation} onChange={(e) => setShootingLocation(e.target.value)} placeholder="e.g. Berlin, Germany" disabled={isSubmitting} className="h-7 text-xs" />
+                <Label className="text-[10px] text-gray-500">{t('fields.shootingLocation')}</Label>
+                <Input value={shootingLocation} onChange={(e) => setShootingLocation(e.target.value)} placeholder={t('fields.shootingLocation')} disabled={isSubmitting} className="h-7 text-xs" />
               </div>
 
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Notes</Label>
-                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes…" rows={3} disabled={isSubmitting} className="text-xs resize-none" />
+                <Label className="text-[10px] text-gray-500">{t('fields.notes')}</Label>
+                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('fields.notes')} rows={3} disabled={isSubmitting} className="text-xs resize-none" />
               </div>
             </div>
 
-            {/* Right column: calendar */}
             <div>
-              <Label className="text-[10px] text-gray-500 block mb-1.5">Schedule</Label>
+              <Label className="text-[10px] text-gray-500 block mb-1.5">{t('sections.schedule')}</Label>
               <div className="border border-gray-200 dark:border-gray-700 rounded p-3 bg-gray-50 dark:bg-gray-800/50">
                 <InlineDateRangePicker
                   startDate={startDate}
@@ -253,10 +255,10 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
 
           <div className="flex justify-end gap-2 pt-3">
             <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={() => { resetForm(); onOpenChange(false); }} disabled={isSubmitting}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" size="sm" className="h-7 text-xs" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding…' : 'Add Project'}
+              {isSubmitting ? tCommon('saving') : t('addProject')}
             </Button>
           </div>
         </form>

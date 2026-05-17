@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Plus, Share2, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Project, ProjectCalendar } from '@/lib/types/models';
 import { PROJECT_COLORS, PROJECT_COLOR_SHADES, ProjectStatus } from '@/lib/types/models';
@@ -27,6 +28,8 @@ function getCalendarColor(projectColor: string, indexInProject: number): string 
 }
 
 export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAddCalendar, onDeleteCalendar, onShareCalendar }: Props) {
+  const t = useTranslations('calendar');
+  const tCommon = useTranslations('common');
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -57,7 +60,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
   return (
     <div className="w-52 shrink-0 border-r overflow-y-auto bg-gray-50 dark:bg-gray-950 flex flex-col">
       <div className="px-3 py-2 border-b">
-        <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Calendars</span>
+        <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{t('title')}</span>
       </div>
 
       <div className="flex-1 overflow-y-auto py-1">
@@ -83,7 +86,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
                 <span className="text-xs font-medium truncate flex-1">{project.name}</span>
                 <button
                   type="button"
-                  title="Add sub-calendar"
+                  title={t('addCalendar')}
                   onClick={e => { e.stopPropagation(); setAddingTo(project.id); setNewName(''); }}
                   className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-700 transition-opacity"
                 >
@@ -100,7 +103,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
                         type="button"
                         onClick={() => onToggleVisibility(cal.id, !cal.is_visible)}
                         className="shrink-0"
-                        title={cal.is_visible ? 'Hide' : 'Show'}
+                        title={cal.is_visible ? t('visibility.hide') : t('visibility.show')}
                       >
                         <span
                           className="h-2.5 w-2.5 rounded-sm inline-block border"
@@ -116,7 +119,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
                       <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
                         <button
                           type="button"
-                          title="Share / Copy ICS link"
+                          title={t('copyShareLink')}
                           onClick={() => onShareCalendar(cal)}
                           className="text-gray-400 hover:text-blue-600"
                         >
@@ -124,9 +127,9 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
                         </button>
                         <button
                           type="button"
-                          title="Delete calendar"
+                          title={tCommon('delete')}
                           onClick={() => {
-                            if (confirm(`Delete calendar "${cal.name}"? All events will be deleted.`)) {
+                            if (confirm(t('confirmDeleteEvent'))) {
                               onDeleteCalendar(cal.id);
                             }
                           }}
@@ -149,10 +152,10 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
                           if (e.key === 'Enter') handleAdd(project.id);
                           if (e.key === 'Escape') setAddingTo(null);
                         }}
-                        placeholder="Calendar name…"
+                        placeholder={t('addCalendar')}
                         className="text-xs border rounded px-1.5 py-0.5 flex-1 min-w-0 bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
-                      <button type="button" onClick={() => handleAdd(project.id)} className="text-xs text-blue-600 font-medium">Add</button>
+                      <button type="button" onClick={() => handleAdd(project.id)} className="text-xs text-blue-600 font-medium">{tCommon('add')}</button>
                     </div>
                   )}
 
@@ -162,7 +165,7 @@ export function CalendarSidebar({ projects, calendars, onToggleVisibility, onAdd
                       onClick={() => { setAddingTo(project.id); setNewName(''); }}
                       className="w-full text-left px-2 py-0.5 text-[10px] text-gray-400 hover:text-gray-600 italic"
                     >
-                      + Add calendar
+                      + {t('addCalendar')}
                     </button>
                   )}
                 </div>

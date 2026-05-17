@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/main-layout';
 import { useInvoiceStore } from '@/lib/stores/invoice-store';
 import { Button } from '@/components/ui/button';
@@ -17,18 +18,20 @@ import { InvoiceDetailPanel } from '@/components/invoices/invoice-detail-panel';
 import type { Invoice } from '@/lib/types/models';
 
 function ListHeader() {
+  const t = useTranslations('invoices.columns');
+  const cols = ['number', 'recipient', 'date', 'total', 'status'] as const;
   return (
     <div
       aria-hidden
       className="sticky top-0 z-10 hidden md:grid items-center gap-3 bg-muted/60 px-5 py-2.5 border-b backdrop-blur-sm"
       style={{ gridTemplateColumns: '1.5fr 2fr 1fr 1fr 1fr' }}
     >
-      {['Number', 'Recipient', 'Date', 'Total', 'Status'].map((col, i) => (
+      {cols.map((col, i) => (
         <div
           key={col}
           className={`text-[11px] font-semibold text-muted-foreground uppercase tracking-wide ${i === 3 ? 'text-right' : ''}`}
         >
-          {col}
+          {t(col)}
         </div>
       ))}
     </div>
@@ -36,6 +39,8 @@ function ListHeader() {
 }
 
 export default function InvoicesPage() {
+  const t = useTranslations('invoices');
+  const tCommon = useTranslations('common');
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -67,12 +72,12 @@ export default function InvoicesPage() {
   if (isMobile) {
     return (
       <MainLayout>
-        <MobilePageHeader title="Invoices" subtitle="Desktop only" />
+        <MobilePageHeader title={t('title')} />
         <MobileDesktopOnlyPlaceholder
-          title="Invoices are available on desktop"
-          description="Invoice creation and PDF generation are optimised for larger screens. Please use CrewBooklet on a desktop browser for invoices."
+          title={t('title')}
+          description={t('searchInvoices')}
           actionHref="/"
-          actionLabel="Go to Dashboard"
+          actionLabel={tCommon('back')}
         />
       </MainLayout>
     );
@@ -82,18 +87,18 @@ export default function InvoicesPage() {
     <MainLayout>
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Invoices"
-          subtitle={invoices.length > 0 ? `${invoices.length} invoices` : undefined}
+          title={t('title')}
+          subtitle={invoices.length > 0 ? t('count', { count: invoices.length }) : undefined}
           search={
             !selectedInvoice ? (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
                 <Input
-                  placeholder="Search invoices…"
+                  placeholder={t('searchInvoices')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="pl-9 h-9"
-                  aria-label="Search invoices"
+                  aria-label={t('searchInvoices')}
                 />
               </div>
             ) : undefined
@@ -102,7 +107,7 @@ export default function InvoicesPage() {
             canCreate ? (
               <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
                 <Plus className="h-4 w-4" aria-hidden />
-                New Invoice
+                {t('newInvoice')}
               </Button>
             ) : undefined
           }
@@ -119,16 +124,16 @@ export default function InvoicesPage() {
         ) : (
           <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
-              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">{tCommon('loading')}</div>
             ) : filtered.length === 0 ? (
               <div className="flex h-40 flex-col items-center justify-center gap-3">
                 <p className="text-sm text-muted-foreground">
-                  {searchQuery ? 'No invoices match your search' : 'No invoices yet'}
+                  {searchQuery ? t('noInvoicesMatch') : t('noInvoicesYet')}
                 </p>
                 {!searchQuery && canCreate && (
                   <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                    Create your first invoice
+                    {t('addFirstInvoice')}
                   </Button>
                 )}
               </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Invoice, InvoiceItem, InvoiceAttachment, InvoiceAcontoApplication } from '@/lib/types/models';
 import { InvoiceStatus, InvoiceDocumentType } from '@/lib/types/models';
 import { SupabaseService } from '@/lib/services/supabase-service';
@@ -70,16 +71,18 @@ function AttachmentRow({
         {att.file_size && <div className="text-[9px] text-gray-400">{fmtFileSize(att.file_size)}</div>}
       </div>
       <button type="button" onClick={() => onDownload(att)} className="text-gray-400 hover:text-gray-700 shrink-0" title="Download">
-        <Download className="h-3 w-3" />
+        <Download className="h-3 w-3" aria-hidden />
       </button>
       <button type="button" onClick={() => onDelete(att)} className="text-gray-400 hover:text-red-600 shrink-0" title="Remove">
-        <X className="h-3 w-3" />
+        <X className="h-3 w-3" aria-hidden />
       </button>
     </div>
   );
 }
 
 export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetailPanelProps) {
+  const t = useTranslations('invoices');
+  const tCommon = useTranslations('common');
   const [edited, setEdited] = useState<Invoice>({ ...invoice, items: invoice.items ?? [] });
   const [items, setItems] = useState<InvoiceItem[]>(invoice.items ?? []);
   const [acontoApplications, setAcontoApplications] = useState<InvoiceAcontoApplication[]>(
@@ -398,7 +401,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 border-b bg-card px-5 py-3 shrink-0">
-        <Button variant="ghost" size="sm" onClick={onClose} className="gap-1.5 text-[13px] text-muted-foreground" aria-label="Back to invoices">
+        <Button variant="ghost" size="sm" onClick={onClose} className="gap-1.5 text-[13px] text-muted-foreground" aria-label={t('linkedDocs.backToList')}>
           <ChevronLeft className="h-4 w-4" />Back
         </Button>
         <div className="flex-1" />
@@ -411,7 +414,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
             <Ban className="h-3.5 w-3.5" />Storno / Korrektur
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={readOnly} className="text-muted-foreground/50 hover:text-destructive gap-1.5 h-8 text-[13px]" aria-label="Delete invoice">
+        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={readOnly} className="text-muted-foreground/50 hover:text-destructive gap-1.5 h-8 text-[13px]" aria-label={t('linkedDocs.deleteInvoice')}>
           <Trash2 className="h-3.5 w-3.5" />Delete
         </Button>
       </div>
@@ -424,15 +427,9 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
           <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs flex items-start gap-2">
             <Ban className="h-4 w-4 shrink-0 mt-0.5 text-amber-700" />
             <div className="text-amber-900">
-              {isStornoDoc && (
-                <>Diese Stornorechnung ist final und kann nicht mehr bearbeitet werden.</>
-              )}
-              {isOriginalCorrected && (
-                <>Diese Rechnung wurde durch eine Revisionsrechnung ersetzt und kann nicht mehr bearbeitet werden.</>
-              )}
-              {isOriginalCancelled && !isOriginalCorrected && (
-                <>Diese Rechnung wurde storniert und kann nicht mehr bearbeitet werden.</>
-              )}
+              {isStornoDoc && t('readOnly.stornoFinal')}
+              {isOriginalCorrected && t('readOnly.replacedByRevision')}
+              {isOriginalCancelled && !isOriginalCorrected && t('readOnly.cancelled')}
             </div>
           </div>
         )}
@@ -441,11 +438,11 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
         {(linkedStorno || linkedRevision || correctsInvoice || revisionOfInvoice || chainRevisions.length > 0) && (
           <div className="rounded-md border bg-muted/20 px-3 py-2 space-y-1.5">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Korrekturen / Storno
+              {t('linkedDocs.heading')}
             </div>
             {correctsInvoice && (
               <LinkedDocRow
-                label="Storniert"
+                label={t('linkedDocs.cancelled')}
                 target={correctsInvoice}
                 onOpen={() => openInvoice(correctsInvoice.id)}
                 onPrint={() => openPrint(correctsInvoice.id)}
@@ -453,7 +450,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
             )}
             {revisionOfInvoice && (
               <LinkedDocRow
-                label="Revision von"
+                label={t('linkedDocs.revisionOf')}
                 target={revisionOfInvoice}
                 onOpen={() => openInvoice(revisionOfInvoice.id)}
                 onPrint={() => openPrint(revisionOfInvoice.id)}
@@ -461,7 +458,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
             )}
             {linkedStorno && (
               <LinkedDocRow
-                label="Stornorechnung"
+                label={t('linkedDocs.stornoInvoice')}
                 target={linkedStorno}
                 onOpen={() => openInvoice(linkedStorno.id)}
                 onPrint={() => openPrint(linkedStorno.id)}
@@ -469,7 +466,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
             )}
             {linkedRevision && (
               <LinkedDocRow
-                label="Revisionsrechnung"
+                label={t('linkedDocs.revisionInvoice')}
                 target={linkedRevision}
                 onOpen={() => openInvoice(linkedRevision.id)}
                 onPrint={() => openPrint(linkedRevision.id)}
@@ -478,7 +475,7 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
             {chainRevisions.map(r => (
               <LinkedDocRow
                 key={r.id}
-                label="Revision"
+                label={t('linkedDocs.revision')}
                 target={r}
                 onOpen={() => openInvoice(r.id)}
                 onPrint={() => openPrint(r.id)}

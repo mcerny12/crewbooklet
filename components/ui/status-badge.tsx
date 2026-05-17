@@ -1,4 +1,7 @@
+'use client';
+
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 // ── Project status ───────────────────────────────────────────────────────────
@@ -12,14 +15,7 @@ const PROJECT_STATUS_CLASSES: Record<string, string> = {
   HOLD:       'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
-const PROJECT_STATUS_LABELS: Record<string, string> = {
-  INQUIRY:    'Inquiry',
-  BUDGET:     'Budget',
-  PRODUCTION: 'Production',
-  COMPLETED:  'Completed',
-  CANCELLED:  'Cancelled',
-  HOLD:       'Hold',
-};
+const PROJECT_STATUS_VALUES = new Set(Object.keys(PROJECT_STATUS_CLASSES));
 
 // ── Invoice status ───────────────────────────────────────────────────────────
 
@@ -33,15 +29,7 @@ const INVOICE_STATUS_CLASSES: Record<string, string> = {
   revision_draft:  'bg-slate-100  text-slate-600  border border-slate-200',
 };
 
-const INVOICE_STATUS_LABELS: Record<string, string> = {
-  draft:           'Draft',
-  sent:            'Sent',
-  paid:            'Paid',
-  overdue:         'Overdue',
-  cancelled:       'Storniert',
-  corrected:       'Korrigiert',
-  revision_draft:  'Revision draft',
-};
+const INVOICE_STATUS_VALUES = new Set(Object.keys(INVOICE_STATUS_CLASSES));
 
 // ── Assignment / availability status ─────────────────────────────────────────
 
@@ -56,6 +44,8 @@ const AVAILABILITY_STATUS_CLASSES: Record<string, string> = {
   'Cancelled':    'bg-red-50    text-red-600    border border-red-200',
   'No Response':  'bg-slate-100 text-slate-500  border border-slate-200',
 };
+
+const AVAILABILITY_STATUS_VALUES = new Set(Object.keys(AVAILABILITY_STATUS_CLASSES));
 
 // ── Generic badge ────────────────────────────────────────────────────────────
 
@@ -81,16 +71,21 @@ function StatusPill({
 // ── Exported convenience components ─────────────────────────────────────────
 
 export function ProjectStatusBadge({ status }: { status: string }) {
+  const t = useTranslations('projects.status');
+  const label = PROJECT_STATUS_VALUES.has(status) ? t(status) : status;
   return (
     <StatusPill
-      label={PROJECT_STATUS_LABELS[status] ?? status}
+      label={label}
       className={PROJECT_STATUS_CLASSES[status] ?? 'bg-slate-100 text-slate-600'}
     />
   );
 }
 
 export function InvoiceStatusBadge({ status }: { status: string }) {
-  const label = INVOICE_STATUS_LABELS[status] ?? (status.charAt(0).toUpperCase() + status.slice(1));
+  const t = useTranslations('invoices.status');
+  const label = INVOICE_STATUS_VALUES.has(status)
+    ? t(status)
+    : status.charAt(0).toUpperCase() + status.slice(1);
   return (
     <StatusPill
       label={label}
@@ -100,9 +95,11 @@ export function InvoiceStatusBadge({ status }: { status: string }) {
 }
 
 export function AvailabilityBadge({ status }: { status: string }) {
+  const t = useTranslations('assignmentStatus');
+  const label = AVAILABILITY_STATUS_VALUES.has(status) ? t(status) : status;
   return (
     <StatusPill
-      label={status}
+      label={label}
       className={AVAILABILITY_STATUS_CLASSES[status] ?? 'bg-slate-100 text-slate-500'}
     />
   );

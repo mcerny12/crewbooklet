@@ -11,26 +11,30 @@ import {
 
 export type NavVisibility = 'all' | 'desktop-only' | 'mobile-only';
 
+/**
+ * `labelKey` is a translation key under the `navigation` namespace.
+ * Components rendering nav items must translate it via `useTranslations('navigation')`.
+ */
 export type NavItem = {
   href: string;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
   visibility?: NavVisibility;
 };
 
 export const primaryNavItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/people', label: 'People', icon: Users },
-  { href: '/projects', label: 'Projects', icon: Briefcase },
-  { href: '/organizations', label: 'Organizations', icon: Building2 },
-  { href: '/invoices', label: 'Invoices', icon: FileText, visibility: 'desktop-only' },
-  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-  { href: '/search', label: 'Search', icon: Search, visibility: 'mobile-only' },
+  { href: '/', labelKey: 'dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/people', labelKey: 'people', icon: Users },
+  { href: '/projects', labelKey: 'projects', icon: Briefcase },
+  { href: '/organizations', labelKey: 'organizations', icon: Building2 },
+  { href: '/invoices', labelKey: 'invoices', icon: FileText, visibility: 'desktop-only' },
+  { href: '/calendar', labelKey: 'calendar', icon: CalendarDays },
+  { href: '/search', labelKey: 'search', icon: Search, visibility: 'mobile-only' },
 ];
 
 export const adminNavItems: NavItem[] = [
-  { href: '/admin', label: 'User Management', icon: Shield },
+  { href: '/admin', labelKey: 'userManagement', icon: Shield },
 ];
 
 export function isNavItemActive(pathname: string, href: string, exact?: boolean): boolean {

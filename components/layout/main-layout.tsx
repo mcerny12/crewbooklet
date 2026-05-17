@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Sidebar } from './sidebar';
 
@@ -9,6 +10,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const session = useAuthStore(state => state.session);
   const isLoading = useAuthStore(state => state.isLoading);
+  const tCommon = useTranslations('common');
 
   useEffect(() => {
     if (!isLoading && !session.isAuthenticated) {
@@ -19,7 +21,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">{tCommon('loading')}</div>
       </div>
     );
   }

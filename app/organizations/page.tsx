@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/main-layout';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { usePeopleStore } from '@/lib/stores/people-store';
@@ -21,6 +22,8 @@ import type { Organization, Project, Person } from '@/lib/types/models';
 type DrillTarget = { type: 'project'; item: Project } | { type: 'person'; item: Person };
 
 function ListHeader() {
+  const t = useTranslations('organizations.columns');
+  const cols = ['nameAndType', 'email', 'phone', 'website', 'location'] as const;
   return (
     <div
       aria-hidden
@@ -28,14 +31,16 @@ function ListHeader() {
       style={{ gridTemplateColumns: '28px 2fr 1.5fr 1fr 1fr 1fr' }}
     >
       <div />
-      {['Name & Type', 'Email', 'Phone', 'Website', 'Location'].map(col => (
-        <div key={col} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{col}</div>
+      {cols.map(col => (
+        <div key={col} className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">{t(col)}</div>
       ))}
     </div>
   );
 }
 
 export default function OrganizationsPage() {
+  const t = useTranslations('organizations');
+  const tCommon = useTranslations('common');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -52,7 +57,6 @@ export default function OrganizationsPage() {
 
   useEffect(() => { fetchOrganizations(); fetchPeople(); fetchProjects(); }, [fetchOrganizations, fetchPeople, fetchProjects]);
 
-  // Restore selection from URL on initial load
   useEffect(() => {
     if (urlParamsReadRef.current || organizations.length === 0) return;
     urlParamsReadRef.current = true;
@@ -82,14 +86,14 @@ export default function OrganizationsPage() {
       <div className="flex h-full flex-col">
         {/* Mobile header */}
         <MobilePageHeader
-          title="Organizations"
-          subtitle={organizations.length > 0 ? `${organizations.length} orgs` : undefined}
+          title={t('title')}
+          subtitle={organizations.length > 0 ? t('count', { count: organizations.length }) : undefined}
           rightAction={
             canCreate && !selectedOrg ? (
               <button
                 type="button"
                 onClick={() => setIsAddDialogOpen(true)}
-                aria-label="Add organization"
+                aria-label={t('actions.addOrganization')}
                 className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               >
                 <Plus className="h-5 w-5" aria-hidden />
@@ -100,18 +104,18 @@ export default function OrganizationsPage() {
         {/* Desktop header */}
         <div className="hidden lg:block">
           <PageHeader
-            title="Organizations"
-            subtitle={organizations.length > 0 ? `${organizations.length} companies & vendors` : undefined}
+            title={t('title')}
+            subtitle={organizations.length > 0 ? t('subtitle', { count: organizations.length }) : undefined}
             search={
               !selectedOrg ? (
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
                   <Input
-                    placeholder="Search organizations…"
+                    placeholder={t('searchOrganizations')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 h-9"
-                    aria-label="Search organizations"
+                    aria-label={t('searchOrganizations')}
                   />
                 </div>
               ) : undefined
@@ -120,7 +124,7 @@ export default function OrganizationsPage() {
               canCreate ? (
                 <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="h-9 gap-1.5">
                   <Plus className="h-4 w-4" aria-hidden />
-                  Add Organization
+                  {t('addOrganization')}
                 </Button>
               ) : undefined
             }
@@ -147,16 +151,16 @@ export default function OrganizationsPage() {
         ) : (
           <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
-              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">Loading…</div>
+              <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">{tCommon('loading')}</div>
             ) : filteredOrganizations.length === 0 ? (
               <div className="flex h-40 flex-col items-center justify-center gap-3">
                 <p className="text-sm text-muted-foreground">
-                  {searchQuery ? 'No organizations match your search' : 'No organizations yet'}
+                  {searchQuery ? t('noOrganizationsMatch') : t('noOrganizationsYet')}
                 </p>
                 {!searchQuery && canCreate && (
                   <Button variant="outline" size="sm" onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-                    Add your first organization
+                    {t('addFirstOrganization')}
                   </Button>
                 )}
               </div>

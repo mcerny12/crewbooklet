@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,8 @@ interface AddPersonDialogProps {
 }
 
 export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
+  const t = useTranslations('people');
+  const tCommon = useTranslations('common');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobilePhone, setMobilePhone] = useState('');
@@ -68,68 +71,63 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent className="w-full max-w-lg sm:max-w-2xl p-0 gap-0">
         <DialogHeader className="px-4 pt-4 pb-3 border-b">
-          <DialogTitle className="text-sm font-semibold">Add Person</DialogTitle>
+          <DialogTitle className="text-sm font-semibold">{t('addPersonTitle')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col max-h-[80vh]">
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
-            {/* Name — full width always */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Name *</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required disabled={isSubmitting} className="h-9 text-sm" />
+              <label className="text-xs font-medium text-muted-foreground">{t('fields.name')} *</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('fields.namePlaceholder')} required disabled={isSubmitting} className="h-9 text-sm" />
             </div>
 
-            {/* Email + Phone — stack on mobile, side-by-side on sm */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Email</label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="john@example.com" disabled={isSubmitting} className="h-9 text-sm" />
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.email')}</label>
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder={t('fields.email')} disabled={isSubmitting} className="h-9 text-sm" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Phone</label>
-                <Input value={mobilePhone} onChange={(e) => setMobilePhone(e.target.value)} type="tel" placeholder="+49 123 456 789" disabled={isSubmitting} className="h-9 text-sm" />
-              </div>
-            </div>
-
-            {/* Jobs + Languages — stack on mobile */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Jobs / Roles (up to 3)</label>
-                <MultiSelect options={jobOptions} selected={jobs} onChange={setJobs} placeholder="Select jobs…" maxSelections={3} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Languages</label>
-                <MultiSelect options={languageOptions} selected={languages} onChange={setLanguages} placeholder="Select languages…" />
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.mobilePhone')}</label>
+                <Input value={mobilePhone} onChange={(e) => setMobilePhone(e.target.value)} type="tel" placeholder={t('fields.mobilePhone')} disabled={isSubmitting} className="h-9 text-sm" />
               </div>
             </div>
 
-            {/* City + Country — stack on mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">City</label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Berlin" disabled={isSubmitting} className="h-9 text-sm" />
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.jobs')}</label>
+                <MultiSelect options={jobOptions} selected={jobs} onChange={setJobs} placeholder={t('fields.selectJob')} maxSelections={3} />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Country</label>
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.languages')}</label>
+                <MultiSelect options={languageOptions} selected={languages} onChange={setLanguages} placeholder={tCommon('selectPlaceholder')} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.city')}</label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('fields.city')} disabled={isSubmitting} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">{t('fields.country')}</label>
                 <SearchableSelect
                   options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
                   value={country || null}
                   onChange={(v) => setCountry(v ?? '')}
-                  placeholder="Search country..."
+                  placeholder={`${tCommon('search')}…`}
                 />
               </div>
             </div>
 
           </div>
 
-          {/* Sticky footer */}
           <div className="shrink-0 flex justify-end gap-2 px-4 py-3 border-t bg-background">
             <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => { resetForm(); onOpenChange(false); }} disabled={isSubmitting}>
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" size="sm" className="h-9" disabled={isSubmitting || !name.trim()}>
-              {isSubmitting ? 'Adding…' : 'Add Person'}
+              {isSubmitting ? `${tCommon('saving')}` : t('addPerson')}
             </Button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useInvoiceStore } from '@/lib/stores/invoice-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
@@ -26,6 +27,9 @@ interface AddInvoiceDialogProps {
 }
 
 export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDialogProps) {
+  const t = useTranslations('invoices');
+  const tCommon = useTranslations('common');
+  const appLocale = useLocale();
   const [nextNumber, setNextNumber] = useState('…');
   const [projectId, setProjectId] = useState<string | null>(null);
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -111,6 +115,9 @@ export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDi
         recipient_city: recipientCity || null,
         recipient_country: recipientCountry || null,
         reference: selectedProject?.project_number ?? null,
+        // Drafts may follow the current app language until finalized.
+        // Finalization (mark as sent) elsewhere should freeze this value.
+        document_language: appLocale === 'de' || appLocale === 'en' ? appLocale : null,
       });
 
       reset();
@@ -138,7 +145,7 @@ export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDi
       <DialogContent className="max-w-md">
         <DialogHeader className="pb-1">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-sm font-semibold">New Invoice</DialogTitle>
+            <DialogTitle className="text-sm font-semibold">{t('newInvoice')}</DialogTitle>
             <span className="text-xs font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
               {nextNumber}
             </span>
@@ -147,7 +154,7 @@ export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDi
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-0.5">
-            <Label className="text-[10px] text-gray-500">Invoice Date</Label>
+            <Label className="text-[10px] text-gray-500">{t('fields.date')}</Label>
             <Input
               type="date"
               value={date}
@@ -158,19 +165,18 @@ export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDi
           </div>
 
           <div className="space-y-0.5">
-            <Label className="text-[10px] text-gray-500">Project</Label>
+            <Label className="text-[10px] text-gray-500">{t('fields.project')}</Label>
             <SearchableSelect
               options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
               value={projectId}
               onChange={setProjectId}
-              placeholder="Search project..."
+              placeholder={`${tCommon('search')}…`}
             />
           </div>
 
-          {/* Recipient preview */}
           {clientOrg && !showAddressOverride && (
             <div className="rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-3 py-2 space-y-0.5">
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Recipient (from org)</div>
+              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{t('fields.recipientName')}</div>
               <div className="text-xs text-gray-700 dark:text-gray-300">{orgAddressPreview}</div>
               <button
                 type="button"
@@ -178,67 +184,54 @@ export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDi
                 className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5 mt-0.5"
               >
                 <ChevronDown className="h-3 w-3" />
-                Use a different address
+                {tCommon('edit')}
               </button>
             </div>
           )}
 
-          {!clientOrg && !projectId && (
-            <div className="text-[10px] text-gray-400 italic">
-              Select a project to auto-fill the recipient from its client organisation.
-            </div>
-          )}
-
-          {!clientOrg && projectId && (
-            <div className="text-[10px] text-amber-600">
-              This project has no client organisation set — you can fill the address manually in the invoice detail.
-            </div>
-          )}
-
-          {/* Address override */}
           {showAddressOverride && (
             <div className="rounded border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-3 py-2 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">Override Address</div>
+                <div className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide">{t('fields.recipientName')}</div>
                 <button
                   type="button"
                   onClick={() => setShowAddressOverride(false)}
                   className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"
                 >
                   <ChevronUp className="h-3 w-3" />
-                  Use org address
+                  {tCommon('cancel')}
                 </button>
               </div>
               <Input
                 value={overrideName}
                 onChange={e => setOverrideName(e.target.value)}
-                placeholder="Name"
+                placeholder={t('fields.recipientName')}
                 className="h-7 text-xs"
               />
               <Input
                 value={overrideStreet}
                 onChange={e => setOverrideStreet(e.target.value)}
-                placeholder="Street"
+                placeholder={t('fields.recipientStreet')}
                 className="h-7 text-xs"
               />
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   value={overrideZip}
                   onChange={e => setOverrideZip(e.target.value)}
-                  placeholder="ZIP"
+                  placeholder={t('fields.recipientZip')}
                   className="h-7 text-xs"
                 />
                 <Input
                   value={overrideCity}
                   onChange={e => setOverrideCity(e.target.value)}
-                  placeholder="City"
+                  placeholder={t('fields.recipientCity')}
                   className="h-7 text-xs col-span-2"
                 />
               </div>
               <Input
                 value={overrideCountry}
                 onChange={e => setOverrideCountry(e.target.value)}
-                placeholder="Country"
+                placeholder={t('fields.recipientCountry')}
                 className="h-7 text-xs"
               />
             </div>
@@ -253,10 +246,10 @@ export function AddInvoiceDialog({ open, onOpenChange, onCreated }: AddInvoiceDi
               onClick={() => { reset(); onOpenChange(false); }}
               disabled={isSubmitting}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" size="sm" className="h-7 text-xs" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating…' : 'Create Invoice'}
+              {isSubmitting ? `${tCommon('saving')}` : t('addInvoice')}
             </Button>
           </div>
         </form>

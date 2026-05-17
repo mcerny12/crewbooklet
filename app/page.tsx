@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/main-layout';
 import { MobilePageHeader } from '@/components/layout/mobile-page-header';
 import { usePeopleStore } from '@/lib/stores/people-store';
@@ -15,9 +16,9 @@ import { MobileDashboardSection } from '@/components/mobile/mobile-dashboard-sec
 import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
 import { Users, Briefcase, Building2, MapPin, CalendarDays } from 'lucide-react';
 import { ProjectStatus, type Project } from '@/lib/types/models';
-import { format } from 'date-fns';
 
 function MobileProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+  const format = useFormatter();
   return (
     <button
       type="button"
@@ -35,7 +36,7 @@ function MobileProjectCard({ project, onClick }: { project: Project; onClick: ()
         {project.start_date && (
           <span className="flex items-center gap-1">
             <CalendarDays className="h-3 w-3" aria-hidden />
-            {format(new Date(project.start_date), 'MMM d, yyyy')}
+            {format.dateTime(new Date(project.start_date), { day: 'numeric', month: 'short', year: 'numeric' })}
           </span>
         )}
         {(project.shooting_location || project.inquiry_country) && (
@@ -50,6 +51,8 @@ function MobileProjectCard({ project, onClick }: { project: Project; onClick: ()
 }
 
 function MobileUpcomingSchedule({ projects }: { projects: Project[] }) {
+  const t = useTranslations('dashboard');
+  const format = useFormatter();
   const upcoming = projects
     .filter(p => p.start_date && new Date(p.start_date) >= new Date())
     .sort((a, b) => new Date(a.start_date!).getTime() - new Date(b.start_date!).getTime())
@@ -57,7 +60,7 @@ function MobileUpcomingSchedule({ projects }: { projects: Project[] }) {
 
   if (upcoming.length === 0) {
     return (
-      <p className="py-4 text-center text-sm text-muted-foreground">No upcoming shoots scheduled</p>
+      <p className="py-4 text-center text-sm text-muted-foreground">{t('noUpcomingShoots')}</p>
     );
   }
 
@@ -67,10 +70,10 @@ function MobileUpcomingSchedule({ projects }: { projects: Project[] }) {
         <div key={project.id} className="flex items-center gap-3 px-4 py-3">
           <div className="shrink-0 rounded-xl bg-primary/10 px-2 py-1 text-center min-w-[48px]">
             <p className="text-[10px] font-semibold uppercase text-primary">
-              {format(new Date(project.start_date!), 'MMM')}
+              {format.dateTime(new Date(project.start_date!), { month: 'short' })}
             </p>
             <p className="text-lg font-bold leading-tight text-primary">
-              {format(new Date(project.start_date!), 'd')}
+              {format.dateTime(new Date(project.start_date!), { day: 'numeric' })}
             </p>
           </div>
           <div className="min-w-0 flex-1">
@@ -103,6 +106,8 @@ function MobileStatMini({ title, value, href, router }: {
 
 export default function Home() {
   const router = useRouter();
+  const t = useTranslations('dashboard');
+  const locale = useLocale();
 
   const people = usePeopleStore(state => state.people);
   const fetchPeople = usePeopleStore(state => state.fetchPeople);
@@ -124,23 +129,23 @@ export default function Home() {
   );
 
   return (
-    <MainLayout>
+    <MainLayout key={locale}>
       <div className="flex h-full flex-col overflow-y-auto">
         {/* Mobile header */}
         <MobilePageHeader title="CrewBooklet" />
         {/* Desktop header */}
         <div className="hidden lg:flex shrink-0 border-b bg-card h-12 items-center px-4">
-          <h1 className="text-[15px] font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-[15px] font-semibold tracking-tight">{t('title')}</h1>
         </div>
 
-        {/* Mobile layout: ongoing → calendar → datasets */}
+        {/* Mobile layout */}
         <div
           className="lg:hidden space-y-5 px-4 py-4"
           style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
         >
-          <MobileDashboardSection title="Ongoing Projects">
+          <MobileDashboardSection title={t('ongoingProjects')}>
             {activeProjects.length === 0 ? (
-              <MobileEmptyState title="No ongoing projects" description="Active productions will appear here." />
+              <MobileEmptyState title={t('noOngoingProjects')} description={t('noOngoingProjectsDescription')} />
             ) : (
               <div className="space-y-3">
                 {activeProjects.slice(0, 5).map(project => (
@@ -154,38 +159,38 @@ export default function Home() {
             )}
           </MobileDashboardSection>
 
-          <MobileDashboardSection title="Upcoming Schedule">
+          <MobileDashboardSection title={t('upcomingSchedule')}>
             <MobileUpcomingSchedule projects={projects} />
           </MobileDashboardSection>
 
-          <MobileDashboardSection title="Overview">
+          <MobileDashboardSection title={t('overview')}>
             <div className="grid grid-cols-3 gap-3">
-              <MobileStatMini title="People" value={people.length} href="/people" router={router} />
-              <MobileStatMini title="Projects" value={projects.length} href="/projects" router={router} />
-              <MobileStatMini title="Orgs" value={organizations.length} href="/organizations" router={router} />
+              <MobileStatMini title={t('people')} value={people.length} href="/people" router={router} />
+              <MobileStatMini title={t('projects')} value={projects.length} href="/projects" router={router} />
+              <MobileStatMini title={t('orgs')} value={organizations.length} href="/organizations" router={router} />
             </div>
           </MobileDashboardSection>
         </div>
 
-        {/* Desktop layout: stat cards → calendar + recent projects */}
+        {/* Desktop layout */}
         <div className="hidden lg:block flex-1 p-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
-              title="Crew members"
+              title={t('crewMembers')}
               value={people.length}
               icon={Users}
               colorClass="bg-blue-50 text-blue-600"
               onClick={() => router.push('/people')}
             />
             <StatCard
-              title="Active projects"
+              title={t('activeProjects')}
               value={activeProjects.length}
               icon={Briefcase}
               colorClass="bg-emerald-50 text-emerald-600"
               onClick={() => router.push('/projects')}
             />
             <StatCard
-              title="Organizations"
+              title={t('organizations')}
               value={organizations.length}
               icon={Building2}
               colorClass="bg-orange-50 text-orange-600"
