@@ -129,11 +129,39 @@ export function FeedbackOverlay() {
   // The toolbar and highlight must sit above every other layer in the app
   // (Radix Dialog, BottomDrawer, native popups), and must NOT be hidden by
   // Radix's aria-hidden / inert sweeps when a Dialog opens. To guarantee
-  // both, portal them straight to <body> and pin them to the top of the
-  // viewport's stacking context with an explicit max z-index plus
-  // `pointer-events: auto` so any ancestor's `pointer-events: none` from
-  // RemoveScroll / focus traps cannot disable them.
-  if (typeof document === 'undefined') return null;
+  // both, portal them into a dedicated container appended to <body>.
+  //
+  // Portalling directly to document.body during render races with React's
+  // reconciliation when other portals (Radix Dialog) mount/unmount as
+  // body children — manifests as
+  //   "Failed to execute 'insertBefore'/'removeChild' on 'Node'".
+  // A stable, owned container that React fully controls avoids that.
+  // Create the host element in a lazy state initialiser so it exists from
+  // first render and we don't have to do setState inside an effect. The
+  // effect only handles attach/detach to <body>.
+  const [portalNode] = useState<HTMLDivElement | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const el = document.createElement('div');
+    el.setAttribute('data-feedback-portal', '');
+    // The children already use position: fixed; the wrapper just provides
+    // a stable mount point that React owns and can patch without touching
+    // <body>'s other children (which is what causes the
+    // "insertBefore / removeChild" portal race against other portals).
+    el.style.position = 'fixed';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.width = '0';
+    el.style.height = '0';
+    el.style.zIndex = String(TOOLBAR_Z);
+    return el;
+  });
+  useEffect(() => {
+    if (!portalNode) return;
+    document.body.appendChild(portalNode);
+    return () => {
+      if (portalNode.parentNode) portalNode.parentNode.removeChild(portalNode);
+    };
+  }, [portalNode]);
 
   const overlay = (
     <>
@@ -204,7 +232,7 @@ export function FeedbackOverlay() {
 
   return (
     <>
-      {createPortal(overlay, document.body)}
+      {portalNode && createPortal(overlay, portalNode)}
       {selectedTarget && <FeedbackDialog />}
     </>
   );
