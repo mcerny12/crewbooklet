@@ -25,6 +25,14 @@ import type {
   CalendarEvent,
 } from '@/lib/types/models';
 import { InvoiceDocumentType, InvoiceItemType, InvoiceStatus } from '@/lib/types/models';
+import { calculateInvoiceTotals } from '@/lib/invoice/totals';
+
+// Accounting tolerance for cent-level rounding when reconciling computed vs stored totals.
+const TOTAL_RECONCILE_TOLERANCE = 0.01;
+
+function sumItemTotals(items: ReadonlyArray<{ total: number }>): number {
+  return items.reduce((sum, it) => sum + (it.total ?? 0), 0);
+}
 
 export class SupabaseService {
   // MARK: - Person Operations
@@ -1095,6 +1103,20 @@ export class SupabaseService {
     const stornoNumber = await SupabaseService.getNextStornoInvoiceNumber(source.invoice_number);
     const stornoDate = params.stornoDate ?? new Date().toISOString().slice(0, 10);
 
+    // Build items first, then derive total from them so the stored total
+    // can never drift from what the PDF/UI renders. Fail loudly if the
+    // computed reversal doesn't equal -(source.total).
+    const stornoItemsTemplate = SupabaseService.buildStornoLineItems(source, '');
+    const stornoTotal = sumItemTotals(stornoItemsTemplate);
+    const expectedTotal = -(source.total ?? 0);
+    if (Math.abs(stornoTotal - expectedTotal) > TOTAL_RECONCILE_TOLERANCE) {
+      throw new Error(
+        `Storno total mismatch for invoice ${source.invoice_number}: ` +
+        `computed ${stornoTotal.toFixed(2)} but expected ${expectedTotal.toFixed(2)}. ` +
+        `Refusing to create a storno whose items do not zero-sum the original.`
+      );
+    }
+
     const stornoPayload: Partial<Invoice> = {
       ...SupabaseService.copyInvoiceHeader(source),
       invoice_number: stornoNumber,
@@ -1110,14 +1132,14 @@ export class SupabaseService {
       reference: source.invoice_number,
       is_aconto: false,
       aconto_invoice_ids: [],
-      total: source.total != null ? -source.total : 0,
+      total: stornoTotal,
     };
 
     const stornoInvoice = await SupabaseService.addInvoice(stornoPayload);
     if (!stornoInvoice) throw new Error('Failed to create Stornorechnung');
 
     try {
-      const items = SupabaseService.buildStornoLineItems(source, stornoInvoice.id);
+      const items = stornoItemsTemplate.map(it => ({ ...it, invoice_id: stornoInvoice.id }));
       await SupabaseService.replaceInvoiceItems(stornoInvoice.id, items);
 
       await SupabaseService.updateInvoice(source.id, {
@@ -1174,6 +1196,19 @@ export class SupabaseService {
     const stornoDate = params.stornoDate ?? new Date().toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
 
+    // Build storno items first, recompute total from them, and assert the
+    // zero-sum invariant before any DB write.
+    const stornoItemsTemplate = SupabaseService.buildStornoLineItems(source, '');
+    const stornoTotal = sumItemTotals(stornoItemsTemplate);
+    const expectedStornoTotal = -(source.total ?? 0);
+    if (Math.abs(stornoTotal - expectedStornoTotal) > TOTAL_RECONCILE_TOLERANCE) {
+      throw new Error(
+        `Storno total mismatch for invoice ${source.invoice_number}: ` +
+        `computed ${stornoTotal.toFixed(2)} but expected ${expectedStornoTotal.toFixed(2)}. ` +
+        `Refusing to create a storno whose items do not zero-sum the original.`
+      );
+    }
+
     // 1. Create Stornorechnung
     const stornoPayload: Partial<Invoice> = {
       ...SupabaseService.copyInvoiceHeader(source),
@@ -1190,17 +1225,31 @@ export class SupabaseService {
       reference: source.invoice_number,
       is_aconto: false,
       aconto_invoice_ids: [],
-      total: source.total != null ? -source.total : 0,
+      total: stornoTotal,
     };
     const storno = await SupabaseService.addInvoice(stornoPayload);
     if (!storno) throw new Error('Failed to create Stornorechnung');
 
     let revision: Invoice | null = null;
     try {
-      const stornoItems = SupabaseService.buildStornoLineItems(source, storno.id);
+      const stornoItems = stornoItemsTemplate.map(it => ({ ...it, invoice_id: storno.id }));
       await SupabaseService.replaceInvoiceItems(storno.id, stornoItems);
 
-      // 2. Create revision-draft invoice with positive line items copied
+      // 2. Create revision-draft invoice with positive line items copied.
+      // Total is recomputed from copied items + (to-be-copied) aconto applications
+      // via the shared calculator and asserted against source.total.
+      const revisionTotals = calculateInvoiceTotals(
+        source.items ?? [],
+        source.aconto_applications ?? [],
+        InvoiceDocumentType.RevisionInvoice
+      );
+      const expectedRevisionTotal = source.total ?? 0;
+      if (Math.abs(revisionTotals.total - expectedRevisionTotal) > TOTAL_RECONCILE_TOLERANCE) {
+        throw new Error(
+          `Revision total mismatch for invoice ${source.invoice_number}: ` +
+          `computed ${revisionTotals.total.toFixed(2)} but expected ${expectedRevisionTotal.toFixed(2)}.`
+        );
+      }
       const revisionPayload: Partial<Invoice> = {
         ...SupabaseService.copyInvoiceHeader(source),
         invoice_number: revisionNumber,
@@ -1214,7 +1263,7 @@ export class SupabaseService {
         reference: source.invoice_number,
         is_aconto: source.is_aconto ?? false,
         aconto_invoice_ids: source.aconto_invoice_ids ?? [],
-        total: source.total ?? 0,
+        total: revisionTotals.total,
       };
       revision = await SupabaseService.addInvoice(revisionPayload);
       if (!revision) throw new Error('Failed to create revision invoice');
