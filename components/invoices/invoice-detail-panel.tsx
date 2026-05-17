@@ -573,6 +573,21 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
               <Label className="text-xs text-gray-500 mb-1 block">UID Empfänger</Label>
               <Input value={edited.uid_recipient ?? ''} onChange={e => handleChange('uid_recipient', e.target.value)} placeholder="VAT ID of recipient" className="h-8 text-sm" />
             </div>
+
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">{t('fields.documentLanguage')}</Label>
+              <Select
+                value={edited.document_language ?? ''}
+                onValueChange={v => handleChange('document_language', (v || null) as Invoice['document_language'])}
+              >
+                <SelectTrigger className="h-8 text-sm"><SelectValue placeholder={t('documentLanguagePlaceholder')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="de" className="text-sm">{t('documentLanguageOptions.de')}</SelectItem>
+                  <SelectItem value="en" className="text-sm">{t('documentLanguageOptions.en')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">{t('documentLanguageHint')}</p>
+            </div>
           </div>
         </div>
 

@@ -469,6 +469,7 @@ function useDocMeta(
 
 function PrintInvoiceInner({ invoiceId }: { invoiceId: string }) {
   const tCommon = useTranslations('common');
+  const tErrors = useTranslations('invoicePdf.errors');
 
   const [invoice,  setInvoice]  = useState<Invoice | null>(null);
   const [applications, setApplications] = useState<InvoiceAcontoApplication[]>([]);
@@ -563,6 +564,29 @@ function PrintInvoiceInner({ invoiceId }: { invoiceId: string }) {
     return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>{tCommon('loading')}</div>;
 
   const items    = invoice.items ?? [];
+  // Guard: a non-storno invoice that has only aconto deductions and zero
+  // positive line items would render as a blank document with a negative
+  // total. This usually means the line items failed to copy during
+  // revision creation (or were deleted). Refuse to print and surface the
+  // problem so the user can repair the data instead of issuing a bad PDF.
+  const positiveItemCount = items.filter(it => {
+    const t = it.item_type ?? InvoiceItemType.Service;
+    return t === InvoiceItemType.Service
+        || t === InvoiceItemType.Expense
+        || t === InvoiceItemType.Other;
+  }).length;
+  const isStornoDoc = invoice.document_type === InvoiceDocumentType.StornoInvoice;
+  if (!isStornoDoc && positiveItemCount === 0 && applications.length > 0) {
+    return (
+      <div style={{ padding: 40, fontFamily: 'sans-serif', maxWidth: 640, lineHeight: 1.5 }}>
+        <h1 style={{ fontSize: 18, marginBottom: 12 }}>{tErrors('blankRevisionTitle')}</h1>
+        <p style={{ marginBottom: 12 }}>{tErrors('blankRevisionBody')}</p>
+        <p style={{ fontFamily: 'monospace', fontSize: 12, color: '#666' }}>
+          {invoice.invoice_number}
+        </p>
+      </div>
+    );
+  }
   const computed = calculateInvoiceTotals(items, applications, invoice.document_type);
   const subtotal = computed.subtotal;
   const total    = computed.total;

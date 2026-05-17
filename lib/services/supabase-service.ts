@@ -1021,6 +1021,11 @@ export class SupabaseService {
       bank_recipient: source.bank_recipient ?? null,
       iban: source.iban ?? null,
       bic: source.bic ?? null,
+      // Inherit the issued document language. Storno/revision PDFs must render
+      // in the same language as the corrected/original invoice — switching
+      // the app locale must not retroactively change the language of an issued
+      // document chain.
+      document_language: source.document_language ?? null,
     };
   }
 
@@ -1196,6 +1201,22 @@ export class SupabaseService {
     }
     if (source.storno_invoice_id) {
       throw new Error('A Stornorechnung already exists for this invoice.');
+    }
+
+    // Refuse to revise a source whose line items did not load. Without this
+    // guard the revision would be created with zero items but inherit the
+    // applied aconto deductions, producing a PDF whose only positions are
+    // negative — a blank, negative-total document. Hard-fail and surface so
+    // the caller can fix the data instead of silently corrupting the chain.
+    const sourceItemCount = (source.items ?? []).length;
+    const sourceAppCount = (source.aconto_applications ?? []).length;
+    if (sourceItemCount === 0 && sourceAppCount > 0) {
+      throw new Error(
+        `Cannot create revision of ${source.invoice_number}: the original ` +
+        `has applied aconto deductions but no line items loaded. ` +
+        `Reload the invoice and try again; if the problem persists, the ` +
+        `source invoice may be missing its positions in the database.`
+      );
     }
 
     const rootOriginalId = source.original_invoice_id ?? source.id;

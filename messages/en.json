@@ -503,6 +503,11 @@
       }
     },
     "documentLanguageHint": "The document language is fixed on the PDF when issued and is not affected by the app language.",
+    "documentLanguagePlaceholder": "Use app language",
+    "documentLanguageOptions": {
+      "de": "Deutsch",
+      "en": "English"
+    },
     "readOnly": {
       "stornoFinal": "This storno invoice is final and cannot be edited any longer.",
       "replacedByRevision": "This invoice has been replaced by a revision invoice and cannot be edited any longer.",
@@ -713,6 +718,10 @@
     },
     "footer": {
       "page": "Page {current} / {total}"
+    },
+    "errors": {
+      "blankRevisionTitle": "Cannot generate PDF",
+      "blankRevisionBody": "This revision invoice has no billable line items but does contain aconto deductions — the result would be a blank document with a negative total. Open the invoice, add the missing positions, and try again."
     }
   },
   "feedback": {

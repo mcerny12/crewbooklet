@@ -503,6 +503,11 @@
       }
     },
     "documentLanguageHint": "Die Dokumentensprache wird beim Ausstellen der Rechnung fixiert und ist von der App-Sprache unabhängig.",
+    "documentLanguagePlaceholder": "App-Sprache verwenden",
+    "documentLanguageOptions": {
+      "de": "Deutsch",
+      "en": "English"
+    },
     "readOnly": {
       "stornoFinal": "Diese Stornorechnung ist final und kann nicht mehr bearbeitet werden.",
       "replacedByRevision": "Diese Rechnung wurde durch eine Revisionsrechnung ersetzt und kann nicht mehr bearbeitet werden.",
@@ -713,6 +718,10 @@
     },
     "footer": {
       "page": "Seite {current} / {total}"
+    },
+    "errors": {
+      "blankRevisionTitle": "PDF kann nicht erstellt werden",
+      "blankRevisionBody": "Diese Revisionsrechnung enthält keine Leistungspositionen, aber Aconto-Abzüge — das Ergebnis wäre ein leeres Dokument mit negativem Gesamtbetrag. Bitte öffne die Rechnung, ergänze die fehlenden Positionen und versuche es erneut."
     }
   },
   "feedback": {
