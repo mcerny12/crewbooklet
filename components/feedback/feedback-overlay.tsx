@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useFeedback } from './feedback-provider';
 import { extractTarget, isSensitiveElement } from './element-inspector';
@@ -58,6 +59,19 @@ export function FeedbackOverlay() {
       setSelectedTarget(extractTarget(target));
     };
 
+    // Radix Dialog closes on pointerdown/mousedown outside its content
+    // (`onPointerDownOutside`). When feedback mode is on, the user wants to
+    // click elements anywhere — including outside an open dialog — without
+    // closing the dialog. Swallow these events on the capture phase so
+    // Radix never sees them; the `click` handler above still captures the
+    // target for the inspector.
+    const swallowPointer = (e: Event) => {
+      const target = e.target as Element | null;
+      if (!target || isOverlayElement(target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedTarget(null);
@@ -67,12 +81,16 @@ export function FeedbackOverlay() {
 
     document.addEventListener('mouseover', onMouseOver, true);
     document.addEventListener('mouseout', onMouseOut, true);
+    document.addEventListener('pointerdown', swallowPointer, true);
+    document.addEventListener('mousedown', swallowPointer, true);
     document.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown);
 
     return () => {
       document.removeEventListener('mouseover', onMouseOver, true);
       document.removeEventListener('mouseout', onMouseOut, true);
+      document.removeEventListener('pointerdown', swallowPointer, true);
+      document.removeEventListener('mousedown', swallowPointer, true);
       document.removeEventListener('click', onClick, true);
       document.removeEventListener('keydown', onKeyDown);
     };
@@ -108,7 +126,16 @@ export function FeedbackOverlay() {
     }
   };
 
-  return (
+  // The toolbar and highlight must sit above every other layer in the app
+  // (Radix Dialog, BottomDrawer, native popups), and must NOT be hidden by
+  // Radix's aria-hidden / inert sweeps when a Dialog opens. To guarantee
+  // both, portal them straight to <body> and pin them to the top of the
+  // viewport's stacking context with an explicit max z-index plus
+  // `pointer-events: auto` so any ancestor's `pointer-events: none` from
+  // RemoveScroll / focus traps cannot disable them.
+  if (typeof document === 'undefined') return null;
+
+  const overlay = (
     <>
       {isActive && highlight && (
         <div
@@ -122,6 +149,11 @@ export function FeedbackOverlay() {
             background: 'rgba(37,99,235,0.08)',
             zIndex: HIGHLIGHT_Z,
           }}
+          // Radix sweeps siblings with aria-hidden when a Dialog opens; opt
+          // this node out so screen readers still see the highlight overlay
+          // (and so any tooling that turns aria-hidden into inert doesn't
+          // disable it).
+          data-radix-focus-guard=""
         />
       )}
 
@@ -131,7 +163,8 @@ export function FeedbackOverlay() {
           OVERLAY_CLASS,
           'fixed bottom-4 right-4 flex items-center gap-2 rounded-xl border bg-card p-2 shadow-lg'
         )}
-        style={{ zIndex: TOOLBAR_Z }}
+        style={{ zIndex: TOOLBAR_Z, pointerEvents: 'auto' }}
+        data-radix-focus-guard=""
       >
         <button
           type="button"
@@ -166,7 +199,12 @@ export function FeedbackOverlay() {
           Clear
         </button>
       </div>
+    </>
+  );
 
+  return (
+    <>
+      {createPortal(overlay, document.body)}
       {selectedTarget && <FeedbackDialog />}
     </>
   );
