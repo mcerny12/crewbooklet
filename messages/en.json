@@ -53,6 +53,7 @@
     "search": "Search",
     "admin": "Administration",
     "userManagement": "User Management",
+    "settings": "Settings",
     "workspace": "Workspace",
     "signOut": "Sign out",
     "openSidebar": "Open sidebar",
@@ -723,6 +724,29 @@
       "blankRevisionTitle": "Cannot generate PDF",
       "blankRevisionBody": "This revision invoice has no billable line items but does contain aconto deductions — the result would be a blank document with a negative total. Open the invoice, add the missing positions, and try again."
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "navAriaLabel": "Settings sections",
+    "sections": {
+      "general": "General",
+      "admin": "Administration",
+      "adminUsers": "User Management",
+      "adminJobTypes": "Job Types",
+      "adminRoles": "Roles",
+      "adminSystem": "System"
+    },
+    "appLanguage": {
+      "label": "App language",
+      "helper": "Controls the app interface language. Invoice document language is selected per invoice.",
+      "options": {
+        "de": "Deutsch",
+        "en": "English"
+      }
+    },
+    "saved": "Saved",
+    "saveError": "Failed to save",
+    "notAuthorized": "You do not have access to this area."
   },
   "feedback": {
     "title": "Feedback",

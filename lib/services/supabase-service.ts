@@ -23,6 +23,7 @@ import type {
   InvoiceAcontoApplication,
   ProjectCalendar,
   CalendarEvent,
+  UserSettings,
 } from '@/lib/types/models';
 import { InvoiceDocumentType, InvoiceItemType, InvoiceStatus } from '@/lib/types/models';
 import { calculateInvoiceTotals } from '@/lib/invoice/totals';
@@ -1367,6 +1368,42 @@ export class SupabaseService {
       try { await SupabaseService.deleteInvoice(storno.id); } catch { /* best effort */ }
       throw err;
     }
+  }
+
+  // MARK: - User Settings
+
+  static async fetchUserSettings(): Promise<UserSettings | null> {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user.id;
+    if (!userId) return null;
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) {
+      console.error('Error fetching user settings:', error);
+      return null;
+    }
+    return data as UserSettings | null;
+  }
+
+  static async upsertUserSettings(
+    updates: Partial<Pick<UserSettings, 'app_language'>>
+  ): Promise<UserSettings | null> {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user.id;
+    if (!userId) throw new Error('Not authenticated');
+    const { data, error } = await supabase
+      .from('user_settings')
+      .upsert({ user_id: userId, ...updates }, { onConflict: 'user_id' })
+      .select()
+      .single();
+    if (error) {
+      console.error('Error upserting user settings:', error);
+      throw error;
+    }
+    return data as UserSettings;
   }
 
   // MARK: - Calendar Operations

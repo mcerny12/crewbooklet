@@ -5,8 +5,8 @@ import {
   Building2,
   FileText,
   CalendarDays,
-  Shield,
   Search,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 
 export type NavVisibility = 'all' | 'desktop-only' | 'mobile-only';
@@ -31,11 +31,17 @@ export const primaryNavItems: NavItem[] = [
   { href: '/invoices', labelKey: 'invoices', icon: FileText, visibility: 'desktop-only' },
   { href: '/calendar', labelKey: 'calendar', icon: CalendarDays },
   { href: '/search', labelKey: 'search', icon: Search, visibility: 'mobile-only' },
+  { href: '/settings', labelKey: 'settings', icon: SettingsIcon },
 ];
 
-export const adminNavItems: NavItem[] = [
-  { href: '/admin', labelKey: 'userManagement', icon: Shield },
-];
+/**
+ * @deprecated Admin functionality now lives inside `/settings` as admin-only
+ * sections (gated by `usePermissions().isAdmin` in the UI and by
+ * `assertAdmin()` server-side in /api/admin/*). Kept as an empty export so
+ * legacy imports keep building during the transition; remove once no
+ * consumers reference it.
+ */
+export const adminNavItems: NavItem[] = [];
 
 export function isNavItemActive(pathname: string, href: string, exact?: boolean): boolean {
   if (exact) return pathname === href;

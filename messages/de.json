@@ -53,6 +53,7 @@
     "search": "Suche",
     "admin": "Administration",
     "userManagement": "Benutzerverwaltung",
+    "settings": "Einstellungen",
     "workspace": "Arbeitsbereich",
     "signOut": "Abmelden",
     "openSidebar": "Seitenleiste öffnen",
@@ -723,6 +724,29 @@
       "blankRevisionTitle": "PDF kann nicht erstellt werden",
       "blankRevisionBody": "Diese Revisionsrechnung enthält keine Leistungspositionen, aber Aconto-Abzüge — das Ergebnis wäre ein leeres Dokument mit negativem Gesamtbetrag. Bitte öffne die Rechnung, ergänze die fehlenden Positionen und versuche es erneut."
     }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "navAriaLabel": "Einstellungsbereiche",
+    "sections": {
+      "general": "Allgemein",
+      "admin": "Administration",
+      "adminUsers": "Benutzerverwaltung",
+      "adminJobTypes": "Jobtypen",
+      "adminRoles": "Rollen",
+      "adminSystem": "System"
+    },
+    "appLanguage": {
+      "label": "App-Sprache",
+      "helper": "Legt die Sprache der Benutzeroberfläche fest. Die Rechnungssprache wird pro Rechnung ausgewählt.",
+      "options": {
+        "de": "Deutsch",
+        "en": "English"
+      }
+    },
+    "saved": "Gespeichert",
+    "saveError": "Speichern fehlgeschlagen",
+    "notAuthorized": "Du hast keine Berechtigung für diesen Bereich."
   },
   "feedback": {
     "title": "Feedback",

@@ -35,7 +35,6 @@ export interface Person {
   // Additional
   notes?: string | null;
   financial_details?: FinancialDetails | null;
-  documents?: Document[] | null;
 }
 
 // MARK: - Supporting Enums for Person Model
@@ -307,7 +306,6 @@ export interface Organization {
   // Additional
   notes?: string | null;
   financial_details?: FinancialDetails | null;
-  documents?: Document[] | null;
 }
 
 // MARK: - Organization Job Types
@@ -622,6 +620,20 @@ export const GUEST_SESSION: UserSession = {
   isAuthenticated: false
 };
 
+// MARK: - User Settings
+export type AppLanguage = 'de' | 'en';
+
+export interface UserSettings {
+  user_id: string;
+  app_language: AppLanguage;
+  created_at: string;
+  updated_at: string;
+}
+
+export const DEFAULT_USER_SETTINGS: Pick<UserSettings, 'app_language'> = {
+  app_language: 'de',
+};
+
 // MARK: - Film Industry Countries
 export const FILM_COUNTRIES = [
   "Germany", "Austria", "Switzerland", "USA", "Canada", "United Kingdom",
@@ -752,16 +764,6 @@ export interface FinancialDetails {
   routing_number?: string | null;
   vat_number?: string | null;
   invoice_address?: Address | null;
-}
-
-// MARK: - Document Model
-export interface Document {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  upload_date: string;
-  file_url: string;
 }
 
 // MARK: - Invoice Model

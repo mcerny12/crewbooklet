@@ -9,12 +9,10 @@ import {
   LogOut, Film, PanelLeftClose, PanelLeftOpen, Menu, X, MessageSquareWarning,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { usePermissions } from '@/lib/hooks/use-permissions';
 import { useFeedback } from '@/components/feedback/feedback-provider';
 import { useSidebar } from './sidebar-context';
 import {
   primaryNavItems,
-  adminNavItems,
   isNavItemActive,
   getVisibleNavItems,
   type NavItem as NavItemType,
@@ -23,7 +21,6 @@ import { UserRole } from '@/lib/types/models';
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { cn } from '@/lib/utils';
 
 const SIDEBAR_ID = 'primary-sidebar';
@@ -258,12 +255,11 @@ export function MobileSidebarTrigger() {
 }
 
 function SidebarBody({
-  isDesktop, collapsed, pathname, isAdmin, session, onNavigate, onToggleDesktop, onCloseMobile, onSignOut,
+  isDesktop, collapsed, pathname, session, onNavigate, onToggleDesktop, onCloseMobile, onSignOut,
 }: {
   isDesktop: boolean;
   collapsed: boolean;
   pathname: string;
-  isAdmin: boolean;
   session: { email: string | null; role: UserRole };
   onNavigate: () => void;
   onToggleDesktop: () => void;
@@ -369,26 +365,11 @@ function SidebarBody({
             />
           ))}
         </SidebarNavGroup>
-
-        {isAdmin && (
-          <SidebarNavGroup label={tNav('admin')} collapsed={collapsed}>
-            {adminNavItems.map(item => (
-              <NavItem
-                key={item.href}
-                item={item}
-                collapsed={collapsed}
-                active={isNavItemActive(pathname, item.href, item.exact)}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </SidebarNavGroup>
-        )}
       </nav>
 
-      {/* Footer */}
+      {/* Footer — language switcher lives in /settings now, not here */}
       <div className={cn('border-t shrink-0 space-y-2', collapsed ? 'p-2' : 'p-3')}>
         <UserSummary collapsed={collapsed} email={session.email} role={session.role} />
-        <LanguageSwitcher collapsed={collapsed} />
         <FeedbackToggleButton collapsed={collapsed} />
         <SignOutButton collapsed={collapsed} onSignOut={onSignOut} />
       </div>
@@ -402,7 +383,6 @@ export function Sidebar() {
   const { isDesktop, collapsed, mobileOpen, setMobileOpen, toggleDesktop } = useSidebar();
   const session = useAuthStore(state => state.session);
   const signOut = useAuthStore(state => state.signOut);
-  const { isAdmin } = usePermissions();
 
   const onNavigate = React.useCallback(() => {
     if (!isDesktop) setMobileOpen(false);
@@ -418,7 +398,6 @@ export function Sidebar() {
       isDesktop={isDesktop}
       collapsed={collapsed}
       pathname={pathname}
-      isAdmin={isAdmin}
       session={{ email: session.email, role: session.role }}
       onNavigate={onNavigate}
       onToggleDesktop={toggleDesktop}
