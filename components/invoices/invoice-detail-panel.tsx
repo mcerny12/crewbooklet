@@ -132,14 +132,21 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
     }
   }, [invoice.id]);
 
-  // If the invoice prop arrives without applications, fetch them once.
+  // Always refetch authoritative invoice data on open. The store snapshot can
+  // be stale (e.g. items were repaired in the DB after the list was loaded),
+  // and autosave does a wholesale replace — without this, opening an invoice
+  // whose store copy has items=[] and then editing any item would wipe the
+  // real items in the DB. Treat the DB as source of truth on every open.
   useEffect(() => {
-    if (invoice.aconto_applications === undefined) {
-      SupabaseService.fetchInvoiceAcontoApplications(invoice.id)
-        .then(setAcontoApplications)
-        .catch(err => console.error('Failed to load aconto applications:', err));
-    }
-  }, [invoice.id, invoice.aconto_applications]);
+    let cancelled = false;
+    SupabaseService.fetchInvoice(invoice.id).then(fresh => {
+      if (cancelled || !fresh) return;
+      setEdited(prev => ({ ...prev, ...fresh, items: fresh.items ?? [] }));
+      setItems(fresh.items ?? []);
+      setAcontoApplications(fresh.aconto_applications ?? []);
+    }).catch(err => console.error('Failed to refresh invoice:', err));
+    return () => { cancelled = true; };
+  }, [invoice.id]);
 
   const scheduleSave = useCallback((data: Invoice, currentItems: InvoiceItem[]) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
