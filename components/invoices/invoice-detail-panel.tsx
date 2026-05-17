@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Invoice, InvoiceItem, InvoiceAttachment, InvoiceAcontoApplication } from '@/lib/types/models';
-import { InvoiceStatus, InvoiceDocumentType } from '@/lib/types/models';
+import { InvoiceStatus, InvoiceDocumentType, InvoiceItemType } from '@/lib/types/models';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import { calculateInvoiceTotals } from '@/lib/invoice/totals';
 import { Input } from '@/components/ui/input';
@@ -253,6 +253,10 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
   };
 
   const addItem = () => {
+    // item_type and source_invoice_id must be present, even if defaulted —
+    // PostgREST bulk insert normalises columns across rows and a row missing
+    // item_type would be sent as NULL (violating the NOT NULL constraint)
+    // when the existing rows already carry it.
     const newItem: InvoiceItem = {
       id: `temp-${Date.now()}`,
       invoice_id: edited.id,
@@ -263,6 +267,8 @@ export function InvoiceDetailPanel({ invoice, onClose, onDeleted }: InvoiceDetai
       unit_price: 0,
       tax_rate: 0,
       total: 0,
+      item_type: InvoiceItemType.Service,
+      source_invoice_id: null,
     };
     const newItems = [...items, newItem];
     setItems(newItems);

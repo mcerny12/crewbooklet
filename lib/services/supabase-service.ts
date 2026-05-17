@@ -205,7 +205,7 @@ export class SupabaseService {
 
   static async updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | null> {
     // Remove fields that don't exist as DB columns
-    const { user_id: _uid2, website: _w, financial_details: _fd, documents: _docs, ...cleanUpdates } = updates as Record<string, unknown>;
+    const { user_id: _uid2, website: _w, financial_details: _fd, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('organizations')
@@ -772,9 +772,29 @@ export class SupabaseService {
 
     if (items.length === 0) return [];
 
+    // PostgREST bulk insert normalises columns across rows: any field absent
+    // from one row but present on another is sent as explicit NULL. If a
+    // caller mixes DB-loaded rows (which carry item_type / source_invoice_id)
+    // with a freshly-added row that omits them, the omitted fields land in
+    // the database as NULL and the NOT NULL constraint on item_type rejects
+    // the entire INSERT — wiping the items (DELETE already ran). Normalise
+    // every row to the same shape with safe defaults.
+    const normalised = items.map(it => ({
+      invoice_id: it.invoice_id,
+      sort_order: it.sort_order,
+      description: it.description ?? '',
+      sub_description: it.sub_description ?? null,
+      quantity: it.quantity,
+      unit_price: it.unit_price,
+      tax_rate: it.tax_rate,
+      total: it.total,
+      item_type: it.item_type ?? InvoiceItemType.Service,
+      source_invoice_id: it.source_invoice_id ?? null,
+    }));
+
     const { data, error } = await supabase
       .from('invoice_items')
-      .insert(items)
+      .insert(normalised)
       .select();
 
     if (error) {
