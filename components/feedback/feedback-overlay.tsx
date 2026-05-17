@@ -49,6 +49,30 @@ export function FeedbackOverlay() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isActive, setActive, setSelectedTarget]);
 
+  // Block Radix DismissableLayer's document-level pointerdown listener while
+  // feedback mode is on. The intercept <div> below catches the click for our
+  // own React handler, but native pointerdown still bubbles through to
+  // document — where Radix sees the intercept as "outside" the dialog and
+  // dismisses the popup. React's stopPropagation does not stop native
+  // document listeners, so we listen on `window` during the CAPTURE phase
+  // (which fires before any document listener) and stop propagation there.
+  useEffect(() => {
+    if (!isActive) return;
+    const stop = (e: Event) => {
+      const t = e.target as Element | null;
+      // Allow events targeted at the toolbar / FeedbackDialog through so the
+      // user can still interact with feedback controls themselves.
+      if (!t || isOverlayElement(t)) return;
+      e.stopPropagation();
+    };
+    window.addEventListener('pointerdown', stop, true);
+    window.addEventListener('mousedown', stop, true);
+    return () => {
+      window.removeEventListener('pointerdown', stop, true);
+      window.removeEventListener('mousedown', stop, true);
+    };
+  }, [isActive, isOverlayElement]);
+
   // Find the real element under the cursor by briefly hiding the intercept
   // layer so elementFromPoint sees through it.
   const elementAtPoint = useCallback(
