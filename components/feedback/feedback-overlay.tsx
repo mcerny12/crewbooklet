@@ -19,6 +19,12 @@ interface HighlightBox {
 
 const TOOLBAR_Z = 2147483000;
 const HIGHLIGHT_Z = TOOLBAR_Z - 1;
+// The intercept layer sits just below the toolbar/highlight but above every
+// Radix dialog (z-50) and BottomDrawer. It captures pointer events before any
+// other listener on the document can react to them — that's the only reliable
+// way to keep Radix Dialog's `onPointerDownOutside` from dismissing a popup
+// while the user is inspecting an element inside it.
+const INTERCEPT_Z = HIGHLIGHT_Z - 1;
 
 export function FeedbackOverlay() {
   const { isActive, setActive, items, clearItems, selectedTarget, setSelectedTarget } = useFeedback();
@@ -30,71 +36,66 @@ export function FeedbackOverlay() {
     return !!el.closest(`.${OVERLAY_CLASS}`);
   }, []);
 
+  // Escape key still closes inspector / mode.
   useEffect(() => {
     if (!isActive) return;
-
-    const onMouseOver = (e: MouseEvent) => {
-      const target = e.target as Element | null;
-      if (!target || isOverlayElement(target)) {
-        setHighlight(null);
-        return;
-      }
-      const rect = target.getBoundingClientRect();
-      setHighlight({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
-    };
-
-    const onMouseOut = () => {
-      setHighlight(null);
-    };
-
-    const onClick = (e: MouseEvent) => {
-      const target = e.target as Element | null;
-      if (!target || isOverlayElement(target)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (isSensitiveElement(target)) {
-        alert('Cannot select sensitive elements');
-        return;
-      }
-      setSelectedTarget(extractTarget(target));
-    };
-
-    // Radix Dialog closes on pointerdown/mousedown outside its content
-    // (`onPointerDownOutside`). When feedback mode is on, the user wants to
-    // click elements anywhere — including outside an open dialog — without
-    // closing the dialog. Swallow these events on the capture phase so
-    // Radix never sees them; the `click` handler above still captures the
-    // target for the inspector.
-    const swallowPointer = (e: Event) => {
-      const target = e.target as Element | null;
-      if (!target || isOverlayElement(target)) return;
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedTarget(null);
         setActive(false);
       }
     };
-
-    document.addEventListener('mouseover', onMouseOver, true);
-    document.addEventListener('mouseout', onMouseOut, true);
-    document.addEventListener('pointerdown', swallowPointer, true);
-    document.addEventListener('mousedown', swallowPointer, true);
-    document.addEventListener('click', onClick, true);
     document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isActive, setActive, setSelectedTarget]);
 
-    return () => {
-      document.removeEventListener('mouseover', onMouseOver, true);
-      document.removeEventListener('mouseout', onMouseOut, true);
-      document.removeEventListener('pointerdown', swallowPointer, true);
-      document.removeEventListener('mousedown', swallowPointer, true);
-      document.removeEventListener('click', onClick, true);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [isActive, isOverlayElement, setActive, setSelectedTarget]);
+  // Find the real element under the cursor by briefly hiding the intercept
+  // layer so elementFromPoint sees through it.
+  const elementAtPoint = useCallback(
+    (clientX: number, clientY: number, interceptEl: HTMLElement | null): Element | null => {
+      const prev = interceptEl?.style.pointerEvents;
+      if (interceptEl) interceptEl.style.pointerEvents = 'none';
+      const el = document.elementFromPoint(clientX, clientY);
+      if (interceptEl) interceptEl.style.pointerEvents = prev || 'auto';
+      return el;
+    },
+    []
+  );
+
+  const interceptRef = useRef<HTMLDivElement | null>(null);
+
+  const handleInterceptMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = elementAtPoint(e.clientX, e.clientY, interceptRef.current);
+    if (!el || isOverlayElement(el)) {
+      setHighlight(null);
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    setHighlight({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+  }, [elementAtPoint, isOverlayElement]);
+
+  const handleInterceptLeave = useCallback(() => setHighlight(null), []);
+
+  const handleInterceptClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = elementAtPoint(e.clientX, e.clientY, interceptRef.current);
+    if (!el || isOverlayElement(el)) return;
+    if (isSensitiveElement(el)) {
+      alert('Cannot select sensitive elements');
+      return;
+    }
+    setSelectedTarget(extractTarget(el));
+  }, [elementAtPoint, isOverlayElement, setSelectedTarget]);
+
+  // Eat pointerdown / mousedown so nothing underneath (Radix DismissableLayer,
+  // focus changes, native button presses) reacts before our click handler
+  // runs. React's onPointerDown on the intercept layer is enough because the
+  // event never reaches the document — the overlay is the topmost hit.
+  const swallow = useCallback((e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -165,6 +166,29 @@ export function FeedbackOverlay() {
 
   const overlay = (
     <>
+      {/* Full-viewport intercept layer. Only active in feedback mode. Hidden
+          while the FeedbackDialog (target editor) is open so the user can
+          actually use that form. */}
+      {isActive && !selectedTarget && (
+        <div
+          ref={interceptRef}
+          className={cn(OVERLAY_CLASS, 'fixed inset-0')}
+          style={{
+            zIndex: INTERCEPT_Z,
+            pointerEvents: 'auto',
+            background: 'transparent',
+            cursor: 'crosshair',
+          }}
+          onPointerMove={handleInterceptMove}
+          onPointerLeave={handleInterceptLeave}
+          onPointerDown={swallow}
+          onMouseDown={swallow}
+          onClick={handleInterceptClick}
+          onContextMenu={swallow}
+          data-radix-focus-guard=""
+        />
+      )}
+
       {isActive && highlight && (
         <div
           className={cn(OVERLAY_CLASS, 'pointer-events-none fixed')}

@@ -9,9 +9,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useLocale } from 'next-intl';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { writeLocaleCookie } from '@/lib/i18n/locale-cookie';
+import { isLocale } from '@/i18n/routing';
 import {
   DEFAULT_USER_SETTINGS,
   type AppLanguage,
@@ -22,6 +24,7 @@ type EditableSettings = Partial<Pick<UserSettings, 'app_language'>>;
 
 export function useUserSettings() {
   const userId = useAuthStore((s) => s.session.userId);
+  const currentLocale = useLocale();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -68,9 +71,17 @@ export function useUserSettings() {
     [update]
   );
 
+  // When no user_settings row exists yet, fall back to the currently
+  // rendered locale rather than the static default — otherwise Settings
+  // would show "German" while the UI is rendering in English (or vice
+  // versa), confusing the user. AuthProvider seeds the row in the
+  // background; once that resolves this falls through to the DB value.
+  const appLanguage: AppLanguage = settings?.app_language
+    ?? (isLocale(currentLocale) ? currentLocale : DEFAULT_USER_SETTINGS.app_language);
+
   return {
     settings,
-    appLanguage: (settings?.app_language ?? DEFAULT_USER_SETTINGS.app_language) as AppLanguage,
+    appLanguage,
     isLoading,
     error,
     update,
