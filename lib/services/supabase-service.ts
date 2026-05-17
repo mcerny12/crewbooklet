@@ -571,7 +571,7 @@ export class SupabaseService {
   static async fetchInvoice(id: string): Promise<Invoice | null> {
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, items:invoice_items!invoice_items_invoice_id_fkey(*), aconto_applications:invoice_aconto_applications(*)')
+      .select('*, items:invoice_items!invoice_items_invoice_id_fkey(*), aconto_applications:invoice_aconto_applications!invoice_aconto_applications_invoice_id_fkey(*)')
       .eq('id', id)
       .single();
 
