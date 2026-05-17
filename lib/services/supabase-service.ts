@@ -549,7 +549,7 @@ export class SupabaseService {
   static async fetchInvoices(): Promise<Invoice[]> {
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, items:invoice_items(*)')
+      .select('*, items:invoice_items!invoice_items_invoice_id_fkey(*)')
       .order('invoice_number', { ascending: false });
 
     if (error) {
@@ -563,7 +563,7 @@ export class SupabaseService {
   static async fetchInvoice(id: string): Promise<Invoice | null> {
     const { data, error } = await supabase
       .from('invoices')
-      .select('*, items:invoice_items(*), aconto_applications:invoice_aconto_applications(*)')
+      .select('*, items:invoice_items!invoice_items_invoice_id_fkey(*), aconto_applications:invoice_aconto_applications(*)')
       .eq('id', id)
       .single();
 
