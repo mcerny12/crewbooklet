@@ -1104,15 +1104,24 @@ export class SupabaseService {
     const stornoDate = params.stornoDate ?? new Date().toISOString().slice(0, 10);
 
     // Build items first, then derive total from them so the stored total
-    // can never drift from what the PDF/UI renders. Fail loudly if the
-    // computed reversal doesn't equal -(source.total).
+    // can never drift from what the PDF/UI renders. The invariant compares
+    // sum(storno items) against -(source's actual final amount = subtotal
+    // − applied acontos), not -(source.total): `invoices.total` stores the
+    // line-item subtotal, while the financial amount that must zero-sum is
+    // what the PDF prints (subtotal − acontoSum).
     const stornoItemsTemplate = SupabaseService.buildStornoLineItems(source, '');
     const stornoTotal = sumItemTotals(stornoItemsTemplate);
-    const expectedTotal = -(source.total ?? 0);
+    const sourceFinal = calculateInvoiceTotals(
+      source.items,
+      source.aconto_applications,
+      source.document_type
+    ).total;
+    const expectedTotal = -sourceFinal;
     if (Math.abs(stornoTotal - expectedTotal) > TOTAL_RECONCILE_TOLERANCE) {
       throw new Error(
         `Storno total mismatch for invoice ${source.invoice_number}: ` +
-        `computed ${stornoTotal.toFixed(2)} but expected ${expectedTotal.toFixed(2)}. ` +
+        `computed ${stornoTotal.toFixed(2)} but expected ${expectedTotal.toFixed(2)} ` +
+        `(source final ${sourceFinal.toFixed(2)}). ` +
         `Refusing to create a storno whose items do not zero-sum the original.`
       );
     }
@@ -1197,14 +1206,22 @@ export class SupabaseService {
     const today = new Date().toISOString().slice(0, 10);
 
     // Build storno items first, recompute total from them, and assert the
-    // zero-sum invariant before any DB write.
+    // zero-sum invariant against the source's actual final amount (subtotal
+    // − applied acontos), not -(source.total) — see createInvoiceStorno
+    // for the rationale.
     const stornoItemsTemplate = SupabaseService.buildStornoLineItems(source, '');
     const stornoTotal = sumItemTotals(stornoItemsTemplate);
-    const expectedStornoTotal = -(source.total ?? 0);
+    const sourceFinal = calculateInvoiceTotals(
+      source.items,
+      source.aconto_applications,
+      source.document_type
+    ).total;
+    const expectedStornoTotal = -sourceFinal;
     if (Math.abs(stornoTotal - expectedStornoTotal) > TOTAL_RECONCILE_TOLERANCE) {
       throw new Error(
         `Storno total mismatch for invoice ${source.invoice_number}: ` +
-        `computed ${stornoTotal.toFixed(2)} but expected ${expectedStornoTotal.toFixed(2)}. ` +
+        `computed ${stornoTotal.toFixed(2)} but expected ${expectedStornoTotal.toFixed(2)} ` +
+        `(source final ${sourceFinal.toFixed(2)}). ` +
         `Refusing to create a storno whose items do not zero-sum the original.`
       );
     }
@@ -1236,20 +1253,10 @@ export class SupabaseService {
       await SupabaseService.replaceInvoiceItems(storno.id, stornoItems);
 
       // 2. Create revision-draft invoice with positive line items copied.
-      // Total is recomputed from copied items + (to-be-copied) aconto applications
-      // via the shared calculator and asserted against source.total.
-      const revisionTotals = calculateInvoiceTotals(
-        source.items ?? [],
-        source.aconto_applications ?? [],
-        InvoiceDocumentType.RevisionInvoice
-      );
-      const expectedRevisionTotal = source.total ?? 0;
-      if (Math.abs(revisionTotals.total - expectedRevisionTotal) > TOTAL_RECONCILE_TOLERANCE) {
-        throw new Error(
-          `Revision total mismatch for invoice ${source.invoice_number}: ` +
-          `computed ${revisionTotals.total.toFixed(2)} but expected ${expectedRevisionTotal.toFixed(2)}.`
-        );
-      }
+      // Revision is a value-preserving copy of the source: same items, same
+      // applied acontos (copied below via copyAppliedAcontosToInvoice).
+      // `invoices.total` stores the line-item subtotal — the final figure is
+      // derived at render time — so revision.total mirrors source.total.
       const revisionPayload: Partial<Invoice> = {
         ...SupabaseService.copyInvoiceHeader(source),
         invoice_number: revisionNumber,
@@ -1263,7 +1270,7 @@ export class SupabaseService {
         reference: source.invoice_number,
         is_aconto: source.is_aconto ?? false,
         aconto_invoice_ids: source.aconto_invoice_ids ?? [],
-        total: revisionTotals.total,
+        total: source.total ?? 0,
       };
       revision = await SupabaseService.addInvoice(revisionPayload);
       if (!revision) throw new Error('Failed to create revision invoice');
