@@ -430,7 +430,7 @@ function OverviewTab({ editedProject, updateField, organizations, onViewOrganiza
 
       <MobileField label="Inquiry Country" data-cb-field="inquiry-country">
         <SearchableSelect
-          options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+          options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
           value={editedProject.inquiry_country || null}
           onChange={(v) => updateField('inquiry_country', v)}
           placeholder="Search country..."

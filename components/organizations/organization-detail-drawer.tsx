@@ -170,7 +170,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
           </div>
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Country</Label>
-            <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} value={editedOrg.country || null} onChange={v => updateField('country', v)} placeholder="Search country..." />
+            <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty value={editedOrg.country || null} onChange={v => updateField('country', v)} placeholder="Search country..." />
           </div>
 
           {/* Invoice address toggle */}
@@ -190,7 +190,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
                   <Input value={editedOrg.zip_invoice || ''} onChange={e => updateField('zip_invoice', e.target.value || null)} placeholder={editedOrg.zip || 'ZIP'} className="h-7 text-xs" />
                   <Input value={editedOrg.city_invoice || ''} onChange={e => updateField('city_invoice', e.target.value || null)} placeholder={editedOrg.city || 'City'} className="h-7 text-xs" />
                 </div>
-                <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} value={editedOrg.country_invoice || null} onChange={v => updateField('country_invoice', v)} placeholder="Search country..." />
+                <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty value={editedOrg.country_invoice || null} onChange={v => updateField('country_invoice', v)} placeholder="Search country..." />
               </div>
             )}
           </div>

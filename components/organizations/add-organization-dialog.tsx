@@ -127,7 +127,7 @@ export function AddOrganizationDialog({ open, onOpenChange }: AddOrganizationDia
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">{t('fields.country')}</label>
                 <SearchableSelect
-                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
                   value={country || null}
                   onChange={(v) => setCountry(v ?? '')}
                   placeholder={`${tCommon('search')}…`}

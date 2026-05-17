@@ -222,7 +222,7 @@ export function AddProjectDialog({ open, onOpenChange }: AddProjectDialogProps) 
               <div className="space-y-0.5">
                 <Label className="text-[10px] text-gray-500">{t('fields.inquiryCountry')}</Label>
                 <SearchableSelect
-                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
                   value={inquiryCountry || null}
                   onChange={(v) => setInquiryCountry(v ?? '')}
                   placeholder={`${tCommon('search')}…`}

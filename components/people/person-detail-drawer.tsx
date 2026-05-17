@@ -176,7 +176,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
           <div className="space-y-0.5">
             <Label className="text-[10px] text-gray-500">Country</Label>
             <SearchableSelect
-              options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+              options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
               value={editedPerson.address?.country || null}
               onChange={v => updateField('address', { ...editedPerson.address, country: v })}
               placeholder="Search country..."

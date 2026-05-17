@@ -576,7 +576,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               <div className="space-y-0.5">
                 <Label className="text-[10px] font-medium text-gray-500">Inquiry Country</Label>
                 <SearchableSelect
-                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
                   value={editedProject.inquiry_country || null}
                   onChange={(v) => updateField('inquiry_country', v)}
                   placeholder="Search country..."

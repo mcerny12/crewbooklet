@@ -120,7 +120,7 @@ function OverviewTab({ editedOrg, updateField }: {
 
       <MobileField label="Country">
         <SearchableSelect
-          options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+          options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
           value={editedOrg.country || null}
           onChange={v => updateField('country', v)}
           placeholder="Search country..."
@@ -427,7 +427,7 @@ function FinancialTab({ editedOrg, updateField, useCustomInvoice, setUseCustomIn
             </div>
             <MobileField label="Country">
               <SearchableSelect
-                options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+                options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
                 value={editedOrg.country_invoice || null}
                 onChange={v => updateField('country_invoice', v)}
                 placeholder="Search country..."

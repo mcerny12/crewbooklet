@@ -17,9 +17,18 @@ interface SearchableSelectProps {
   onChange: (id: string | null) => void;
   placeholder?: string;
   className?: string;
+  /**
+   * When true, opens the dropdown with the full option list as soon as the
+   * input is focused (and keeps filtering as the user types). Use for fixed,
+   * reasonably-sized enumerations like country / department, where users
+   * expect to scan a list. Defaults to false to preserve the
+   * type-to-search behaviour used for large entity pickers
+   * (people / organizations / projects).
+   */
+  showOptionsWhenEmpty?: boolean;
 }
 
-export function SearchableSelect({ options, value, onChange, placeholder = 'Search...', className }: SearchableSelectProps) {
+export function SearchableSelect({ options, value, onChange, placeholder = 'Search...', className, showOptionsWhenEmpty = false }: SearchableSelectProps) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -85,12 +94,14 @@ export function SearchableSelect({ options, value, onChange, placeholder = 'Sear
         ref={inputRef}
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => { if (query.trim().length > 0) setOpen(true); }}
+        onFocus={() => {
+          if (showOptionsWhenEmpty || query.trim().length > 0) setOpen(true);
+        }}
         onBlur={() => { if (editing && selected) setEditing(false); }}
         placeholder={placeholder}
         className="min-h-9 text-sm pl-8"
       />
-      {open && query.trim().length > 0 && (
+      {open && (showOptionsWhenEmpty || query.trim().length > 0) && (
         <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg max-h-56 overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="text-sm text-muted-foreground px-3 py-2.5">No results found</div>

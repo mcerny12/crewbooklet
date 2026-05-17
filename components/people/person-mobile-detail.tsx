@@ -182,7 +182,7 @@ function AddressTab({ editedPerson, updateField }: {
       </div>
       <MobileField label="Country">
         <SearchableSelect
-          options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))}
+          options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
           value={addr?.country || null}
           onChange={v => update({ country: v })}
           placeholder="Search country..."
