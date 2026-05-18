@@ -33,7 +33,7 @@ import { PersonDetailPane } from '@/components/people/person-detail-drawer';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { ProjectMobileDetail } from './project-mobile-detail';
-import { DetailFrame, DesktopDetailSnapCanvas } from '@/components/detail';
+import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
 
 interface ProjectDetailPanelProps {
   project: Project;
@@ -544,10 +544,11 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           </div>
         </div>
 
-        {/* ── SINGLE FULL-HEIGHT HORIZONTAL SNAP CANVAS ── */}
-        <DesktopDetailSnapCanvas ariaLabel="Project detail frames">
+        {/* ── HORIZONTAL SLIDE CANVAS — each slide holds 1–2 frames ── */}
+        <DesktopDetailSnapCanvas ariaLabel="Project detail slides">
 
-            <DetailFrame title="Basic Information" className="h-full w-90 shrink-0 snap-start" data-cb-area="BasicInfo">
+          <DetailSlide ariaLabel="Project basics and schedule">
+            <DetailFrame title="Basic Information" className="flex-1" data-cb-area="BasicInfo">
               <div className="space-y-2 detail-form-fields">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-gray-500">Project Number</Label>
@@ -571,7 +572,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               </div>
             </DetailFrame>
 
-            <DetailFrame title="Schedule" className="h-full w-90 shrink-0 snap-start" data-cb-area="Schedule">
+            <DetailFrame title="Schedule" className="flex-1" data-cb-area="Schedule">
               <div className="detail-form-fields">
                 <InlineDateRangePicker
                   startDate={editedProject.start_date ?? null}
@@ -581,56 +582,13 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                 />
               </div>
             </DetailFrame>
+          </DetailSlide>
 
-            <DetailFrame title="Location" className="h-full w-95 shrink-0 snap-start" data-cb-area="Location">
-              <div className="space-y-2 detail-form-fields">
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] text-gray-500">Inquiry Country</Label>
-                  <SearchableSelect
-                    options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
-                    value={editedProject.inquiry_country || null}
-                    onChange={(v) => updateField('inquiry_country', v)}
-                    placeholder="Search country..."
-                  />
-                </div>
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] text-gray-500">Shooting Location</Label>
-                  <Input
-                    value={editedProject.shooting_location || ''}
-                    onChange={(e) => updateField('shooting_location', e.target.value || null)}
-                    placeholder="e.g. Berlin"
-                    className="h-7 text-xs"
-                  />
-                </div>
-              </div>
-            </DetailFrame>
-
-            <DetailFrame title="Client / Organization" className="h-full w-110 shrink-0 snap-start" data-cb-area="ClientOrg">
-              {selectedOrg ? (
-                <ClientOrgCard
-                  org={selectedOrg}
-                  onView={() => setOrgForDetail(selectedOrg)}
-                  onClear={() => {
-                    if (confirm('Remove client organization from this project?')) handleOrgClear();
-                  }}
-                />
-              ) : (
-                <div className="space-y-2">
-                  <Label className="text-[10px] text-gray-500">Link client organization</Label>
-                  <SearchableSelect
-                    options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
-                    value={null}
-                    onChange={(id) => { if (id) updateField('client_organization_id', id); }}
-                    placeholder="Search organization..."
-                  />
-                </div>
-              )}
-            </DetailFrame>
-
+          <DetailSlide ariaLabel="Project crew">
             <DetailFrame
               title="Crew"
               description={assignments.length > 0 ? `${assignments.length} crew member${assignments.length === 1 ? '' : 's'}` : undefined}
-              className="h-full w-240 shrink-0 snap-start"
+              className="flex-1"
               data-cb-area="CrewSection"
               action={
                 <div className="flex items-center gap-1.5">
@@ -815,7 +773,59 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               )}
             </DetailFrame>
 
-            <DetailFrame title="Notes" className="h-full w-105 shrink-0 snap-start" data-cb-area="Notes">
+          </DetailSlide>
+
+          <DetailSlide ariaLabel="Project location and client">
+            <DetailFrame title="Location" className="flex-1" data-cb-area="Location">
+              <div className="space-y-2 detail-form-fields">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-gray-500">Inquiry Country</Label>
+                  <SearchableSelect
+                    options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
+                    value={editedProject.inquiry_country || null}
+                    onChange={(v) => updateField('inquiry_country', v)}
+                    placeholder="Search country..."
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-gray-500">Shooting Location</Label>
+                  <Input
+                    value={editedProject.shooting_location || ''}
+                    onChange={(e) => updateField('shooting_location', e.target.value || null)}
+                    placeholder="e.g. Berlin"
+                    className="h-7 text-xs"
+                  />
+                </div>
+              </div>
+            </DetailFrame>
+
+            <DetailFrame title="Client / Organization" className="flex-1" data-cb-area="ClientOrg">
+              {selectedOrg ? (
+                <ClientOrgCard
+                  org={selectedOrg}
+                  onView={() => setOrgForDetail(selectedOrg)}
+                  onClear={() => {
+                    if (confirm('Remove client organization from this project?')) handleOrgClear();
+                  }}
+                />
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-[10px] text-gray-500">Link client organization</Label>
+                  <SearchableSelect
+                    options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
+                    value={null}
+                    onChange={(id) => { if (id) updateField('client_organization_id', id); }}
+                    placeholder="Search organization..."
+                  />
+                </div>
+              )}
+            </DetailFrame>
+
+
+          </DetailSlide>
+
+          <DetailSlide ariaLabel="Project notes and metadata">
+            <DetailFrame title="Notes" className="flex-1" data-cb-area="Notes">
               <div className="flex h-full flex-col detail-form-fields">
                 <Textarea
                   value={editedProject.notes || ''}
@@ -828,7 +838,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
             <DetailFrame
               title="Metadata"
-              className="h-full w-80 shrink-0 snap-start"
+              className="flex-1"
               data-cb-area="Metadata"
               action={
                 <Button
@@ -848,6 +858,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                 userId={project.user_id}
               />
             </DetailFrame>
+          </DetailSlide>
 
         </DesktopDetailSnapCanvas>
 

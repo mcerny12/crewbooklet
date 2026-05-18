@@ -20,7 +20,7 @@ import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, Building2, ExternalLink
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { PersonMobileDetail } from './person-mobile-detail';
-import { DetailFrame, DesktopDetailSnapCanvas } from '@/components/detail';
+import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 
 interface PersonDetailContentProps {
@@ -117,7 +117,6 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
   }
 
   const fdBase = { id: editedPerson.financial_details?.id ?? '', ...editedPerson.financial_details };
-  const frameCn = 'h-full shrink-0 snap-start';
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-background" data-cb-component="PersonDetailPane">
@@ -142,10 +141,11 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         </div>
       </div>
 
-      {/* ── SINGLE FULL-HEIGHT HORIZONTAL SNAP CANVAS ── */}
-      <DesktopDetailSnapCanvas ariaLabel="Person detail frames">
+      {/* ── HORIZONTAL SLIDE CANVAS — each slide holds 1–2 frames ── */}
+      <DesktopDetailSnapCanvas ariaLabel="Person detail slides">
 
-        <DetailFrame title="Basic Information" className={`${frameCn} w-95`}>
+        <DetailSlide ariaLabel="Person basics and contact">
+          <DetailFrame title="Basic Information" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="name">
               <Label className="text-[10px] text-gray-500">Full Name</Label>
@@ -176,7 +176,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
           </div>
         </DetailFrame>
 
-        <DetailFrame title="Contact" className={`${frameCn} w-90`}>
+        <DetailFrame title="Contact" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="email">
               <Label className="text-[10px] text-gray-500">Email</Label>
@@ -196,89 +196,13 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             </div>
           </div>
         </DetailFrame>
+        </DetailSlide>
 
-        <DetailFrame title="Address" className={`${frameCn} w-95`}>
-          <div className="space-y-2 detail-form-fields">
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Street</Label>
-              <Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" />
-            </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Street 2</Label>
-              <Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" />
-            </div>
-            <div className="grid grid-cols-[70px_1fr] gap-1">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">ZIP</Label>
-                <Input value={editedPerson.address?.zip || ''} onChange={e => updateField('address', { ...editedPerson.address, zip: e.target.value || null })} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">City</Label>
-                <Input value={editedPerson.address?.city || ''} onChange={e => updateField('address', { ...editedPerson.address, city: e.target.value || null })} className="h-7 text-xs" />
-              </div>
-            </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Country</Label>
-              <SearchableSelect
-                options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
-                value={editedPerson.address?.country || null}
-                onChange={v => updateField('address', { ...editedPerson.address, country: v })}
-                placeholder="Search country..."
-              />
-            </div>
-          </div>
-        </DetailFrame>
-
-        <DetailFrame
-          title="Organization"
-          className={`${frameCn} w-105`}
-          action={!connectedOrg && !addingOrg ? (
-            <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
-              <Plus className="h-3 w-3 mr-1" />Link
-            </Button>
-          ) : null}
-        >
-          {addingOrg ? (
-            <div className="space-y-2">
-              <SearchableSelect
-                options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
-                value={newOrgId}
-                onChange={setNewOrgId}
-                placeholder="Search organization…"
-              />
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>
-                <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Link</Button>
-              </div>
-            </div>
-          ) : !connectedOrg ? (
-            <p className="text-xs text-gray-400 py-1">Not connected to any organization.</p>
-          ) : (
-            <div className="flex items-center gap-2 p-2 border rounded bg-muted/30 text-xs">
-              {getFaviconUrl(connectedOrg.website) && (
-                <img src={getFaviconUrl(connectedOrg.website)!} alt="" className="h-5 w-5 rounded shrink-0" onError={e => { e.currentTarget.style.display = 'none'; }} />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{connectedOrg.name}</div>
-                {connectedOrg.jobs?.length ? <div className="text-muted-foreground truncate">{connectedOrg.jobs.join(', ')}</div> : null}
-              </div>
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-              {onOpenOrg && (
-                <button type="button" onClick={() => onOpenOrg(connectedOrg)} className="text-muted-foreground hover:text-primary shrink-0" title="Open detail">
-                  <ExternalLink className="h-3 w-3" />
-                </button>
-              )}
-              <Button variant="ghost" size="sm" onClick={() => updateField('organization_id', null)} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0">
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
-        </DetailFrame>
-
+        <DetailSlide ariaLabel="Person projects">
         <DetailFrame
           title="Projects"
           description={assignments.length > 0 ? `${assignments.length} assignment${assignments.length === 1 ? '' : 's'}` : undefined}
-          className={`${frameCn} w-240`}
+          className="flex-1"
           action={
             !addingToProject ? (
               <Button size="sm" variant="ghost" onClick={() => setAddingToProject(true)} className="h-7 text-xs px-2">
@@ -357,8 +281,90 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             </div>
           )}
         </DetailFrame>
+        </DetailSlide>
 
-        <DetailFrame title="Financial" className={`${frameCn} w-105`}>
+        <DetailSlide ariaLabel="Person address and organization">
+        <DetailFrame title="Address" className="flex-1">
+          <div className="space-y-2 detail-form-fields">
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Street</Label>
+              <Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Street 2</Label>
+              <Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="grid grid-cols-[70px_1fr] gap-1">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">ZIP</Label>
+                <Input value={editedPerson.address?.zip || ''} onChange={e => updateField('address', { ...editedPerson.address, zip: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">City</Label>
+                <Input value={editedPerson.address?.city || ''} onChange={e => updateField('address', { ...editedPerson.address, city: e.target.value || null })} className="h-7 text-xs" />
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Country</Label>
+              <SearchableSelect
+                options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
+                value={editedPerson.address?.country || null}
+                onChange={v => updateField('address', { ...editedPerson.address, country: v })}
+                placeholder="Search country..."
+              />
+            </div>
+          </div>
+        </DetailFrame>
+
+        <DetailFrame
+          title="Organization"
+          className="flex-1"
+          action={!connectedOrg && !addingOrg ? (
+            <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
+              <Plus className="h-3 w-3 mr-1" />Link
+            </Button>
+          ) : null}
+        >
+          {addingOrg ? (
+            <div className="space-y-2">
+              <SearchableSelect
+                options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
+                value={newOrgId}
+                onChange={setNewOrgId}
+                placeholder="Search organization…"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>
+                <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Link</Button>
+              </div>
+            </div>
+          ) : !connectedOrg ? (
+            <p className="text-xs text-gray-400 py-1">Not connected to any organization.</p>
+          ) : (
+            <div className="flex items-center gap-2 p-2 border rounded bg-muted/30 text-xs">
+              {getFaviconUrl(connectedOrg.website) && (
+                <img src={getFaviconUrl(connectedOrg.website)!} alt="" className="h-5 w-5 rounded shrink-0" onError={e => { e.currentTarget.style.display = 'none'; }} />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{connectedOrg.name}</div>
+                {connectedOrg.jobs?.length ? <div className="text-muted-foreground truncate">{connectedOrg.jobs.join(', ')}</div> : null}
+              </div>
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+              {onOpenOrg && (
+                <button type="button" onClick={() => onOpenOrg(connectedOrg)} className="text-muted-foreground hover:text-primary shrink-0" title="Open detail">
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => updateField('organization_id', null)} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0">
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </DetailFrame>
+        </DetailSlide>
+
+        <DetailSlide ariaLabel="Person financial and notes">
+        <DetailFrame title="Financial" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="vat">
               <Label className="text-[10px] text-gray-500">VAT Number</Label>
@@ -381,7 +387,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
 
         <DetailFrame
           title="Notes / Metadata"
-          className={`${frameCn} w-105`}
+          className="flex-1"
           action={
             <Button
               variant="ghost"
@@ -408,6 +414,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             </div>
           </div>
         </DetailFrame>
+        </DetailSlide>
 
       </DesktopDetailSnapCanvas>
     </div>

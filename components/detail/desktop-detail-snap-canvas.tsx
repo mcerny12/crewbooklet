@@ -79,12 +79,13 @@ export function DesktopDetailSnapCanvas({
     const root = scrollRef.current;
     if (!root) return;
     if (event.target !== event.currentTarget) return;
+    const slideStep = root.clientWidth;
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      root.scrollBy({ left: 420, behavior: 'smooth' });
+      root.scrollBy({ left: slideStep, behavior: 'smooth' });
     } else if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      root.scrollBy({ left: -420, behavior: 'smooth' });
+      root.scrollBy({ left: -slideStep, behavior: 'smooth' });
     } else if (event.key === 'Home') {
       event.preventDefault();
       root.scrollTo({ left: 0, behavior: 'smooth' });
@@ -106,7 +107,7 @@ export function DesktopDetailSnapCanvas({
         onKeyDown={onKeyDown}
         className={cn(
           'flex h-full min-h-0 items-stretch gap-3 overflow-x-auto overflow-y-hidden',
-          'scroll-smooth px-3 py-3',
+          'scroll-smooth py-3',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-inset',
           snap === 'mandatory' && 'snap-x snap-mandatory',
           snap === 'proximity' && 'snap-x snap-proximity'

@@ -19,7 +19,7 @@ import { OrgLogo } from './org-logo';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { OrgMobileDetail } from './org-mobile-detail';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
-import { DetailFrame, DesktopDetailSnapCanvas } from '@/components/detail';
+import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
 
 interface OrgDetailContentProps {
   organization: Organization;
@@ -88,7 +88,6 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
 
   const orgTypeOptions = Object.values(OrganizationJobType).map(t => ({ value: t, label: t }));
   const fdBase = { id: editedOrg.financial_details?.id ?? '', ...editedOrg.financial_details };
-  const frameCn = 'h-full shrink-0 snap-start';
 
   if (isMobile) {
     return (
@@ -137,10 +136,11 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         </div>
       </div>
 
-      {/* ── SINGLE FULL-HEIGHT HORIZONTAL SNAP CANVAS ── */}
-      <DesktopDetailSnapCanvas ariaLabel="Organization detail frames">
+      {/* ── HORIZONTAL SLIDE CANVAS — each slide holds 1–2 frames ── */}
+      <DesktopDetailSnapCanvas ariaLabel="Organization detail slides">
 
-        <DetailFrame title="Basic Information" className={`${frameCn} w-95`}>
+        <DetailSlide ariaLabel="Organization basics and contact">
+        <DetailFrame title="Basic Information" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="name">
               <Label className="text-[10px] text-gray-500">Organization Name</Label>
@@ -156,7 +156,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
           </div>
         </DetailFrame>
 
-        <DetailFrame title="Contact" className={`${frameCn} w-90`}>
+        <DetailFrame title="Contact" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="email">
               <Label className="text-[10px] text-gray-500">Email</Label>
@@ -177,78 +177,13 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           </div>
         </DetailFrame>
+        </DetailSlide>
 
-        <DetailFrame title="Address" className={`${frameCn} w-95`}>
-          <div className="space-y-2 detail-form-fields">
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Street</Label>
-              <Input value={editedOrg.street || ''} onChange={e => updateField('street', e.target.value || null)} className="h-7 text-xs" />
-            </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Street 2</Label>
-              <Input value={editedOrg.street2 || ''} onChange={e => updateField('street2', e.target.value || null)} className="h-7 text-xs" />
-            </div>
-            <div className="grid grid-cols-[70px_1fr] gap-1">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">ZIP</Label>
-                <Input value={editedOrg.zip || ''} onChange={e => updateField('zip', e.target.value || null)} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">City</Label>
-                <Input value={editedOrg.city || ''} onChange={e => updateField('city', e.target.value || null)} className="h-7 text-xs" />
-              </div>
-            </div>
-            <div className="space-y-0.5">
-              <Label className="text-[10px] text-gray-500">Country</Label>
-              <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty value={editedOrg.country || null} onChange={v => updateField('country', v)} placeholder="Search country..." />
-            </div>
-          </div>
-        </DetailFrame>
-
-        <DetailFrame
-          title="Invoice Address"
-          className={`${frameCn} w-110`}
-          action={
-            <label className="flex items-center gap-1 cursor-pointer">
-              <input type="checkbox" checked={useCustomInvoice} onChange={e => { setUseCustomInvoice(e.target.checked); if (!e.target.checked) clearCustomInvoice(); }} className="h-3 w-3" />
-              <span className="text-[10px] text-muted-foreground">Custom</span>
-            </label>
-          }
-        >
-          {useCustomInvoice ? (
-            <div className="space-y-2 detail-form-fields">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Invoice Name</Label>
-                <Input value={editedOrg.name_invoice || ''} onChange={e => updateField('name_invoice', e.target.value || null)} placeholder={editedOrg.name} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Street</Label>
-                <Input value={editedOrg.street_invoice || ''} onChange={e => updateField('street_invoice', e.target.value || null)} placeholder={editedOrg.street || 'Street'} className="h-7 text-xs" />
-              </div>
-              <div className="grid grid-cols-[70px_1fr] gap-1">
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] text-gray-500">ZIP</Label>
-                  <Input value={editedOrg.zip_invoice || ''} onChange={e => updateField('zip_invoice', e.target.value || null)} placeholder={editedOrg.zip || 'ZIP'} className="h-7 text-xs" />
-                </div>
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] text-gray-500">City</Label>
-                  <Input value={editedOrg.city_invoice || ''} onChange={e => updateField('city_invoice', e.target.value || null)} placeholder={editedOrg.city || 'City'} className="h-7 text-xs" />
-                </div>
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Country</Label>
-                <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty value={editedOrg.country_invoice || null} onChange={v => updateField('country_invoice', v)} placeholder="Search country..." />
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground py-1">Uses main address by default. Toggle Custom to override.</p>
-          )}
-        </DetailFrame>
-
+        <DetailSlide ariaLabel="Organization people">
         <DetailFrame
           title="People"
           description={orgPeople.length > 0 ? `${orgPeople.length} linked` : undefined}
-          className={`${frameCn} w-225`}
+          className="flex-1"
           action={
             !addingPerson ? (
               <Button size="sm" variant="ghost" onClick={() => setAddingPerson(true)} className="h-7 text-xs px-2">
@@ -314,11 +249,13 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           )}
         </DetailFrame>
+        </DetailSlide>
 
+        <DetailSlide ariaLabel="Organization projects">
         <DetailFrame
           title="Projects"
           description={orgProjects.length > 0 ? `${orgProjects.length} linked` : undefined}
-          className={`${frameCn} w-240`}
+          className="flex-1"
           action={
             !addingProject ? (
               <Button size="sm" variant="ghost" onClick={() => setAddingProject(true)} className="h-7 text-xs px-2">
@@ -374,8 +311,79 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           )}
         </DetailFrame>
+        </DetailSlide>
 
-        <DetailFrame title="Financial" className={`${frameCn} w-105`}>
+        <DetailSlide ariaLabel="Organization address and invoice">
+        <DetailFrame title="Address" className="flex-1">
+          <div className="space-y-2 detail-form-fields">
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Street</Label>
+              <Input value={editedOrg.street || ''} onChange={e => updateField('street', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Street 2</Label>
+              <Input value={editedOrg.street2 || ''} onChange={e => updateField('street2', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+            <div className="grid grid-cols-[70px_1fr] gap-1">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">ZIP</Label>
+                <Input value={editedOrg.zip || ''} onChange={e => updateField('zip', e.target.value || null)} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">City</Label>
+                <Input value={editedOrg.city || ''} onChange={e => updateField('city', e.target.value || null)} className="h-7 text-xs" />
+              </div>
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Country</Label>
+              <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty value={editedOrg.country || null} onChange={v => updateField('country', v)} placeholder="Search country..." />
+            </div>
+          </div>
+        </DetailFrame>
+
+        <DetailFrame
+          title="Invoice Address"
+          className="flex-1"
+          action={
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" checked={useCustomInvoice} onChange={e => { setUseCustomInvoice(e.target.checked); if (!e.target.checked) clearCustomInvoice(); }} className="h-3 w-3" />
+              <span className="text-[10px] text-muted-foreground">Custom</span>
+            </label>
+          }
+        >
+          {useCustomInvoice ? (
+            <div className="space-y-2 detail-form-fields">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Invoice Name</Label>
+                <Input value={editedOrg.name_invoice || ''} onChange={e => updateField('name_invoice', e.target.value || null)} placeholder={editedOrg.name} className="h-7 text-xs" />
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Street</Label>
+                <Input value={editedOrg.street_invoice || ''} onChange={e => updateField('street_invoice', e.target.value || null)} placeholder={editedOrg.street || 'Street'} className="h-7 text-xs" />
+              </div>
+              <div className="grid grid-cols-[70px_1fr] gap-1">
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-gray-500">ZIP</Label>
+                  <Input value={editedOrg.zip_invoice || ''} onChange={e => updateField('zip_invoice', e.target.value || null)} placeholder={editedOrg.zip || 'ZIP'} className="h-7 text-xs" />
+                </div>
+                <div className="space-y-0.5">
+                  <Label className="text-[10px] text-gray-500">City</Label>
+                  <Input value={editedOrg.city_invoice || ''} onChange={e => updateField('city_invoice', e.target.value || null)} placeholder={editedOrg.city || 'City'} className="h-7 text-xs" />
+                </div>
+              </div>
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">Country</Label>
+                <SearchableSelect options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty value={editedOrg.country_invoice || null} onChange={v => updateField('country_invoice', v)} placeholder="Search country..." />
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground py-1">Uses main address by default. Toggle Custom to override.</p>
+          )}
+        </DetailFrame>
+        </DetailSlide>
+
+        <DetailSlide ariaLabel="Organization financial and notes">
+        <DetailFrame title="Financial" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="vat">
               <Label className="text-[10px] text-gray-500">VAT Number</Label>
@@ -398,7 +406,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
 
         <DetailFrame
           title="Notes / Metadata"
-          className={`${frameCn} w-105`}
+          className="flex-1"
           action={
             <Button
               variant="ghost"
@@ -425,6 +433,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           </div>
         </DetailFrame>
+        </DetailSlide>
 
       </DesktopDetailSnapCanvas>
     </div>
