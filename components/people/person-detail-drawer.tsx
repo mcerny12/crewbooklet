@@ -20,7 +20,7 @@ import { ChevronLeft, Mail, Phone, MapPin, Trash2, Plus, Building2, ExternalLink
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { PersonMobileDetail } from './person-mobile-detail';
-import { DetailFrame, DetailFrameRow } from '@/components/detail';
+import { DetailFrame, DesktopDetailSnapCanvas } from '@/components/detail';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 
 interface PersonDetailContentProps {
@@ -117,9 +117,10 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
   }
 
   const fdBase = { id: editedPerson.financial_details?.id ?? '', ...editedPerson.financial_details };
+  const frameCn = 'h-full shrink-0 snap-start';
 
   return (
-    <div className="flex flex-col h-full bg-background" data-cb-component="PersonDetailPane">
+    <div className="flex flex-col h-full min-h-0 bg-background" data-cb-component="PersonDetailPane">
 
       {/* ── DETAIL HEADER ── */}
       <div className="shrink-0 border-b bg-card px-5 py-3 flex items-center gap-4">
@@ -141,199 +142,143 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         </div>
       </div>
 
-      {/* ── HORIZONTAL FRAME ROW: Basic info groups ── */}
-      <div className="shrink-0 h-80 border-b">
-        <DetailFrameRow ariaLabel="Person information sections">
+      {/* ── SINGLE FULL-HEIGHT HORIZONTAL SNAP CANVAS ── */}
+      <DesktopDetailSnapCanvas ariaLabel="Person detail frames">
 
-          <DetailFrame title="Basic Information" className="w-80 shrink-0">
-            <div className="space-y-2 detail-form-fields">
-              <div className="space-y-0.5" data-cb-field="name">
-                <Label className="text-[10px] text-gray-500">Full Name</Label>
-                <Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" />
+        <DetailFrame title="Basic Information" className={`${frameCn} w-95`}>
+          <div className="space-y-2 detail-form-fields">
+            <div className="space-y-0.5" data-cb-field="name">
+              <Label className="text-[10px] text-gray-500">Full Name</Label>
+              <Input value={editedPerson.name} onChange={e => updateField('name', e.target.value)} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
+              <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)} placeholder="Select jobs…" maxSelections={3} />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Gender</Label>
+              <Select value={editedPerson.gender || 'none'} onValueChange={v => updateField('gender', v === 'none' ? null : v as Gender)}>
+                <SelectTrigger size="xs" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">—</SelectItem>
+                  {Object.values(Gender).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Date of Birth</Label>
+              <Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Languages</Label>
+              <MultiSelect options={languageOptions} selected={editedPerson.languages || []} onChange={langs => updateField('languages', langs as Language[])} placeholder="Select languages…" />
+            </div>
+          </div>
+        </DetailFrame>
+
+        <DetailFrame title="Contact" className={`${frameCn} w-90`}>
+          <div className="space-y-2 detail-form-fields">
+            <div className="space-y-0.5" data-cb-field="email">
+              <Label className="text-[10px] text-gray-500">Email</Label>
+              <Input type="email" value={editedPerson.email || ''} onChange={e => updateField('email', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5" data-cb-field="mobile-phone">
+              <Label className="text-[10px] text-gray-500">Mobile</Label>
+              <Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Work Phone</Label>
+              <Input type="tel" value={editedPerson.work_phone || ''} onChange={e => updateField('work_phone', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Website</Label>
+              <Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className="h-7 text-xs" />
+            </div>
+          </div>
+        </DetailFrame>
+
+        <DetailFrame title="Address" className={`${frameCn} w-95`}>
+          <div className="space-y-2 detail-form-fields">
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Street</Label>
+              <Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Street 2</Label>
+              <Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="grid grid-cols-[70px_1fr] gap-1">
+              <div className="space-y-0.5">
+                <Label className="text-[10px] text-gray-500">ZIP</Label>
+                <Input value={editedPerson.address?.zip || ''} onChange={e => updateField('address', { ...editedPerson.address, zip: e.target.value || null })} className="h-7 text-xs" />
               </div>
               <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
-                <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)} placeholder="Select jobs…" maxSelections={3} />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Gender</Label>
-                <Select value={editedPerson.gender || 'none'} onValueChange={v => updateField('gender', v === 'none' ? null : v as Gender)}>
-                  <SelectTrigger size="xs" className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {Object.values(Gender).map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Date of Birth</Label>
-                <Input type="date" value={editedPerson.date_of_birth || ''} onChange={e => updateField('date_of_birth', e.target.value || null)} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Languages</Label>
-                <MultiSelect options={languageOptions} selected={editedPerson.languages || []} onChange={langs => updateField('languages', langs as Language[])} placeholder="Select languages…" />
+                <Label className="text-[10px] text-gray-500">City</Label>
+                <Input value={editedPerson.address?.city || ''} onChange={e => updateField('address', { ...editedPerson.address, city: e.target.value || null })} className="h-7 text-xs" />
               </div>
             </div>
-          </DetailFrame>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Country</Label>
+              <SearchableSelect
+                options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
+                value={editedPerson.address?.country || null}
+                onChange={v => updateField('address', { ...editedPerson.address, country: v })}
+                placeholder="Search country..."
+              />
+            </div>
+          </div>
+        </DetailFrame>
 
-          <DetailFrame title="Contact" className="w-75 shrink-0">
-            <div className="space-y-2 detail-form-fields">
-              <div className="space-y-0.5" data-cb-field="email">
-                <Label className="text-[10px] text-gray-500">Email</Label>
-                <Input type="email" value={editedPerson.email || ''} onChange={e => updateField('email', e.target.value || null)} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5" data-cb-field="mobile-phone">
-                <Label className="text-[10px] text-gray-500">Mobile</Label>
-                <Input type="tel" value={editedPerson.mobile_phone || ''} onChange={e => updateField('mobile_phone', e.target.value || null)} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Work Phone</Label>
-                <Input type="tel" value={editedPerson.work_phone || ''} onChange={e => updateField('work_phone', e.target.value || null)} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Website</Label>
-                <Input type="url" value={editedPerson.website || ''} onChange={e => updateField('website', e.target.value || null)} className="h-7 text-xs" />
+        <DetailFrame
+          title="Organization"
+          className={`${frameCn} w-105`}
+          action={!connectedOrg && !addingOrg ? (
+            <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
+              <Plus className="h-3 w-3 mr-1" />Link
+            </Button>
+          ) : null}
+        >
+          {addingOrg ? (
+            <div className="space-y-2">
+              <SearchableSelect
+                options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
+                value={newOrgId}
+                onChange={setNewOrgId}
+                placeholder="Search organization…"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>
+                <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Link</Button>
               </div>
             </div>
-          </DetailFrame>
-
-          <DetailFrame title="Address" className="w-80 shrink-0">
-            <div className="space-y-2 detail-form-fields">
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Street</Label>
-                <Input value={editedPerson.address?.street1 || ''} onChange={e => updateField('address', { ...editedPerson.address, street1: e.target.value || null })} className="h-7 text-xs" />
+          ) : !connectedOrg ? (
+            <p className="text-xs text-gray-400 py-1">Not connected to any organization.</p>
+          ) : (
+            <div className="flex items-center gap-2 p-2 border rounded bg-muted/30 text-xs">
+              {getFaviconUrl(connectedOrg.website) && (
+                <img src={getFaviconUrl(connectedOrg.website)!} alt="" className="h-5 w-5 rounded shrink-0" onError={e => { e.currentTarget.style.display = 'none'; }} />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{connectedOrg.name}</div>
+                {connectedOrg.jobs?.length ? <div className="text-muted-foreground truncate">{connectedOrg.jobs.join(', ')}</div> : null}
               </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Street 2</Label>
-                <Input value={editedPerson.address?.street2 || ''} onChange={e => updateField('address', { ...editedPerson.address, street2: e.target.value || null })} className="h-7 text-xs" />
-              </div>
-              <div className="grid grid-cols-[70px_1fr] gap-1">
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] text-gray-500">ZIP</Label>
-                  <Input value={editedPerson.address?.zip || ''} onChange={e => updateField('address', { ...editedPerson.address, zip: e.target.value || null })} className="h-7 text-xs" />
-                </div>
-                <div className="space-y-0.5">
-                  <Label className="text-[10px] text-gray-500">City</Label>
-                  <Input value={editedPerson.address?.city || ''} onChange={e => updateField('address', { ...editedPerson.address, city: e.target.value || null })} className="h-7 text-xs" />
-                </div>
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Country</Label>
-                <SearchableSelect
-                  options={FILM_COUNTRIES.map(c => ({ id: c, label: c }))} showOptionsWhenEmpty
-                  value={editedPerson.address?.country || null}
-                  onChange={v => updateField('address', { ...editedPerson.address, country: v })}
-                  placeholder="Search country..."
-                />
-              </div>
-            </div>
-          </DetailFrame>
-
-          <DetailFrame
-            title="Organization"
-            className="w-80 shrink-0"
-            action={!connectedOrg && !addingOrg ? (
-              <Button size="sm" variant="ghost" onClick={() => setAddingOrg(true)} className="h-6 text-xs px-2">
-                <Plus className="h-3 w-3 mr-1" />Link
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+              {onOpenOrg && (
+                <button type="button" onClick={() => onOpenOrg(connectedOrg)} className="text-muted-foreground hover:text-primary shrink-0" title="Open detail">
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => updateField('organization_id', null)} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0">
+                <X className="h-3 w-3" />
               </Button>
-            ) : null}
-          >
-            {addingOrg ? (
-              <div className="space-y-2">
-                <SearchableSelect
-                  options={organizations.map(o => ({ id: o.id, label: o.name, sublabel: o.jobs?.[0] }))}
-                  value={newOrgId}
-                  onChange={setNewOrgId}
-                  placeholder="Search organization…"
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>
-                  <Button size="sm" disabled={!newOrgId} onClick={() => { if (newOrgId) updateField('organization_id', newOrgId); setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Link</Button>
-                </div>
-              </div>
-            ) : !connectedOrg ? (
-              <p className="text-xs text-gray-400 py-1">Not connected to any organization.</p>
-            ) : (
-              <div className="flex items-center gap-2 p-2 border rounded bg-muted/30 text-xs">
-                {getFaviconUrl(connectedOrg.website) && (
-                  <img src={getFaviconUrl(connectedOrg.website)!} alt="" className="h-5 w-5 rounded shrink-0" onError={e => { e.currentTarget.style.display = 'none'; }} />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{connectedOrg.name}</div>
-                  {connectedOrg.jobs?.length ? <div className="text-muted-foreground truncate">{connectedOrg.jobs.join(', ')}</div> : null}
-                </div>
-                <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
-                {onOpenOrg && (
-                  <button type="button" onClick={() => onOpenOrg(connectedOrg)} className="text-muted-foreground hover:text-primary shrink-0" title="Open detail">
-                    <ExternalLink className="h-3 w-3" />
-                  </button>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => updateField('organization_id', null)} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0">
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            )}
-          </DetailFrame>
-
-          <DetailFrame title="Financial" className="w-75 shrink-0">
-            <div className="space-y-2 detail-form-fields">
-              <div className="space-y-0.5" data-cb-field="vat">
-                <Label className="text-[10px] text-gray-500">VAT Number</Label>
-                <Input value={editedPerson.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...fdBase, vat_number: e.target.value || null })} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">Bank Name</Label>
-                <Input value={editedPerson.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...fdBase, bank_name: e.target.value || null })} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5" data-cb-field="iban">
-                <Label className="text-[10px] text-gray-500">IBAN</Label>
-                <Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...fdBase, iban: e.target.value || null })} className="h-7 text-xs" />
-              </div>
-              <div className="space-y-0.5">
-                <Label className="text-[10px] text-gray-500">BIC / SWIFT</Label>
-                <Input value={editedPerson.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...fdBase, bic: e.target.value || null })} className="h-7 text-xs" />
-              </div>
             </div>
-          </DetailFrame>
+          )}
+        </DetailFrame>
 
-          <DetailFrame
-            title="Notes / Metadata"
-            className="w-85 shrink-0"
-            action={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleDelete}
-                className="h-6 w-6 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
-                aria-label="Delete person"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            }
-          >
-            <div className="flex h-full flex-col gap-3 detail-form-fields">
-              <div className="space-y-0.5 flex-1 min-h-0 flex flex-col">
-                <Label className="text-[10px] text-gray-500">Notes</Label>
-                <Textarea
-                  value={editedPerson.notes || ''}
-                  onChange={e => updateField('notes', e.target.value || null)}
-                  className="flex-1 text-xs resize-none min-h-20"
-                />
-              </div>
-              <div className="border-t pt-2">
-                <EntryMetadata createdAt={person.created_at} updatedAt={person.updated_at} userId={person.user_id} />
-              </div>
-            </div>
-          </DetailFrame>
-
-        </DetailFrameRow>
-      </div>
-
-      {/* ── PROJECTS WIDE FRAME ── */}
-      <div className="flex-1 min-h-0 px-3 py-3">
         <DetailFrame
           title="Projects"
           description={assignments.length > 0 ? `${assignments.length} assignment${assignments.length === 1 ? '' : 's'}` : undefined}
+          className={`${frameCn} w-240`}
           action={
             !addingToProject ? (
               <Button size="sm" variant="ghost" onClick={() => setAddingToProject(true)} className="h-7 text-xs px-2">
@@ -341,7 +286,6 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
               </Button>
             ) : null
           }
-          className="h-full"
         >
           {addingToProject && (
             <div className="mb-3 rounded-lg border bg-muted/30 p-3 space-y-2">
@@ -371,8 +315,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             <p className="text-xs text-muted-foreground py-3 text-center">Not assigned to any projects yet.</p>
           ) : (
             <div className="space-y-1">
-              {/* header row */}
-              <div className="grid grid-cols-[2fr_0.8fr_1.2fr_1fr_1fr_1.4fr_auto] gap-2 px-2 py-1 border-b text-[10px] font-semibold uppercase text-muted-foreground">
+              <div className="grid grid-cols-[2fr_0.8fr_1.2fr_1fr_1fr_1.4fr_auto] gap-2 px-2 py-1 border-b text-[10px] font-semibold uppercase text-muted-foreground sticky top-0 bg-card">
                 <div>Project</div>
                 <div>Number</div>
                 <div>Role</div>
@@ -414,7 +357,59 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             </div>
           )}
         </DetailFrame>
-      </div>
+
+        <DetailFrame title="Financial" className={`${frameCn} w-105`}>
+          <div className="space-y-2 detail-form-fields">
+            <div className="space-y-0.5" data-cb-field="vat">
+              <Label className="text-[10px] text-gray-500">VAT Number</Label>
+              <Input value={editedPerson.financial_details?.vat_number || ''} onChange={e => updateField('financial_details', { ...fdBase, vat_number: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Bank Name</Label>
+              <Input value={editedPerson.financial_details?.bank_name || ''} onChange={e => updateField('financial_details', { ...fdBase, bank_name: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5" data-cb-field="iban">
+              <Label className="text-[10px] text-gray-500">IBAN</Label>
+              <Input value={editedPerson.financial_details?.iban || ''} onChange={e => updateField('financial_details', { ...fdBase, iban: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">BIC / SWIFT</Label>
+              <Input value={editedPerson.financial_details?.bic || ''} onChange={e => updateField('financial_details', { ...fdBase, bic: e.target.value || null })} className="h-7 text-xs" />
+            </div>
+          </div>
+        </DetailFrame>
+
+        <DetailFrame
+          title="Notes / Metadata"
+          className={`${frameCn} w-105`}
+          action={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleDelete}
+              className="h-6 w-6 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+              aria-label="Delete person"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          }
+        >
+          <div className="flex h-full flex-col gap-3 detail-form-fields">
+            <div className="space-y-0.5 flex-1 min-h-0 flex flex-col">
+              <Label className="text-[10px] text-gray-500">Notes</Label>
+              <Textarea
+                value={editedPerson.notes || ''}
+                onChange={e => updateField('notes', e.target.value || null)}
+                className="flex-1 text-xs resize-none min-h-20"
+              />
+            </div>
+            <div className="border-t pt-2">
+              <EntryMetadata createdAt={person.created_at} updatedAt={person.updated_at} userId={person.user_id} />
+            </div>
+          </div>
+        </DetailFrame>
+
+      </DesktopDetailSnapCanvas>
     </div>
   );
 }

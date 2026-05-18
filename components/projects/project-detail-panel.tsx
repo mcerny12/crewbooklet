@@ -33,7 +33,7 @@ import { PersonDetailPane } from '@/components/people/person-detail-drawer';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { ProjectMobileDetail } from './project-mobile-detail';
-import { DetailFrame, DetailFrameRow } from '@/components/detail';
+import { DetailFrame, DesktopDetailSnapCanvas } from '@/components/detail';
 
 interface ProjectDetailPanelProps {
   project: Project;
@@ -514,7 +514,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
   return (
     <>
-      <div className="flex flex-col h-full bg-background" data-cb-component="ProjectDetailPanel">
+      <div className="flex flex-col h-full min-h-0 bg-background" data-cb-component="ProjectDetailPanel">
 
         {/* ── DETAIL HEADER ── */}
         <div className="shrink-0 border-b bg-card px-4 py-1.5 flex items-center gap-3" data-cb-area="Header">
@@ -544,11 +544,10 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
           </div>
         </div>
 
-        {/* ── HORIZONTAL FRAME ROW: Project info groups ── */}
-        <div className="shrink-0 h-80 border-b">
-          <DetailFrameRow ariaLabel="Project information sections">
+        {/* ── SINGLE FULL-HEIGHT HORIZONTAL SNAP CANVAS ── */}
+        <DesktopDetailSnapCanvas ariaLabel="Project detail frames">
 
-            <DetailFrame title="Basic Information" className="w-80 shrink-0" data-cb-area="BasicInfo">
+            <DetailFrame title="Basic Information" className="h-full w-90 shrink-0 snap-start" data-cb-area="BasicInfo">
               <div className="space-y-2 detail-form-fields">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-gray-500">Project Number</Label>
@@ -572,7 +571,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               </div>
             </DetailFrame>
 
-            <DetailFrame title="Schedule" className="w-80 shrink-0" data-cb-area="Schedule">
+            <DetailFrame title="Schedule" className="h-full w-90 shrink-0 snap-start" data-cb-area="Schedule">
               <div className="detail-form-fields">
                 <InlineDateRangePicker
                   startDate={editedProject.start_date ?? null}
@@ -583,7 +582,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               </div>
             </DetailFrame>
 
-            <DetailFrame title="Location" className="w-75 shrink-0" data-cb-area="Location">
+            <DetailFrame title="Location" className="h-full w-95 shrink-0 snap-start" data-cb-area="Location">
               <div className="space-y-2 detail-form-fields">
                 <div className="space-y-0.5">
                   <Label className="text-[10px] text-gray-500">Inquiry Country</Label>
@@ -606,7 +605,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               </div>
             </DetailFrame>
 
-            <DetailFrame title="Client / Organization" className="w-85 shrink-0" data-cb-area="ClientOrg">
+            <DetailFrame title="Client / Organization" className="h-full w-110 shrink-0 snap-start" data-cb-area="ClientOrg">
               {selectedOrg ? (
                 <ClientOrgCard
                   org={selectedOrg}
@@ -628,95 +627,56 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
               )}
             </DetailFrame>
 
-            <DetailFrame title="Notes" className="w-80 shrink-0" data-cb-area="Notes">
-              <div className="flex h-full flex-col detail-form-fields">
-                <Textarea
-                  value={editedProject.notes || ''}
-                  onChange={(e) => updateField('notes', e.target.value || null)}
-                  placeholder="Project notes..."
-                  className="flex-1 text-xs resize-none min-h-20"
-                />
-              </div>
-            </DetailFrame>
-
             <DetailFrame
-              title="Metadata"
-              className="w-70 shrink-0"
-              data-cb-area="Metadata"
+              title="Crew"
+              description={assignments.length > 0 ? `${assignments.length} crew member${assignments.length === 1 ? '' : 's'}` : undefined}
+              className="h-full w-240 shrink-0 snap-start"
+              data-cb-area="CrewSection"
               action={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={handleDelete}
-                  className="h-6 w-6 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
-                  aria-label="Delete project"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button size="sm" variant="outline" onClick={() => setShowAddOrgDialog(true)} className="h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Organisation
+                  </Button>
+                  <Button size="sm" onClick={() => setShowAddCrewDialog(true)} className="h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Crew
+                  </Button>
+                </div>
               }
             >
-              <EntryMetadata
-                createdAt={project.creation_date}
-                updatedAt={project.updated_at}
-                userId={project.user_id}
-              />
-            </DetailFrame>
-
-          </DetailFrameRow>
-        </div>
-
-        {/* ── CREW WIDE FRAME ── */}
-        <div className="flex-1 min-h-0 px-3 py-3" data-cb-area="CrewSection">
-          <DetailFrame
-            title="Crew"
-            description={assignments.length > 0 ? `${assignments.length} crew member${assignments.length === 1 ? '' : 's'}` : undefined}
-            className="h-full"
-            action={
-              <div className="flex items-center gap-1.5">
-                <Button size="sm" variant="outline" onClick={() => setShowAddOrgDialog(true)} className="h-7 text-xs">
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Organisation
-                </Button>
-                <Button size="sm" onClick={() => setShowAddCrewDialog(true)} className="h-7 text-xs">
-                  <Plus className="h-3 w-3 mr-1" />
-                  Add Crew
-                </Button>
+              {/* Filters sub-toolbar */}
+              <div className="flex items-center gap-2 pb-2 border-b mb-2">
+                <div className="relative flex-1 max-w-48">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+                  <Input
+                    value={crewFilter}
+                    onChange={(e) => setCrewFilter(e.target.value)}
+                    placeholder="Filter crew..."
+                    className="h-7 text-xs pl-6"
+                  />
+                </div>
+                <Select value={crewDeptFilter} onValueChange={setCrewDeptFilter}>
+                  <SelectTrigger size="xs" className="w-36">
+                    <SelectValue placeholder="All departments" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All departments</SelectItem>
+                    {Object.values(CrewDepartment).map((dept) => (
+                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            }
-          >
-            {/* Filters sub-toolbar */}
-            <div className="flex items-center gap-2 pb-2 border-b mb-2">
-              <div className="relative flex-1 max-w-48">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
-                <Input
-                  value={crewFilter}
-                  onChange={(e) => setCrewFilter(e.target.value)}
-                  placeholder="Filter crew..."
-                  className="h-7 text-xs pl-6"
-                />
-              </div>
-              <Select value={crewDeptFilter} onValueChange={setCrewDeptFilter}>
-                <SelectTrigger size="xs" className="w-36">
-                  <SelectValue placeholder="All departments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All departments</SelectItem>
-                  {Object.values(CrewDepartment).map((dept) => (
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            {filteredAssignments.length === 0 ? (
-              <p className="text-xs text-gray-400 py-4 text-center">
-                {assignments.length === 0 ? 'No crew assigned yet. Click "Add Crew" to start.' : 'No crew matches the current filter.'}
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <div className="space-y-1 min-w-125">
+              {filteredAssignments.length === 0 ? (
+                <p className="text-xs text-gray-400 py-4 text-center">
+                  {assignments.length === 0 ? 'No crew assigned yet. Click "Add Crew" to start.' : 'No crew matches the current filter.'}
+                </p>
+              ) : (
+                <div className="space-y-1">
                   {/* Sortable header */}
-                  <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr_1fr_auto] gap-2 px-2 py-1 border-b">
+                  <div className="grid grid-cols-[2fr_1.5fr_1fr_1.5fr_1fr_auto] gap-2 px-2 py-1 border-b sticky top-0 bg-card z-10">
                     {([
                       ['name', 'Name'],
                       ['role', 'Role'],
@@ -802,9 +762,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                           </div>
                         )}
 
-                        {/* Status — DropdownMenu portals out of the frame overflow.
-                            Single-click opens the menu directly (unlike role/dept/notes
-                            which use the click-to-focus + click-to-edit pattern). */}
+                        {/* Status — DropdownMenu portals out of the frame overflow. */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button
@@ -854,10 +812,45 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                     );
                   })}
                 </div>
+              )}
+            </DetailFrame>
+
+            <DetailFrame title="Notes" className="h-full w-105 shrink-0 snap-start" data-cb-area="Notes">
+              <div className="flex h-full flex-col detail-form-fields">
+                <Textarea
+                  value={editedProject.notes || ''}
+                  onChange={(e) => updateField('notes', e.target.value || null)}
+                  placeholder="Project notes..."
+                  className="flex-1 text-xs resize-none min-h-20"
+                />
               </div>
-            )}
-          </DetailFrame>
-        </div>
+            </DetailFrame>
+
+            <DetailFrame
+              title="Metadata"
+              className="h-full w-80 shrink-0 snap-start"
+              data-cb-area="Metadata"
+              action={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleDelete}
+                  className="h-6 w-6 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+                  aria-label="Delete project"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              }
+            >
+              <EntryMetadata
+                createdAt={project.creation_date}
+                updatedAt={project.updated_at}
+                userId={project.user_id}
+              />
+            </DetailFrame>
+
+        </DesktopDetailSnapCanvas>
+
       </div>
 
       <AddCrewDialog
