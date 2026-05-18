@@ -547,7 +547,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
         {/* ── HORIZONTAL SLIDE CANVAS — each slide holds 1–2 frames ── */}
         <DesktopDetailSnapCanvas ariaLabel="Project detail slides">
 
-          <DetailSlide ariaLabel="Project basics and schedule">
+          <DetailSlide ariaLabel="Project basics and schedule" tabLabel="Basics">
             <DetailFrame title="Basic Information" className="flex-1" data-cb-area="BasicInfo">
               <div className="space-y-2 detail-form-fields">
                 <div className="space-y-0.5">
@@ -584,7 +584,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
             </DetailFrame>
           </DetailSlide>
 
-          <DetailSlide ariaLabel="Project crew">
+          <DetailSlide ariaLabel="Project crew" tabLabel="Crew">
             <DetailFrame
               title="Crew"
               description={assignments.length > 0 ? `${assignments.length} crew member${assignments.length === 1 ? '' : 's'}` : undefined}
@@ -775,7 +775,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
           </DetailSlide>
 
-          <DetailSlide ariaLabel="Project location and client">
+          <DetailSlide ariaLabel="Project location and client" tabLabel="Location">
             <DetailFrame title="Location" className="flex-1" data-cb-area="Location">
               <div className="space-y-2 detail-form-fields">
                 <div className="space-y-0.5">
@@ -824,7 +824,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
           </DetailSlide>
 
-          <DetailSlide ariaLabel="Project notes and metadata">
+          <DetailSlide ariaLabel="Project notes and metadata" tabLabel="Notes">
             <DetailFrame title="Notes" className="flex-1" data-cb-area="Notes">
               <div className="flex h-full flex-col detail-form-fields">
                 <Textarea

@@ -144,7 +144,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
       {/* ── HORIZONTAL SLIDE CANVAS — each slide holds 1–2 frames ── */}
       <DesktopDetailSnapCanvas ariaLabel="Person detail slides">
 
-        <DetailSlide ariaLabel="Person basics and contact">
+        <DetailSlide ariaLabel="Person basics and contact" tabLabel="Basics">
           <DetailFrame title="Basic Information" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="name">
@@ -198,7 +198,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Person projects">
+        <DetailSlide ariaLabel="Person projects" tabLabel="Projects">
         <DetailFrame
           title="Projects"
           description={assignments.length > 0 ? `${assignments.length} assignment${assignments.length === 1 ? '' : 's'}` : undefined}
@@ -283,7 +283,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Person address and organization">
+        <DetailSlide ariaLabel="Person address and organization" tabLabel="Address">
         <DetailFrame title="Address" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5">
@@ -363,7 +363,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Person financial and notes">
+        <DetailSlide ariaLabel="Person financial and notes" tabLabel="Financial">
         <DetailFrame title="Financial" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="vat">

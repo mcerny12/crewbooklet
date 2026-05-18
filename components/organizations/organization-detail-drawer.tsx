@@ -139,7 +139,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
       {/* ── HORIZONTAL SLIDE CANVAS — each slide holds 1–2 frames ── */}
       <DesktopDetailSnapCanvas ariaLabel="Organization detail slides">
 
-        <DetailSlide ariaLabel="Organization basics and contact">
+        <DetailSlide ariaLabel="Organization basics and contact" tabLabel="Basics">
         <DetailFrame title="Basic Information" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="name">
@@ -179,7 +179,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Organization people">
+        <DetailSlide ariaLabel="Organization people" tabLabel="People">
         <DetailFrame
           title="People"
           description={orgPeople.length > 0 ? `${orgPeople.length} linked` : undefined}
@@ -251,7 +251,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Organization projects">
+        <DetailSlide ariaLabel="Organization projects" tabLabel="Projects">
         <DetailFrame
           title="Projects"
           description={orgProjects.length > 0 ? `${orgProjects.length} linked` : undefined}
@@ -313,7 +313,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Organization address and invoice">
+        <DetailSlide ariaLabel="Organization address and invoice" tabLabel="Address">
         <DetailFrame title="Address" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5">
@@ -382,7 +382,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         </DetailFrame>
         </DetailSlide>
 
-        <DetailSlide ariaLabel="Organization financial and notes">
+        <DetailSlide ariaLabel="Organization financial and notes" tabLabel="Financial">
         <DetailFrame title="Financial" className="flex-1">
           <div className="space-y-2 detail-form-fields">
             <div className="space-y-0.5" data-cb-field="vat">
