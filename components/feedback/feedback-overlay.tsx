@@ -172,11 +172,11 @@ export function FeedbackOverlay() {
 
   // The toolbar and highlight must sit above every other layer in the app
   // (Radix Dialog, BottomDrawer, native popups). Portal them into a dedicated
-  // container appended to <body>. Creating AND attaching the node in the same
-  // effect ensures createPortal never targets a detached node — that race is
-  // what produced "Failed to execute 'insertBefore'/'removeChild' on 'Node'".
-  const [portalNode, setPortalNode] = useState<HTMLDivElement | null>(null);
-  useEffect(() => {
+  // container appended to <body>. The host is created in a lazy useState
+  // initialiser (client-only via the typeof guard) so it exists on first
+  // render, and a separate effect handles attach/detach to <body>.
+  const [portalNode] = useState<HTMLDivElement | null>(() => {
+    if (typeof document === 'undefined') return null;
     const el = document.createElement('div');
     el.setAttribute('data-feedback-portal', '');
     el.style.position = 'fixed';
@@ -185,13 +185,15 @@ export function FeedbackOverlay() {
     el.style.width = '0';
     el.style.height = '0';
     el.style.zIndex = String(TOOLBAR_Z);
-    document.body.appendChild(el);
-    setPortalNode(el);
+    return el;
+  });
+  useEffect(() => {
+    if (!portalNode) return;
+    document.body.appendChild(portalNode);
     return () => {
-      if (el.parentNode) el.parentNode.removeChild(el);
-      setPortalNode(null);
+      if (portalNode.parentNode) portalNode.parentNode.removeChild(portalNode);
     };
-  }, []);
+  }, [portalNode]);
 
   const overlay = (
     <>
