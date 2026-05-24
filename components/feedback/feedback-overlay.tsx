@@ -26,7 +26,26 @@ const HIGHLIGHT_Z = TOOLBAR_Z - 1;
 // while the user is inspecting an element inside it.
 const INTERCEPT_Z = HIGHLIGHT_Z - 1;
 
+function useFeedbackFlagEnabled(): boolean {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        setEnabled(params.get('feedback') === '1');
+      } catch {
+        setEnabled(false);
+      }
+    };
+    check();
+    window.addEventListener('popstate', check);
+    return () => window.removeEventListener('popstate', check);
+  }, []);
+  return enabled;
+}
+
 export function FeedbackOverlay() {
+  const flagEnabled = useFeedbackFlagEnabled();
   const { isActive, setActive, items, clearItems, selectedTarget, setSelectedTarget } = useFeedback();
   const [highlight, setHighlight] = useState<HighlightBox | null>(null);
   const toolbarRef = useRef<HTMLDivElement | null>(null);
@@ -152,41 +171,27 @@ export function FeedbackOverlay() {
   };
 
   // The toolbar and highlight must sit above every other layer in the app
-  // (Radix Dialog, BottomDrawer, native popups), and must NOT be hidden by
-  // Radix's aria-hidden / inert sweeps when a Dialog opens. To guarantee
-  // both, portal them into a dedicated container appended to <body>.
-  //
-  // Portalling directly to document.body during render races with React's
-  // reconciliation when other portals (Radix Dialog) mount/unmount as
-  // body children — manifests as
-  //   "Failed to execute 'insertBefore'/'removeChild' on 'Node'".
-  // A stable, owned container that React fully controls avoids that.
-  // Create the host element in a lazy state initialiser so it exists from
-  // first render and we don't have to do setState inside an effect. The
-  // effect only handles attach/detach to <body>.
-  const [portalNode] = useState<HTMLDivElement | null>(() => {
-    if (typeof document === 'undefined') return null;
+  // (Radix Dialog, BottomDrawer, native popups). Portal them into a dedicated
+  // container appended to <body>. Creating AND attaching the node in the same
+  // effect ensures createPortal never targets a detached node — that race is
+  // what produced "Failed to execute 'insertBefore'/'removeChild' on 'Node'".
+  const [portalNode, setPortalNode] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
     const el = document.createElement('div');
     el.setAttribute('data-feedback-portal', '');
-    // The children already use position: fixed; the wrapper just provides
-    // a stable mount point that React owns and can patch without touching
-    // <body>'s other children (which is what causes the
-    // "insertBefore / removeChild" portal race against other portals).
     el.style.position = 'fixed';
     el.style.top = '0';
     el.style.left = '0';
     el.style.width = '0';
     el.style.height = '0';
     el.style.zIndex = String(TOOLBAR_Z);
-    return el;
-  });
-  useEffect(() => {
-    if (!portalNode) return;
-    document.body.appendChild(portalNode);
+    document.body.appendChild(el);
+    setPortalNode(el);
     return () => {
-      if (portalNode.parentNode) portalNode.parentNode.removeChild(portalNode);
+      if (el.parentNode) el.parentNode.removeChild(el);
+      setPortalNode(null);
     };
-  }, [portalNode]);
+  }, []);
 
   const overlay = (
     <>
@@ -277,6 +282,8 @@ export function FeedbackOverlay() {
       </div>
     </>
   );
+
+  if (!flagEnabled) return null;
 
   return (
     <>

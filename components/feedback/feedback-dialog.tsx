@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -78,6 +79,9 @@ export function FeedbackDialog() {
       <DialogContent className="cb-feedback-overlay max-w-xl">
         <DialogHeader>
           <DialogTitle>New feedback</DialogTitle>
+          <DialogDescription className="sr-only">
+            Capture a bug, visual change, or other feedback about the selected element.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-1">
