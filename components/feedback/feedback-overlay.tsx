@@ -285,7 +285,7 @@ export function FeedbackOverlay() {
     </>
   );
 
-  if (!flagEnabled) return null;
+  if (!flagEnabled && !isActive) return null;
 
   return (
     <>
