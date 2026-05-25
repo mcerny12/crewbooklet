@@ -3,18 +3,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Briefcase, CalendarDays, Cake, Receipt } from 'lucide-react';
+import { Briefcase, Cake, Receipt } from 'lucide-react';
 import { differenceInCalendarDays, startOfToday } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { useCalendarStore } from '@/lib/stores/calendar-store';
 import { useInvoiceStore } from '@/lib/stores/invoice-store';
 import type { Person, Project } from '@/lib/types/models';
 import { InvoiceStatus, ProjectStatus } from '@/lib/types/models';
 
-type Category = 'projects' | 'events' | 'birthdays' | 'invoices';
+type Category = 'projects' | 'birthdays' | 'invoices';
 
-const ALL_CATEGORIES: Category[] = ['projects', 'events', 'birthdays', 'invoices'];
+const ALL_CATEGORIES: Category[] = ['projects', 'birthdays', 'invoices'];
 const STORAGE_KEY = 'cb_dashboard_upcoming_filters_v1';
 const WINDOW_DAYS = 60;
 const MAX_VISIBLE = 8;
@@ -23,15 +22,13 @@ const CATEGORY_META: Record<
   Category,
   { icon: typeof Briefcase; bgClass: string; dotClass: string }
 > = {
-  projects:  { icon: Briefcase,    bgClass: 'bg-emerald-50 text-emerald-600', dotClass: 'bg-emerald-500' },
-  events:    { icon: CalendarDays, bgClass: 'bg-blue-50 text-blue-600',       dotClass: 'bg-blue-500' },
-  birthdays: { icon: Cake,         bgClass: 'bg-pink-50 text-pink-600',       dotClass: 'bg-pink-500' },
-  invoices:  { icon: Receipt,      bgClass: 'bg-amber-50 text-amber-600',     dotClass: 'bg-amber-500' },
+  projects:  { icon: Briefcase, bgClass: 'bg-emerald-50 text-emerald-600', dotClass: 'bg-emerald-500' },
+  birthdays: { icon: Cake,      bgClass: 'bg-pink-50 text-pink-600',       dotClass: 'bg-pink-500' },
+  invoices:  { icon: Receipt,   bgClass: 'bg-amber-50 text-amber-600',     dotClass: 'bg-amber-500' },
 };
 
-const CATEGORY_LABEL_KEY: Record<Category, 'categoryProjects' | 'categoryEvents' | 'categoryBirthdays' | 'categoryInvoices'> = {
+const CATEGORY_LABEL_KEY: Record<Category, 'categoryProjects' | 'categoryBirthdays' | 'categoryInvoices'> = {
   projects: 'categoryProjects',
-  events: 'categoryEvents',
   birthdays: 'categoryBirthdays',
   invoices: 'categoryInvoices',
 };
@@ -66,16 +63,12 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
   const format = useFormatter();
   const router = useRouter();
 
-  const events = useCalendarStore(s => s.events);
-  const calendars = useCalendarStore(s => s.calendars);
-  const fetchCalendarAll = useCalendarStore(s => s.fetchAll);
   const invoices = useInvoiceStore(s => s.invoices);
   const fetchInvoices = useInvoiceStore(s => s.fetchInvoices);
 
   useEffect(() => {
-    fetchCalendarAll();
     fetchInvoices();
-  }, [fetchCalendarAll, fetchInvoices]);
+  }, [fetchInvoices]);
 
   const [filters, setFilters] = useState<Set<Category>>(() => loadFilters());
   useEffect(() => {
@@ -139,26 +132,6 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
       }
     }
 
-    if (filters.has('events')) {
-      const activeCalendarIds = new Set(
-        calendars.filter(c => activeProjectIds.has(c.project_id)).map(c => c.id)
-      );
-      for (const e of events) {
-        if (!activeCalendarIds.has(e.calendar_id)) continue;
-        const d = new Date(e.start_date);
-        if (d >= today && d <= horizon) {
-          out.push({
-            id: `event-${e.id}`,
-            date: d,
-            category: 'events',
-            title: e.title,
-            subtitle: e.location ?? undefined,
-            href: '/calendar',
-          });
-        }
-      }
-    }
-
     if (filters.has('birthdays')) {
       for (const person of people) {
         if (!person.date_of_birth) continue;
@@ -198,7 +171,7 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
 
     out.sort((a, b) => a.date.getTime() - b.date.getTime());
     return out;
-  }, [filters, projects, people, events, calendars, invoices, t]);
+  }, [filters, projects, people, invoices, t]);
 
   const visible = items.slice(0, MAX_VISIBLE);
   const overflow = items.length - visible.length;
