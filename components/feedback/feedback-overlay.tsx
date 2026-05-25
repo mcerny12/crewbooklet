@@ -290,7 +290,7 @@ export function FeedbackOverlay() {
   return (
     <>
       {portalNode && createPortal(overlay, portalNode)}
-      {selectedTarget && <FeedbackDialog />}
+      <FeedbackDialog />
     </>
   );
 }

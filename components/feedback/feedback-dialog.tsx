@@ -38,8 +38,6 @@ export function FeedbackDialog() {
   const [problem, setProblem] = useState('');
   const [expectedChange, setExpectedChange] = useState('');
 
-  if (!selectedTarget) return null;
-
   const reset = () => {
     setType('bug');
     setSeverity('medium');
@@ -53,6 +51,7 @@ export function FeedbackDialog() {
   };
 
   const handleSave = () => {
+    if (!selectedTarget) return;
     const trimmed = problem.trim();
     if (!trimmed) return;
     addItem({
@@ -84,32 +83,34 @@ export function FeedbackDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-1">
-          <div>
-            <span className="text-muted-foreground">Component: </span>
-            <span className="font-medium">{selectedTarget.component ?? '—'}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Area: </span>
-            <span className="font-medium">{selectedTarget.area ?? '—'}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Field: </span>
-            <span className="font-medium">{selectedTarget.field ?? '—'}</span>
-          </div>
-          <div className="break-all">
-            <span className="text-muted-foreground">Selector: </span>
-            <code className="rounded bg-background px-1 py-0.5 font-mono text-[11px]">
-              {selectedTarget.selector}
-            </code>
-          </div>
-          {selectedTarget.visibleText && (
+        {selectedTarget && (
+          <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-1">
             <div>
-              <span className="text-muted-foreground">Visible text: </span>
-              <span>{selectedTarget.visibleText}</span>
+              <span className="text-muted-foreground">Component: </span>
+              <span className="font-medium">{selectedTarget.component ?? '—'}</span>
             </div>
-          )}
-        </div>
+            <div>
+              <span className="text-muted-foreground">Area: </span>
+              <span className="font-medium">{selectedTarget.area ?? '—'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Field: </span>
+              <span className="font-medium">{selectedTarget.field ?? '—'}</span>
+            </div>
+            <div className="break-all">
+              <span className="text-muted-foreground">Selector: </span>
+              <code className="rounded bg-background px-1 py-0.5 font-mono text-[11px]">
+                {selectedTarget.selector}
+              </code>
+            </div>
+            {selectedTarget.visibleText && (
+              <div>
+                <span className="text-muted-foreground">Visible text: </span>
+                <span>{selectedTarget.visibleText}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
