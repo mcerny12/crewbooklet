@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Cake, Receipt } from 'lucide-react';
+import { Briefcase, Cake, ChevronLeft, ChevronRight, Receipt } from 'lucide-react';
 import {
+  addMonths,
   differenceInCalendarDays,
   eachDayOfInterval,
   endOfMonth,
@@ -13,6 +14,7 @@ import {
   isSameMonth,
   startOfMonth,
   startOfToday,
+  subMonths,
 } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -89,6 +91,7 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
 
   const today = startOfToday();
   const [selectedDay, setSelectedDay] = useState<Date>(today);
+  const [displayedMonth, setDisplayedMonth] = useState<Date>(() => startOfMonth(today));
 
   const toggle = (c: Category) =>
     setFilters(prev => {
@@ -182,9 +185,9 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
     return out;
   }, [filters, projects, people, invoices, t, today]);
 
-  // Mini calendar grid for the current month.
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  // Mini calendar grid for the displayed month.
+  const monthStart = startOfMonth(displayedMonth);
+  const monthEnd = endOfMonth(displayedMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const paddingDays = Array(getDay(monthStart)).fill(null);
   const gridCells: (Date | null)[] = [...paddingDays, ...daysInMonth];
@@ -200,7 +203,7 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
   const categoriesByDay = useMemo(() => {
     const m = new Map<string, Set<Category>>();
     for (const item of allItems) {
-      if (!isSameMonth(item.date, today)) continue;
+      if (!isSameMonth(item.date, displayedMonth)) continue;
       const key = item.date.toDateString();
       let set = m.get(key);
       if (!set) {
@@ -210,7 +213,7 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
       set.add(item.category);
     }
     return m;
-  }, [allItems, today]);
+  }, [allItems, displayedMonth]);
 
   const selectedDayItems = useMemo(
     () => allItems.filter(item => isSameDay(item.date, selectedDay)),
@@ -266,9 +269,34 @@ export function UpcomingEvents({ people, projects }: { people: Person[]; project
       <CardContent className="p-3 pt-1 space-y-3">
         {/* Mini calendar grid */}
         <div>
-          <p className="text-xs font-semibold text-center mb-1">
-            {format.dateTime(today, { month: 'long', year: 'numeric' })}
-          </p>
+          <div className="flex items-center justify-between mb-1">
+            <button
+              type="button"
+              onClick={() => setDisplayedMonth(d => subMonths(d, 1))}
+              aria-label="Previous month"
+              className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ChevronLeft className="h-3 w-3" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDisplayedMonth(startOfMonth(today));
+                setSelectedDay(today);
+              }}
+              className="text-xs font-semibold hover:underline"
+            >
+              {format.dateTime(displayedMonth, { month: 'long', year: 'numeric' })}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayedMonth(d => addMonths(d, 1))}
+              aria-label="Next month"
+              className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ChevronRight className="h-3 w-3" aria-hidden />
+            </button>
+          </div>
           <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] mb-1">
             {weekdayNames.map((day, i) => (
               <div key={i} className="font-semibold text-muted-foreground">
