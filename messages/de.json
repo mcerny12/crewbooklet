@@ -66,7 +66,6 @@
     "feedbackModeOn": "Feedback-Modus (an)"
   },
   "auth": {
-    "tagline": "Crew, Projekte, Kalender und Rechnungen an einem Ort.",
     "signInToYourAccount": "Bei deinem Konto anmelden",
     "email": "E-Mail-Adresse",
     "emailPlaceholder": "du@beispiel.com",
@@ -122,7 +121,19 @@
     "recentProjects": "Aktuelle Projekte",
     "noRecentProjects": "Keine aktuellen Projekte",
     "birthdays": "Kommende Geburtstage",
-    "noUpcomingBirthdays": "Keine kommenden Geburtstage"
+    "noUpcomingBirthdays": "Keine kommenden Geburtstage",
+    "upcomingEvents": "Anstehend",
+    "noUpcomingEvents": "Nichts anstehend",
+    "categoryProjects": "Projekte",
+    "categoryEvents": "Termine",
+    "categoryBirthdays": "Geburtstage",
+    "categoryInvoices": "Rechnungen",
+    "projectStarts": "Beginn",
+    "projectEnds": "Ende",
+    "invoiceDue": "Rechnung fällig",
+    "overdue": "Überfällig",
+    "today": "Heute",
+    "tomorrow": "Morgen"
   },
   "people": {
     "title": "Personen",

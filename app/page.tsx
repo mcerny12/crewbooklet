@@ -9,7 +9,7 @@ import { usePeopleStore } from '@/lib/stores/people-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { StatCard } from '@/components/dashboard/stat-card';
-import { BirthdayCalendar } from '@/components/dashboard/birthday-calendar';
+import { UpcomingEvents } from '@/components/dashboard/upcoming-events';
 import { RecentProjects } from '@/components/dashboard/recent-projects';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { MobileDashboardSection } from '@/components/mobile/mobile-dashboard-section';
@@ -200,7 +200,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-1">
-              <BirthdayCalendar people={people} />
+              <UpcomingEvents people={people} projects={projects} />
             </div>
             <div className="lg:col-span-2">
               <RecentProjects projects={projects} />

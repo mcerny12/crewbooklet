@@ -66,7 +66,6 @@
     "feedbackModeOn": "Feedback mode (on)"
   },
   "auth": {
-    "tagline": "Crew, projects, calendars, and invoices in one place.",
     "signInToYourAccount": "Sign in to your account",
     "email": "Email address",
     "emailPlaceholder": "you@example.com",
@@ -122,7 +121,19 @@
     "recentProjects": "Recent projects",
     "noRecentProjects": "No recent projects",
     "birthdays": "Upcoming birthdays",
-    "noUpcomingBirthdays": "No upcoming birthdays"
+    "noUpcomingBirthdays": "No upcoming birthdays",
+    "upcomingEvents": "Upcoming",
+    "noUpcomingEvents": "Nothing upcoming",
+    "categoryProjects": "Projects",
+    "categoryEvents": "Events",
+    "categoryBirthdays": "Birthdays",
+    "categoryInvoices": "Invoices",
+    "projectStarts": "Start",
+    "projectEnds": "End",
+    "invoiceDue": "Invoice due",
+    "overdue": "Overdue",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
   },
   "people": {
     "title": "People",

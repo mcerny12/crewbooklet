@@ -37,12 +37,7 @@ export default function LoginPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white shadow-md">
             <Film className="h-6 w-6" aria-hidden />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">CrewBooklet</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('tagline')}
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight">CrewBooklet</h1>
         </div>
 
         {/* Card */}
