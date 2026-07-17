@@ -11,7 +11,9 @@
 //   4. billedMinutes   = max(totalWorkMinutes, 480) if dailyMinimum8h, else totalWorkMinutes
 //   5. nightMinutes    = overlap of work window with 22:00–06:00
 //   6. dailyOtBand1/2  = minutes beyond dailyOtStartH and dailyOtBand1 (Mon–Fri only)
-//   7. perDiemCents    = resolved from perDiemType ('auto' → ≥480 min billed → 'partial')
+//   7. perDiemCents    = resolved from perDiemType.
+//      § 12.2 TV FFS: auto → partial when totalWorkMinutes ≥ 480 (actual hours, not billing floor).
+//      Per diems are suppressed when placeOfWork matches homeBase (local booking).
 //
 // Weekly OT:
 //   weeklyCountMinutes:
@@ -21,14 +23,25 @@
 //   weeklyOtMinutes = max(0, weeklyCountMinutes - weeklyOtThresholdH×60)
 //   Split into band1 (up to weeklyOtBand1EndH×60) and band2 (above).
 //
+// Rest-period violations (ArbZG § 5 / TV FFS § 5.8):
+//   Minimum 11h rest between consecutive worked calendar days.
+//   Violation compensation = shortfall minutes × hourlyCents / 60.
+//
 // Surcharges:
 //   All surcharges are ADDITIVE on top of the base hourly rate (C1 answer).
 //   formula per component: Math.round((minutes/60) × hourlyRateCents × pct/100)
+//
+// dayTotalCents (per-day display):
+//   For each worked day: billedMinutes × hourlyCents + day-level surcharges + perDiemCents.
+//   This shows the full per-day contribution including the OT hour's base + surcharge.
+//   Note: in standard (fixed weekly rate) mode the sum of dayTotalCents may differ from
+//   totalGrossCents for short or long weeks; totalGrossCents remains the authoritative total.
 
 import type { DayInput, Ruleset, DayResult, WeekResult } from './types';
 import { hourlyRateCents } from './ruleset';
 
 const MINUTES_PER_HOUR = 60;
+const MIN_REST_MINUTES = 11 * 60; // ArbZG § 5 / TV FFS § 5.8
 
 /** Parse 'HH:MM' → total minutes since 00:00. Returns null if null input. */
 function parseTime(t: string | null): number | null {
@@ -83,17 +96,32 @@ function surchargeCents(minutes: number, hourlyCents: number, pct: number): numb
   return Math.round((minutes / MINUTES_PER_HOUR) * hourlyCents * pct / 100);
 }
 
-/** Resolve per diem type for a day.  'auto' → 'partial' if billedMinutes ≥ 480, else 'none'. */
-function resolvePerDiem(type: string, billedMinutes: number): 'partial' | 'full' | 'none' {
+/**
+ * Resolve per diem type for a day.
+ * § 12.2 TV FFS: the trigger is based on actual working time (Abwesenheitszeit),
+ * NOT the minimum-billing floor. The 8h threshold applies to totalWorkMinutes.
+ * 'auto' → 'partial' if totalWorkMinutes ≥ 480 (actual hours), else 'none'.
+ */
+function resolvePerDiem(type: string, totalWorkMinutes: number): 'partial' | 'full' | 'none' {
   if (type === 'full') return 'full';
   if (type === 'partial') return 'partial';
   if (type === 'none') return 'none';
-  // 'auto': grant partial day if worked ≥ 8 hours
-  return billedMinutes >= 8 * MINUTES_PER_HOUR ? 'partial' : 'none';
+  // 'auto': partial per diem for ≥8h actual work; 'none' below threshold
+  return totalWorkMinutes >= 8 * MINUTES_PER_HOUR ? 'partial' : 'none';
 }
 
-/** Calculate a single day. Returns a DayResult. */
-export function calculateDay(day: DayInput, ruleset: Ruleset): DayResult {
+/**
+ * Calculate a single day.
+ *
+ * `hourlyCents` is optional; when provided it is used to compute `dayTotalCents`.
+ * When omitted it is derived from the ruleset (same value, but pre-computing in
+ * calculateWeek avoids the redundant division for every day in the week).
+ */
+export function calculateDay(
+  day: DayInput,
+  ruleset: Ruleset,
+  hourlyCents: number = hourlyRateCents(ruleset.weeklyRateCents, ruleset.rateType),
+): DayResult {
   const dow = dayOfWeek(day.date);
   const isSaturday = dow === 5;
   const isSunday = dow === 6;
@@ -149,12 +177,45 @@ export function calculateDay(day: DayInput, ruleset: Ruleset): DayResult {
     }
   }
 
-  // Per diem
+  // Per diem (§ 12.2 TV FFS):
+  // - Suppressed when the place of work matches the home base (local booking, Bug #2).
+  // - Auto threshold uses totalWorkMinutes (actual hours), NOT billedMinutes (Bug #3).
   let perDiemCents = 0;
   if (ruleset.perDiemEnabled && isWorked) {
-    const resolved = resolvePerDiem(day.perDiemType, billedMinutes);
-    if (resolved === 'full') perDiemCents = ruleset.perDiemFullDayCents;
-    else if (resolved === 'partial') perDiemCents = ruleset.perDiemPartialDayCents;
+    const isLocalWork = !!(
+      day.placeOfWork &&
+      day.placeOfWork.trim().toLowerCase() === ruleset.homeBase.trim().toLowerCase()
+    );
+    if (!isLocalWork) {
+      const resolved = resolvePerDiem(day.perDiemType, totalWorkMinutes);
+      if (resolved === 'full') perDiemCents = ruleset.perDiemFullDayCents;
+      else if (resolved === 'partial') perDiemCents = ruleset.perDiemPartialDayCents;
+    }
+  }
+
+  // Per-day total (Bug #5 / #6): billed hours × hourly rate + all day-level surcharges + per diem.
+  // This shows the full value of each OT hour (base + surcharge) so callers don't need to
+  // separately add the base component of OT hours.
+  // restViolation fields are always 0 here — calculateWeek fills them in for the violating day.
+  let dayTotalCents = 0;
+  if (isWorked) {
+    const dayBase = Math.round((billedMinutes / MINUTES_PER_HOUR) * hourlyCents);
+    const dayOtSurcharge =
+      surchargeCents(dailyOtBand1Minutes, hourlyCents, ruleset.dailyOtBand1Pct) +
+      surchargeCents(dailyOtBand2Minutes, hourlyCents, ruleset.dailyOtBand2Pct);
+    const dayNight = ruleset.nightEnabled
+      ? surchargeCents(nightMins, hourlyCents, ruleset.nightPct)
+      : 0;
+    const daySat = isSaturday && ruleset.saturdayEnabled
+      ? surchargeCents(billedMinutes, hourlyCents, ruleset.saturdayPct)
+      : 0;
+    const daySun = isSunday && ruleset.sundayEnabled
+      ? surchargeCents(billedMinutes, hourlyCents, ruleset.sundayPct)
+      : 0;
+    const dayHol = isHoliday && ruleset.holidayEnabled
+      ? surchargeCents(billedMinutes, hourlyCents, ruleset.holidayPct)
+      : 0;
+    dayTotalCents = dayBase + dayOtSurcharge + dayNight + daySat + daySun + dayHol + perDiemCents;
   }
 
   return {
@@ -171,12 +232,16 @@ export function calculateDay(day: DayInput, ruleset: Ruleset): DayResult {
     dailyOtBand1Minutes,
     dailyOtBand2Minutes,
     perDiemCents,
+    dayTotalCents,
+    restViolationMinutes: 0,
+    restViolationCents: 0,
   };
 }
 
 /** Calculate an entire week from its day inputs and ruleset. */
 export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
-  const dayResults = days.map((d) => calculateDay(d, ruleset));
+  const hourlyCents = hourlyRateCents(ruleset.weeklyRateCents, ruleset.rateType);
+  const dayResults = days.map((d) => calculateDay(d, ruleset, hourlyCents));
 
   // Weekly OT counting:
   //   - Weekdays: only the hours up to dailyOtStartH count toward the weekly threshold.
@@ -215,8 +280,6 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
   const sunMinutes = dayResults.filter((d) => d.isSunday && d.isWorked).reduce((s, d) => s + d.billedMinutes, 0);
   const holMinutes = dayResults.filter((d) => d.isHoliday && d.isWorked).reduce((s, d) => s + d.billedMinutes, 0);
 
-  const hourlyCents = hourlyRateCents(ruleset.weeklyRateCents, ruleset.rateType);
-
   // Base pay:
   //   standard/full_tarif: weekly rate is guaranteed (covers up to 50h)
   //   custom no-8h-min: bill actual hours at hourly rate
@@ -247,6 +310,52 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
     ? surchargeCents(holMinutes, hourlyCents, ruleset.holidayPct)
     : 0;
 
+  // Rest-period violation detection (ArbZG § 5 / TV FFS § 5.8).
+  // Check each consecutive pair of worked calendar days: minimum 11h rest between shifts.
+  // Compensation = shortfall hours × hourlyRateCents (at base rate, not surcharge).
+  let restViolationCents = 0;
+  const mutableResults = [...dayResults];
+
+  for (let i = 0; i < days.length - 1; i++) {
+    const dayA = days[i];
+    const dayB = days[i + 1];
+    const drA = mutableResults[i];
+    const drB = mutableResults[i + 1];
+
+    if (!drA.isWorked || !drB.isWorked) continue;
+
+    // Only check pairs that are consecutive calendar days
+    const dateA = new Date(dayA.date + 'T00:00:00');
+    const dateB = new Date(dayB.date + 'T00:00:00');
+    const calendarDaysDiff = Math.round(
+      (dateB.getTime() - dateA.getTime()) / (24 * 60 * 60 * 1000)
+    );
+    if (calendarDaysDiff !== 1) continue;
+
+    const startAMin = parseTime(dayA.workStart);
+    const endAMin = parseTime(dayA.workEnd);
+    const startBMin = parseTime(dayB.workStart);
+    if (startAMin === null || endAMin === null || startBMin === null) continue;
+
+    // Adjust end for overnight work (work_end < work_start means past midnight)
+    const actualEndAMin = endAMin < startAMin ? endAMin + 24 * MINUTES_PER_HOUR : endAMin;
+
+    // Gap from end of day A to start of day B (next calendar day)
+    const gapMinutes = 24 * MINUTES_PER_HOUR - actualEndAMin + startBMin;
+
+    if (gapMinutes < MIN_REST_MINUTES) {
+      const shortfall = MIN_REST_MINUTES - gapMinutes;
+      const violationCents = Math.round((shortfall / MINUTES_PER_HOUR) * hourlyCents);
+      restViolationCents += violationCents;
+      // Attribute to the earlier day (the shift that ended too late)
+      mutableResults[i] = {
+        ...mutableResults[i],
+        restViolationMinutes: shortfall,
+        restViolationCents: violationCents,
+      };
+    }
+  }
+
   const totalGrossCents =
     basePayCents +
     dailyOtBand1Cents +
@@ -257,10 +366,11 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
     saturdaySurchargeCents +
     sundaySurchargeCents +
     holidaySurchargeCents +
-    totalPerDiem;
+    totalPerDiem +
+    restViolationCents;
 
   return {
-    days: dayResults,
+    days: mutableResults,
     totalBilledMinutes,
     weeklyCountMinutes,
     weeklyOtBand1Minutes,
@@ -275,6 +385,7 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
     sundaySurchargeCents,
     holidaySurchargeCents,
     perDiemCents: totalPerDiem,
+    restViolationCents,
     totalGrossCents,
     hourlyRateCents: hourlyCents,
   };

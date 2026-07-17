@@ -25,15 +25,21 @@ export default function TimesheetsPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [selectedTimesheet, setSelectedTimesheet] = useState<Timesheet | null>(null);
 
   const timesheets = useTimesheetsStore(s => s.timesheets);
   const isLoading = useTimesheetsStore(s => s.isLoading);
   const loadTimesheets = useTimesheetsStore(s => s.loadTimesheets);
   const selectTimesheet = useTimesheetsStore(s => s.selectTimesheet);
-  const selectedTimesheetId = selectedTimesheet?.id ?? null;
+  // Derive the displayed timesheet directly from the store so updates via updateTimesheet
+  // (e.g. checkbox toggles) propagate to the detail panel without needing a separate local
+  // state copy that would go stale. (Bug #4)
+  const selectedTimesheet: Timesheet | null = useTimesheetsStore(s => s.selectedTimesheet);
 
   useEffect(() => { loadTimesheets(); }, [loadTimesheets]);
+
+  // Extract id before the JSX ternary so TypeScript doesn't narrow selectedTimesheet to null
+  // inside the else-branch and then try to access .id on never.
+  const selectedTimesheetId = selectedTimesheet?.id ?? null;
 
   const filtered = timesheets.filter(ts => {
     const q = searchQuery.toLowerCase();
@@ -46,17 +52,14 @@ export default function TimesheetsPage() {
 
   function handleSelect(ts: Timesheet) {
     const next = selectedTimesheet?.id === ts.id ? null : ts;
-    setSelectedTimesheet(next);
     selectTimesheet(next);
   }
 
   function handleCreated(ts: Timesheet) {
-    setSelectedTimesheet(ts);
     selectTimesheet(ts);
   }
 
   function handleClose() {
-    setSelectedTimesheet(null);
     selectTimesheet(null);
   }
 

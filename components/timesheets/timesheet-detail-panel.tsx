@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { X, Printer, Trash2 } from 'lucide-react';
+import { X, Printer, Trash2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,10 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { TimesheetWeekGrid } from './timesheet-week-grid';
 import { TimesheetEstimatePanel } from './timesheet-estimate-panel';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
-import type { Timesheet, TimesheetEntry } from '@/lib/timesheets/types';
+import { HOME_BASE_DEFAULT } from '@/lib/timesheets/ruleset';
+import type { Timesheet, TimesheetEntry, CustomRulesOverride } from '@/lib/timesheets/types';
 
 const DEBOUNCE_MS = 1000;
 
@@ -36,6 +38,316 @@ function formatWeekHeader(weekStart: string): string {
     return weekStart;
   }
 }
+
+// ─── Custom-mode settings panel (Bug #1) ────────────────────────────────────
+
+const TV_FFS_DEFAULTS = {
+  dailyOtStartH: 10,
+  dailyOtBand1Pct: 25,
+  dailyOtBand2Pct: 50,
+  weeklyOtThresholdH: 50,
+  weeklyOtBand1EndH: 55,
+  weeklyOtBand1Pct: 25,
+  weeklyOtBand2Pct: 50,
+  nightEnabled: true,
+  nightPct: 25,
+  saturdayEnabled: true,
+  saturdayPct: 25,
+  sundayEnabled: true,
+  sundayPct: 75,
+  holidayEnabled: true,
+  holidayPct: 100,
+};
+
+type NumericKey = keyof Omit<CustomRulesOverride, 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled' | 'homeBase'>;
+type BoolKey = 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled';
+
+interface CustomRulesPanelProps {
+  rules: CustomRulesOverride;
+  perDiemFullCents: number;
+  perDiemPartialCents: number;
+  onRulesChange: (overrides: CustomRulesOverride) => void;
+  onPerDiemFullChange: (cents: number) => void;
+  onPerDiemPartialChange: (cents: number) => void;
+}
+
+function CustomRulesPanel({
+  rules,
+  perDiemFullCents,
+  perDiemPartialCents,
+  onRulesChange,
+  onPerDiemFullChange,
+  onPerDiemPartialChange,
+}: CustomRulesPanelProps) {
+  function setNum(key: NumericKey, raw: string, toInt = false) {
+    const val = toInt ? parseInt(raw, 10) : parseFloat(raw.replace(',', '.'));
+    if (!isNaN(val)) onRulesChange({ ...rules, [key]: val });
+  }
+
+  function setBool(key: BoolKey, val: boolean) {
+    onRulesChange({ ...rules, [key]: val });
+  }
+
+  function isDefault(key: keyof typeof TV_FFS_DEFAULTS): boolean {
+    return rules[key as keyof CustomRulesOverride] === undefined;
+  }
+
+  function val<K extends keyof typeof TV_FFS_DEFAULTS>(key: K): (typeof TV_FFS_DEFAULTS)[K] {
+    const override = rules[key as keyof CustomRulesOverride];
+    return (override !== undefined ? override : TV_FFS_DEFAULTS[key]) as (typeof TV_FFS_DEFAULTS)[K];
+  }
+
+  const fieldCn = 'h-7 text-xs border border-border/60 rounded px-1.5 w-20 text-right';
+  const overriddenBadge = (
+    <span className="ml-1 text-[10px] text-primary font-semibold">↑</span>
+  );
+
+  return (
+    <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-3">
+      <div className="flex items-center gap-1.5 text-xs text-primary font-semibold mb-1">
+        <Info className="h-3.5 w-3.5" />
+        Individuelle Regelungen (TV FFS-Abweichungen)
+        <span className="ml-auto text-[10px] font-normal text-muted-foreground">
+          ↑ = von TV FFS abweichend
+        </span>
+      </div>
+
+      {/* OT daily */}
+      <div>
+        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+          Überstunden täglich (§ 5.4.3.2)
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              ÜZ ab Stunde {!isDefault('dailyOtStartH') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="1" max="24" step="1"
+              value={val('dailyOtStartH')}
+              onChange={e => setNum('dailyOtStartH', e.target.value, true)}
+              className={cn(fieldCn, !isDefault('dailyOtStartH') && 'border-primary/50')}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Band 1 (%) {!isDefault('dailyOtBand1Pct') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('dailyOtBand1Pct')}
+              onChange={e => setNum('dailyOtBand1Pct', e.target.value)}
+              className={cn(fieldCn, !isDefault('dailyOtBand1Pct') && 'border-primary/50')}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Band 2 (%) {!isDefault('dailyOtBand2Pct') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('dailyOtBand2Pct')}
+              onChange={e => setNum('dailyOtBand2Pct', e.target.value)}
+              className={cn(fieldCn, !isDefault('dailyOtBand2Pct') && 'border-primary/50')}
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* OT weekly */}
+      <div>
+        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+          Überstunden wöchentlich (§ 5.4.3.3)
+        </div>
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Schwelle (h) {!isDefault('weeklyOtThresholdH') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="1" step="1"
+              value={val('weeklyOtThresholdH')}
+              onChange={e => setNum('weeklyOtThresholdH', e.target.value, true)}
+              className={cn(fieldCn, !isDefault('weeklyOtThresholdH') && 'border-primary/50')}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Band 1 Ende (h) {!isDefault('weeklyOtBand1EndH') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="1" step="1"
+              value={val('weeklyOtBand1EndH')}
+              onChange={e => setNum('weeklyOtBand1EndH', e.target.value, true)}
+              className={cn(fieldCn, !isDefault('weeklyOtBand1EndH') && 'border-primary/50')}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Band 1 (%) {!isDefault('weeklyOtBand1Pct') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('weeklyOtBand1Pct')}
+              onChange={e => setNum('weeklyOtBand1Pct', e.target.value)}
+              className={cn(fieldCn, !isDefault('weeklyOtBand1Pct') && 'border-primary/50')}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Band 2 (%) {!isDefault('weeklyOtBand2Pct') && overriddenBadge}
+            </span>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('weeklyOtBand2Pct')}
+              onChange={e => setNum('weeklyOtBand2Pct', e.target.value)}
+              className={cn(fieldCn, !isDefault('weeklyOtBand2Pct') && 'border-primary/50')}
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* Surcharges */}
+      <div>
+        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+          Zuschläge (§ 5.5 / § 5.6)
+        </div>
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          {/* Night */}
+          <div className="flex flex-col gap-0.5">
+            <label className="flex items-center gap-1 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={val('nightEnabled')}
+                onChange={e => setBool('nightEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+              Nacht {!isDefault('nightEnabled') && overriddenBadge}
+            </label>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('nightPct')}
+              onChange={e => setNum('nightPct', e.target.value)}
+              disabled={!val('nightEnabled')}
+              className={cn(fieldCn, !isDefault('nightPct') && 'border-primary/50')}
+              title="Nachtzuschlag (%)"
+            />
+          </div>
+          {/* Saturday */}
+          <div className="flex flex-col gap-0.5">
+            <label className="flex items-center gap-1 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={val('saturdayEnabled')}
+                onChange={e => setBool('saturdayEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+              Samstag {!isDefault('saturdayEnabled') && overriddenBadge}
+            </label>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('saturdayPct')}
+              onChange={e => setNum('saturdayPct', e.target.value)}
+              disabled={!val('saturdayEnabled')}
+              className={cn(fieldCn, !isDefault('saturdayPct') && 'border-primary/50')}
+              title="Samstagszuschlag (%)"
+            />
+          </div>
+          {/* Sunday */}
+          <div className="flex flex-col gap-0.5">
+            <label className="flex items-center gap-1 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={val('sundayEnabled')}
+                onChange={e => setBool('sundayEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+              Sonntag {!isDefault('sundayEnabled') && overriddenBadge}
+            </label>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('sundayPct')}
+              onChange={e => setNum('sundayPct', e.target.value)}
+              disabled={!val('sundayEnabled')}
+              className={cn(fieldCn, !isDefault('sundayPct') && 'border-primary/50')}
+              title="Sonntagszuschlag (%)"
+            />
+          </div>
+          {/* Holiday */}
+          <div className="flex flex-col gap-0.5">
+            <label className="flex items-center gap-1 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={val('holidayEnabled')}
+                onChange={e => setBool('holidayEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+              Feiertag {!isDefault('holidayEnabled') && overriddenBadge}
+            </label>
+            <Input
+              type="number" min="0" max="500" step="5"
+              value={val('holidayPct')}
+              onChange={e => setNum('holidayPct', e.target.value)}
+              disabled={!val('holidayEnabled')}
+              className={cn(fieldCn, !isDefault('holidayPct') && 'border-primary/50')}
+              title="Feiertagszuschlag (%)"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Per diem amounts + home base */}
+      <div>
+        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
+          Verpflegung & Einsatzort (§ 12.2)
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">Vollpauschale (€)</span>
+            <Input
+              type="text" inputMode="decimal"
+              defaultValue={(perDiemFullCents / 100).toFixed(2)}
+              onBlur={e => {
+                const cents = Math.round(parseFloat(e.target.value.replace(',', '.')) * 100) || 0;
+                onPerDiemFullChange(cents);
+              }}
+              className={fieldCn}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">Teilpauschale (€)</span>
+            <Input
+              type="text" inputMode="decimal"
+              defaultValue={(perDiemPartialCents / 100).toFixed(2)}
+              onBlur={e => {
+                const cents = Math.round(parseFloat(e.target.value.replace(',', '.')) * 100) || 0;
+                onPerDiemPartialChange(cents);
+              }}
+              className={fieldCn}
+            />
+          </label>
+          <label className="flex flex-col gap-0.5">
+            <span className="text-muted-foreground">
+              Heimatort {rules.homeBase !== undefined && overriddenBadge}
+            </span>
+            <Input
+              type="text"
+              value={rules.homeBase ?? HOME_BASE_DEFAULT}
+              onChange={e => onRulesChange({ ...rules, homeBase: e.target.value || undefined })}
+              className={cn(
+                'h-7 text-xs border border-border/60 rounded px-1.5 w-full',
+                rules.homeBase !== undefined && 'border-primary/50'
+              )}
+              placeholder={HOME_BASE_DEFAULT}
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main detail panel ───────────────────────────────────────────────────────
 
 export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
   const t = useTranslations('timesheets');
@@ -71,6 +383,15 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
     if (headerSaveTimer.current) clearTimeout(headerSaveTimer.current);
     headerSaveTimer.current = setTimeout(() => {
       updateTimesheet(timesheet.id, overrides);
+    }, DEBOUNCE_MS);
+  }
+
+  // Custom rules — debounced
+  const customRulesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function scheduleCustomRulesSave(rules: CustomRulesOverride) {
+    if (customRulesTimer.current) clearTimeout(customRulesTimer.current);
+    customRulesTimer.current = setTimeout(() => {
+      updateTimesheet(timesheet.id, { custom_rules: rules });
     }, DEBOUNCE_MS);
   }
 
@@ -232,7 +553,7 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
               </div>
             </div>
 
-            {/* Per diem settings */}
+            {/* Per diem + daily minimum checkboxes (Bug #4: these read from the store-fresh prop) */}
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-xs cursor-pointer">
                 <input
@@ -253,6 +574,22 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
                 {t('fields.dailyMinimum8h')}
               </label>
             </div>
+
+            {/* Custom-mode settings panel (Bug #1): only visible when custom_tarif is selected */}
+            {timesheet.calc_mode === 'custom_tarif' && (
+              <CustomRulesPanel
+                rules={timesheet.custom_rules ?? {}}
+                perDiemFullCents={timesheet.per_diem_full_day_cents}
+                perDiemPartialCents={timesheet.per_diem_partial_day_cents}
+                onRulesChange={rules => scheduleCustomRulesSave(rules)}
+                onPerDiemFullChange={cents =>
+                  updateTimesheet(timesheet.id, { per_diem_full_day_cents: cents })
+                }
+                onPerDiemPartialChange={cents =>
+                  updateTimesheet(timesheet.id, { per_diem_partial_day_cents: cents })
+                }
+              />
+            )}
           </div>
         </div>
 

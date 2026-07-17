@@ -7,6 +7,8 @@
 
 import type { Timesheet, Ruleset, CustomRulesOverride } from './types';
 
+export const HOME_BASE_DEFAULT = 'Berlin';
+
 const TV_FFS_DEFAULTS = {
   // § 5.4.3.2: daily OT
   dailyOtStartH: 10,      // OT starts after the 10th hour
@@ -20,11 +22,15 @@ const TV_FFS_DEFAULTS = {
   weeklyOtBand2Pct: 50,
 
   // § 5.5: night surcharge (22:00–06:00)
+  nightEnabled: true,
   nightPct: 25,
 
   // § 5.6.3–5.6.4: day-type surcharges (stack with OT surcharges)
+  saturdayEnabled: true,
   saturdayPct: 25,
+  sundayEnabled: true,
   sundayPct: 75,
+  holidayEnabled: true,
   holidayPct: 100,
 } as const;
 
@@ -58,19 +64,23 @@ export function buildRuleset(sheet: Timesheet, publicHolidays: Set<string>): Rul
     weeklyOtBand1Pct: overrides.weeklyOtBand1Pct ?? r.weeklyOtBand1Pct,
     weeklyOtBand2Pct: overrides.weeklyOtBand2Pct ?? r.weeklyOtBand2Pct,
 
-    nightEnabled: true,
+    nightEnabled: overrides.nightEnabled ?? r.nightEnabled,
     nightPct: overrides.nightPct ?? r.nightPct,
 
-    saturdayEnabled: true,
+    saturdayEnabled: overrides.saturdayEnabled ?? r.saturdayEnabled,
     saturdayPct: overrides.saturdayPct ?? r.saturdayPct,
-    sundayEnabled: true,
+    sundayEnabled: overrides.sundayEnabled ?? r.sundayEnabled,
     sundayPct: overrides.sundayPct ?? r.sundayPct,
-    holidayEnabled: true,
+    holidayEnabled: overrides.holidayEnabled ?? r.holidayEnabled,
     holidayPct: overrides.holidayPct ?? r.holidayPct,
 
     perDiemEnabled: sheet.per_diem_enabled,
     perDiemFullDayCents: sheet.per_diem_full_day_cents,
     perDiemPartialDayCents: sheet.per_diem_partial_day_cents,
+
+    // § 12.2 TV FFS: per diems only apply when working away from home base.
+    // In full_tarif mode the home base is always the default; custom_tarif can override it.
+    homeBase: (sheet.calc_mode === 'custom_tarif' ? overrides.homeBase : undefined) ?? HOME_BASE_DEFAULT,
 
     publicHolidays,
   };

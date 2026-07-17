@@ -12,17 +12,22 @@ export type PerDiemType = 'auto' | 'partial' | 'full' | 'none';
 
 /** Shape of the `custom_rules` JSONB column on `timesheets`. */
 export interface CustomRulesOverride {
-  dailyOtStartH?: number;      // h/day before OT starts; TV FFS default: 10
-  dailyOtBand1Pct?: number;    // surcharge for hours in band 1; TV FFS: 25
-  dailyOtBand2Pct?: number;    // surcharge for hours in band 2; TV FFS: 50
-  weeklyOtThresholdH?: number; // weekly h before OT kicks in; TV FFS: 50
-  weeklyOtBand1EndH?: number;  // weekly h where band 1 ends; TV FFS: 55
-  weeklyOtBand1Pct?: number;   // weekly OT band 1 surcharge; TV FFS: 25
-  weeklyOtBand2Pct?: number;   // weekly OT band 2 surcharge; TV FFS: 50
-  nightPct?: number;           // night-time surcharge; TV FFS: 25
-  saturdayPct?: number;        // Saturday surcharge; TV FFS: 25
-  sundayPct?: number;          // Sunday surcharge; TV FFS: 75
-  holidayPct?: number;         // Public holiday surcharge; TV FFS: 100
+  dailyOtStartH?: number;       // h/day before OT starts; TV FFS default: 10
+  dailyOtBand1Pct?: number;     // surcharge for hours in band 1; TV FFS: 25
+  dailyOtBand2Pct?: number;     // surcharge for hours in band 2; TV FFS: 50
+  weeklyOtThresholdH?: number;  // weekly h before OT kicks in; TV FFS: 50
+  weeklyOtBand1EndH?: number;   // weekly h where band 1 ends; TV FFS: 55
+  weeklyOtBand1Pct?: number;    // weekly OT band 1 surcharge; TV FFS: 25
+  weeklyOtBand2Pct?: number;    // weekly OT band 2 surcharge; TV FFS: 50
+  nightEnabled?: boolean;       // night surcharge on/off; TV FFS default: true
+  nightPct?: number;            // night-time surcharge; TV FFS: 25
+  saturdayEnabled?: boolean;    // Saturday surcharge on/off; TV FFS default: true
+  saturdayPct?: number;         // Saturday surcharge; TV FFS: 25
+  sundayEnabled?: boolean;      // Sunday surcharge on/off; TV FFS default: true
+  sundayPct?: number;           // Sunday surcharge; TV FFS: 75
+  holidayEnabled?: boolean;     // holiday surcharge on/off; TV FFS default: true
+  holidayPct?: number;          // Public holiday surcharge; TV FFS: 100
+  homeBase?: string;            // Home location for per-diem eligibility; default: 'Berlin'
 }
 
 export interface Timesheet {
@@ -88,6 +93,7 @@ export interface DayInput {
   travelToMinutes: number;
   travelBackMinutes: number;
   travelQualifies: boolean;
+  placeOfWork: string | null; // used to compare against homeBase for per-diem eligibility
   bundesland: string | null;
   perDiemType: PerDiemType;
 }
@@ -126,6 +132,9 @@ export interface Ruleset {
   perDiemFullDayCents: number;
   perDiemPartialDayCents: number;
 
+  // Home base for per-diem eligibility: no per diem when placeOfWork matches homeBase
+  homeBase: string;
+
   // Set of ISO date strings that are public holidays in the week being calculated
   publicHolidays: Set<string>;
 }
@@ -145,6 +154,13 @@ export interface DayResult {
   dailyOtBand1Minutes: number; // minutes in daily OT band 1 (hour 11)
   dailyOtBand2Minutes: number; // minutes in daily OT band 2 (hour 12+)
   perDiemCents: number;
+  // Per-day total pay (base + all day-level surcharges + per diem).
+  // Computed in calculateWeek (requires hourlyCents). Zero when called via calculateDay standalone.
+  dayTotalCents: number;
+  // Minutes below the 11h minimum rest threshold vs. the next day (ArbZG § 5 / TV FFS § 5.8).
+  // Non-zero only on the day that ended too late. Filled in by calculateWeek.
+  restViolationMinutes: number;
+  restViolationCents: number;
 }
 
 /** Aggregated weekly pay calculation result. */
@@ -167,6 +183,7 @@ export interface WeekResult {
   sundaySurchargeCents: number;
   holidaySurchargeCents: number;
   perDiemCents: number;
+  restViolationCents: number;    // ArbZG § 5 / TV FFS § 5.8 rest-period violation pay
   totalGrossCents: number;       // sum of all components
 
   hourlyRateCents: number;       // weeklyRate / 50 (standard) or / 40 (reduced)

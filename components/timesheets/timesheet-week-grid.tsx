@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { parseISO, format, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { Timesheet, TimesheetEntry, PerDiemType } from '@/lib/timesheets/types';
+import { calculateWeek } from '@/lib/timesheets/calculation';
+import { buildRuleset } from '@/lib/timesheets/ruleset';
+import { getWeekHolidays } from '@/lib/timesheets/holidays';
+import { deriveBundesland } from '@/lib/timesheets/location';
+import type { Timesheet, TimesheetEntry, PerDiemType, DayResult } from '@/lib/timesheets/types';
 
 // Bundesland options (DE-ISO3166-2 codes)
 const BUNDESLAENDER = [
@@ -35,7 +39,6 @@ const BUNDESLAENDER = [
   { code: 'DE-TH', label: 'Thüringen' },
 ];
 
-const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
 interface Props {
   timesheet: Timesheet;
@@ -46,6 +49,14 @@ interface Props {
 
 function cellCn(extraClass?: string) {
   return cn('h-7 text-xs border border-border/60 rounded px-1.5', extraClass);
+}
+
+function centsToEuro(cents: number): string {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+  }).format(cents / 100);
 }
 
 export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading }: Props) {
@@ -61,9 +72,47 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = format(addDays(monday, i), 'yyyy-MM-dd');
     const label = format(addDays(monday, i), 'EEEE d. MMM', { locale: de });
-    const dayKey = DAY_KEYS[i];
-    return { date, label, dayKey };
+    return { date, label };
   });
+
+  // Compute per-day totals for the Pay column (Bug #6).
+  // dayResultMap maps date → DayResult (only worked days have meaningful dayTotalCents).
+  const dayResultMap = useMemo((): Record<string, DayResult> => {
+    if (timesheet.weekly_rate_cents === 0) return {};
+
+    const bundeslandCounts: Record<string, number> = {};
+    for (const e of entries) {
+      if (e.bundesland) bundeslandCounts[e.bundesland] = (bundeslandCounts[e.bundesland] ?? 0) + 1;
+    }
+    const primaryBl = Object.entries(bundeslandCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'DE-BE';
+
+    const publicHolidays = getWeekHolidays(timesheet.week_start, primaryBl);
+    const ruleset = buildRuleset(timesheet, publicHolidays);
+
+    const dayInputs = days.map(({ date }) => {
+      const e = entries.find(en => en.entry_date === date);
+      return {
+        date,
+        workStart: e?.work_start ?? null,
+        workEnd: e?.work_end ?? null,
+        breakMinutes: e?.break_minutes ?? 0,
+        travelToMinutes: e?.travel_to_minutes ?? 0,
+        travelBackMinutes: e?.travel_back_minutes ?? 0,
+        travelQualifies: e?.travel_qualifies ?? false,
+        placeOfWork: e?.place_of_work ?? null,
+        bundesland: e?.bundesland ?? null,
+        perDiemType: e?.per_diem_type ?? 'none' as const,
+      };
+    });
+
+    const result = calculateWeek(dayInputs, ruleset);
+    const map: Record<string, DayResult> = {};
+    for (const dr of result.days) {
+      map[dr.date] = dr;
+    }
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timesheet, entries]);
 
   if (isLoading) {
     return <div className="py-8 text-center text-sm text-muted-foreground">{t('title')}…</div>;
@@ -71,7 +120,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs border-collapse min-w-[900px]">
+      <table className="w-full text-xs border-collapse min-w-245">
         <thead>
           <tr className="bg-muted/60">
             <th className="px-3 py-2 text-left font-semibold text-muted-foreground w-36">Tag</th>
@@ -84,6 +133,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground w-32">{t('day.placeOfWork')}</th>
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground w-40">{t('day.bundesland')}</th>
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground">{t('day.perDiem')}</th>
+            <th className="px-2 py-2 text-right font-semibold text-muted-foreground w-24">Verdienst</th>
           </tr>
         </thead>
         <tbody>
@@ -91,6 +141,8 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
             const entry = getEntry(date);
             const isWeekend = date === format(addDays(monday, 5), 'yyyy-MM-dd') ||
               date === format(addDays(monday, 6), 'yyyy-MM-dd');
+            const dr = dayResultMap[date];
+            const hasEntry = !!(entry.work_start || entry.work_end);
 
             return (
               <tr
@@ -98,6 +150,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 className={cn(
                   'border-b transition-colors hover:bg-muted/20',
                   isWeekend && 'bg-slate-50',
+                  dr?.restViolationMinutes ? 'border-l-2 border-l-amber-400' : '',
                 )}
               >
                 {/* Day label */}
@@ -172,11 +225,21 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                   />
                 </td>
 
-                {/* Place of work */}
+                {/* Place of work — Bug #8: auto-derive Bundesland on change */}
                 <td className="px-2 py-1.5">
                   <Input
                     value={entry.place_of_work ?? ''}
-                    onChange={e => onEntryChange(date, 'place_of_work', e.target.value || null)}
+                    onChange={e => {
+                      const place = e.target.value || null;
+                      onEntryChange(date, 'place_of_work', place);
+                      // Auto-derive Bundesland from city name if not manually set
+                      if (place) {
+                        const derived = deriveBundesland(place);
+                        if (derived && !entry.bundesland) {
+                          onEntryChange(date, 'bundesland', derived);
+                        }
+                      }
+                    }}
                     className={cellCn('w-32')}
                     placeholder="Berlin"
                   />
@@ -220,6 +283,23 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                   ) : (
                     <span className="text-muted-foreground px-1">—</span>
                   )}
+                </td>
+
+                {/* Per-day pay (Bug #6): shown only for days with an entry; includes
+                    base pay + daily OT + day-type surcharges + per diem for that day.
+                    An amber left-border indicates a rest-period violation after this day. */}
+                <td className="px-2 py-1.5 text-right tabular-nums">
+                  {hasEntry && dr?.isWorked ? (
+                    <span className={cn(
+                      'font-medium text-xs',
+                      dr.restViolationMinutes > 0 && 'text-amber-600',
+                    )}>
+                      {centsToEuro(dr.dayTotalCents)}
+                      {dr.restViolationMinutes > 0 && (
+                        <span className="ml-1 text-[10px] text-amber-500" title="Ruhezeit-Verstoß">⚠</span>
+                      )}
+                    </span>
+                  ) : null}
                 </td>
               </tr>
             );
