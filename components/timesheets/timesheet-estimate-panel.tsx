@@ -8,8 +8,7 @@ import { cn } from '@/lib/utils';
 import { calculateWeek } from '@/lib/timesheets/calculation';
 import { buildRuleset } from '@/lib/timesheets/ruleset';
 import { getWeekHolidays } from '@/lib/timesheets/holidays';
-import type { Timesheet, TimesheetEntry } from '@/lib/timesheets/types';
-import type { WeekResult } from '@/lib/timesheets/types';
+import type { Timesheet, TimesheetEntry, PerDiemType, WeekResult } from '@/lib/timesheets/types';
 
 function centsToEuro(cents: number): string {
   return new Intl.NumberFormat('de-DE', {
@@ -80,7 +79,7 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
         travelQualifies: e?.travel_qualifies ?? false,
         placeOfWork: e?.place_of_work ?? null,
         bundesland: e?.bundesland ?? null,
-        perDiemType: e?.per_diem_type ?? 'none' as const,
+        perDiemType: (e?.per_diem_type ?? 'auto') as PerDiemType,
       };
     });
 

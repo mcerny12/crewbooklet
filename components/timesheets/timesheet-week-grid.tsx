@@ -12,32 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+// Bundesland is derived in the background from place_of_work and stored on the entry
+// for holiday detection (§ 5.6.1 TV FFS). It is never shown as a UI column.
 import { cn } from '@/lib/utils';
 import { calculateWeek } from '@/lib/timesheets/calculation';
 import { buildRuleset } from '@/lib/timesheets/ruleset';
 import { getWeekHolidays } from '@/lib/timesheets/holidays';
 import { deriveBundesland } from '@/lib/timesheets/location';
 import type { Timesheet, TimesheetEntry, PerDiemType, DayResult } from '@/lib/timesheets/types';
-
-// Bundesland options (DE-ISO3166-2 codes)
-const BUNDESLAENDER = [
-  { code: 'DE-BB', label: 'Brandenburg' },
-  { code: 'DE-BE', label: 'Berlin' },
-  { code: 'DE-BW', label: 'Baden-Württemberg' },
-  { code: 'DE-BY', label: 'Bayern' },
-  { code: 'DE-HB', label: 'Bremen' },
-  { code: 'DE-HE', label: 'Hessen' },
-  { code: 'DE-HH', label: 'Hamburg' },
-  { code: 'DE-MV', label: 'Mecklenburg-Vorpommern' },
-  { code: 'DE-NI', label: 'Niedersachsen' },
-  { code: 'DE-NW', label: 'Nordrhein-Westfalen' },
-  { code: 'DE-RP', label: 'Rheinland-Pfalz' },
-  { code: 'DE-SH', label: 'Schleswig-Holstein' },
-  { code: 'DE-SL', label: 'Saarland' },
-  { code: 'DE-SN', label: 'Sachsen' },
-  { code: 'DE-ST', label: 'Sachsen-Anhalt' },
-  { code: 'DE-TH', label: 'Thüringen' },
-];
 
 
 interface Props {
@@ -101,7 +83,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
         travelQualifies: e?.travel_qualifies ?? false,
         placeOfWork: e?.place_of_work ?? null,
         bundesland: e?.bundesland ?? null,
-        perDiemType: e?.per_diem_type ?? 'none' as const,
+        perDiemType: (e?.per_diem_type ?? 'auto') as PerDiemType,
       };
     });
 
@@ -131,7 +113,6 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelBack')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelQualifies')}</th>
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground w-32">{t('day.placeOfWork')}</th>
-            <th className="px-2 py-2 text-left font-semibold text-muted-foreground w-40">{t('day.bundesland')}</th>
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground">{t('day.perDiem')}</th>
             <th className="px-2 py-2 text-right font-semibold text-muted-foreground w-24">Verdienst</th>
           </tr>
@@ -232,35 +213,13 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                     onChange={e => {
                       const place = e.target.value || null;
                       onEntryChange(date, 'place_of_work', place);
-                      // Auto-derive Bundesland from city name if not manually set
-                      if (place) {
-                        const derived = deriveBundesland(place);
-                        if (derived && !entry.bundesland) {
-                          onEntryChange(date, 'bundesland', derived);
-                        }
-                      }
+                      // Always derive Bundesland from place of work for background holiday detection.
+                      // Clears to null when place is unknown or empty.
+                      onEntryChange(date, 'bundesland', place ? deriveBundesland(place) : null);
                     }}
                     className={cellCn('w-32')}
                     placeholder="Berlin"
                   />
-                </td>
-
-                {/* Bundesland */}
-                <td className="px-2 py-1.5">
-                  <Select
-                    value={entry.bundesland ?? '__none__'}
-                    onValueChange={v => onEntryChange(date, 'bundesland', v === '__none__' ? null : v)}
-                  >
-                    <SelectTrigger className={cellCn('w-40')}>
-                      <SelectValue placeholder="—" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">—</SelectItem>
-                      {BUNDESLAENDER.map(bl => (
-                        <SelectItem key={bl.code} value={bl.code}>{bl.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </td>
 
                 {/* Per diem */}

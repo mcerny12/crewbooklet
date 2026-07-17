@@ -621,7 +621,7 @@
       "calcMode": "Berechnungsmodus",
       "rateType": "Vertragsart",
       "weeklyRate": "Wochengage (€)",
-      "dailyMinimum8h": "Tagesmindest 8 Std.",
+      "dailyMinimum8h": "Tagesminimum anwenden",
       "perDiemEnabled": "Verpflegungsmehraufwand",
       "perDiemFullDay": "Volltagspauschale (€)",
       "perDiemPartialDay": "Teilttagspauschale (€)",

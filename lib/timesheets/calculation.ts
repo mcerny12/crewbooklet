@@ -148,9 +148,12 @@ export function calculateDay(
 
   const totalWorkMinutes = rawWorkMinutes + travelMinutes;
 
-  // Daily minimum 8h: only for pay calc (§ 5.2.4 TV FFS)
+  // Daily minimum = dailyOtStartH (TV FFS default: 10h) when the flag is on.
+  // The weekly rate is built around 5 × dailyOtStartH hours, so each called day
+  // is billed for at least that many hours regardless of actual time worked.
+  const dailyMinimumMinutes = ruleset.dailyOtStartH * MINUTES_PER_HOUR;
   const billedMinutes = isWorked
-    ? (ruleset.dailyMinimum8h ? Math.max(totalWorkMinutes, 8 * MINUTES_PER_HOUR) : totalWorkMinutes)
+    ? (ruleset.dailyMinimum8h ? Math.max(totalWorkMinutes, dailyMinimumMinutes) : totalWorkMinutes)
     : 0;
 
   // Night minutes (22:00–06:00) — only from the raw work window, not travel

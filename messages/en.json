@@ -621,7 +621,7 @@
       "calcMode": "Calculation mode",
       "rateType": "Contract type",
       "weeklyRate": "Weekly rate (€)",
-      "dailyMinimum8h": "Daily 8 h minimum",
+      "dailyMinimum8h": "Apply daily minimum",
       "perDiemEnabled": "Per diem",
       "perDiemFullDay": "Full day rate (€)",
       "perDiemPartialDay": "Partial day rate (€)",
