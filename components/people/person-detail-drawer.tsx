@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSearchSelect } from '@/components/ui/multi-search-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { usePeopleStore } from '@/lib/stores/people-store';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
@@ -153,7 +154,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
             </div>
             <div className="space-y-0.5">
               <Label className="text-[10px] text-gray-500">Jobs (up to 3)</Label>
-              <MultiSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)} placeholder="Select jobs…" maxSelections={3} />
+              <MultiSearchSelect options={jobOptions} selected={editedPerson.jobs || []} onChange={jobs => updateField('jobs', jobs)} placeholder="Search jobs…" maxSelections={3} />
             </div>
             <div className="space-y-0.5">
               <Label className="text-[10px] text-gray-500">Gender</Label>

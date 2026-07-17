@@ -11,7 +11,7 @@ import { MobileEmptyState } from '@/components/mobile/mobile-empty-state';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSearchSelect } from '@/components/ui/multi-search-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { OrgLogo } from './org-logo';
@@ -61,11 +61,11 @@ function OverviewTab({ editedOrg, updateField }: {
       </MobileField>
 
       <MobileField label="Business Type">
-        <MultiSelect
+        <MultiSearchSelect
           options={orgTypeOptions}
           selected={editedOrg.jobs || []}
           onChange={jobs => updateField('jobs', jobs as OrganizationJobType[])}
-          placeholder="Select types…"
+          placeholder="Search types…"
           maxSelections={3}
         />
       </MobileField>

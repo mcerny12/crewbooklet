@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSearchSelect } from '@/components/ui/multi-search-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
@@ -59,13 +60,12 @@ function ProfileTab({ editedPerson, updateField, organizations, onOpenOrg }: {
       </MobileField>
 
       <MobileField label="Jobs (up to 3)">
-        <MultiSelect
+        <MultiSearchSelect
           options={jobOptions}
           selected={editedPerson.jobs || []}
           onChange={jobs => updateField('jobs', jobs)}
-          placeholder="Select jobs…"
+          placeholder="Search jobs…"
           maxSelections={3}
-          className="h-9 min-h-9 text-sm"
         />
       </MobileField>
 

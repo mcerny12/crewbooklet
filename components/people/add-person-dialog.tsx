@@ -6,7 +6,7 @@ import { usePeopleStore } from '@/lib/stores/people-store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSearchSelect } from '@/components/ui/multi-search-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Language, FILM_COUNTRIES } from '@/lib/types/models';
 import { useJobTypesStore } from '@/lib/stores/job-types-store';
@@ -100,11 +100,11 @@ export function AddPersonDialog({ open, onOpenChange, organizationId, onCreated 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">{t('fields.jobs')}</label>
-                <MultiSelect options={jobOptions} selected={jobs} onChange={setJobs} placeholder={t('fields.selectJob')} maxSelections={3} />
+                <MultiSearchSelect options={jobOptions} selected={jobs} onChange={setJobs} placeholder={t('fields.selectJob')} maxSelections={3} />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">{t('fields.languages')}</label>
-                <MultiSelect options={languageOptions} selected={languages} onChange={setLanguages} placeholder={tCommon('selectPlaceholder')} />
+                <MultiSearchSelect options={languageOptions} selected={languages} onChange={setLanguages} placeholder={tCommon('selectPlaceholder')} />
               </div>
             </div>
 

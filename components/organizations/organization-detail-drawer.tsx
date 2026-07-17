@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { MultiSelect } from '@/components/ui/multi-select';
+import { MultiSearchSelect } from '@/components/ui/multi-search-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { useOrganizationsStore } from '@/lib/stores/organizations-store';
 import { usePeopleStore } from '@/lib/stores/people-store';
@@ -153,7 +153,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
             <div className="space-y-0.5">
               <Label className="text-[10px] text-gray-500">Business Type</Label>
-              <MultiSelect options={orgTypeOptions} selected={editedOrg.jobs || []} onChange={jobs => updateField('jobs', jobs as OrganizationJobType[])} placeholder="Select types…" maxSelections={3} />
+              <MultiSearchSelect options={orgTypeOptions} selected={editedOrg.jobs || []} onChange={jobs => updateField('jobs', jobs as OrganizationJobType[])} placeholder="Search types…" maxSelections={3} />
             </div>
           </div>
         </DetailFrame>
