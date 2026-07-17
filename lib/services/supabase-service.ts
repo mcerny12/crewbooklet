@@ -1519,4 +1519,129 @@ export class SupabaseService {
       .order('start_date', { ascending: true });
     return { calendar, events: events || [] };
   }
+
+  // MARK: - Timesheet Operations
+
+  static async fetchTimesheets(): Promise<import('@/lib/timesheets/types').Timesheet[]> {
+    const { data, error } = await supabase
+      .from('timesheets')
+      .select('*')
+      .order('week_start', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async fetchTimesheetsByProject(projectId: string): Promise<import('@/lib/timesheets/types').Timesheet[]> {
+    const { data, error } = await supabase
+      .from('timesheets')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('week_start', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async fetchTimesheet(id: string): Promise<import('@/lib/timesheets/types').Timesheet | null> {
+    const { data, error } = await supabase
+      .from('timesheets')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) return null;
+    return data;
+  }
+
+  static async addTimesheet(
+    sheet: Omit<import('@/lib/timesheets/types').Timesheet, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<import('@/lib/timesheets/types').Timesheet | null> {
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session.session?.user.id;
+    const { data, error } = await supabase
+      .from('timesheets')
+      .insert([{ ...sheet, user_id: userId }])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  static async updateTimesheet(
+    id: string,
+    updates: Partial<import('@/lib/timesheets/types').Timesheet>
+  ): Promise<import('@/lib/timesheets/types').Timesheet | null> {
+    const { user_id: _uid, created_at: _ca, updated_at: _ua, ...clean } = updates as Record<string, unknown>;
+    const { data, error } = await supabase
+      .from('timesheets')
+      .update(clean)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  static async deleteTimesheet(id: string): Promise<boolean> {
+    const { error } = await supabase.from('timesheets').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  }
+
+  // MARK: - Timesheet Entry Operations
+
+  static async fetchTimesheetEntries(
+    timesheetId: string
+  ): Promise<import('@/lib/timesheets/types').TimesheetEntry[]> {
+    const { data, error } = await supabase
+      .from('timesheet_entries')
+      .select('*')
+      .eq('timesheet_id', timesheetId)
+      .order('entry_date', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  static async upsertTimesheetEntry(
+    entry: Omit<import('@/lib/timesheets/types').TimesheetEntry, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<import('@/lib/timesheets/types').TimesheetEntry | null> {
+    const { data, error } = await supabase
+      .from('timesheet_entries')
+      .upsert(entry, { onConflict: 'timesheet_id,entry_date' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  static async deleteTimesheetEntry(id: string): Promise<boolean> {
+    const { error } = await supabase.from('timesheet_entries').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  }
+
+  // MARK: - Project Timesheet Defaults
+
+  static async fetchProjectTimesheetDefaults(
+    projectId: string
+  ): Promise<import('@/lib/timesheets/types').ProjectTimesheetDefaults | null> {
+    const { data, error } = await supabase
+      .from('project_timesheet_defaults')
+      .select('*')
+      .eq('project_id', projectId)
+      .single();
+    if (error) return null;
+    return data;
+  }
+
+  static async upsertProjectTimesheetDefaults(
+    defaults: Partial<import('@/lib/timesheets/types').ProjectTimesheetDefaults> & { project_id: string }
+  ): Promise<import('@/lib/timesheets/types').ProjectTimesheetDefaults | null> {
+    const { created_at: _ca, updated_at: _ua, ...clean } = defaults as Record<string, unknown>;
+    const { data, error } = await supabase
+      .from('project_timesheet_defaults')
+      .upsert(clean, { onConflict: 'project_id' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
 }

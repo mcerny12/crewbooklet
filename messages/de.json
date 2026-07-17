@@ -49,6 +49,7 @@
     "projects": "Projekte",
     "organizations": "Organisationen",
     "invoices": "Rechnungen",
+    "timesheets": "Stundenzettel",
     "calendar": "Kalender",
     "search": "Suche",
     "admin": "Administration",
@@ -589,6 +590,98 @@
       "show": "Anzeigen",
       "hide": "Ausblenden"
     }
+  },
+  "timesheets": {
+    "title": "Stundenzettel",
+    "newTimesheet": "Neuer Stundenzettel",
+    "addTimesheet": "Stundenzettel hinzufügen",
+    "noTimesheets": "Noch keine Stundenzettel",
+    "noTimesheetsHint": "Erstellen Sie einen neuen Stundenzettel für eine Arbeitswoche.",
+    "week": "Woche",
+    "weekOf": "Woche vom",
+    "status": {
+      "draft": "Entwurf",
+      "submitted": "Eingereicht",
+      "approved": "Genehmigt"
+    },
+    "calcMode": {
+      "full_tarif": "TV FFS (Standard)",
+      "custom_tarif": "Individuell"
+    },
+    "rateType": {
+      "standard": "Normalsatz (50 h/Woche)",
+      "reduced": "Reduzierter Satz (40 h/Woche)"
+    },
+    "fields": {
+      "weekStart": "Wochenbeginn (Montag)",
+      "project": "Projekt",
+      "personName": "Name",
+      "positionTitle": "Position/Funktion",
+      "department": "Abteilung",
+      "calcMode": "Berechnungsmodus",
+      "rateType": "Vertragsart",
+      "weeklyRate": "Wochengage (€)",
+      "dailyMinimum8h": "Tagesmindest 8 Std.",
+      "perDiemEnabled": "Verpflegungsmehraufwand",
+      "perDiemFullDay": "Volltagspauschale (€)",
+      "perDiemPartialDay": "Teilttagspauschale (€)",
+      "notes": "Anmerkungen"
+    },
+    "day": {
+      "workStart": "Beginn",
+      "workEnd": "Ende",
+      "break": "Pause (min)",
+      "travelTo": "Anfahrt (min)",
+      "travelBack": "Rückfahrt (min)",
+      "travelQualifies": "Fahrt anrechenbar",
+      "placeOfWork": "Einsatzort",
+      "bundesland": "Bundesland",
+      "perDiem": "Verpflegung",
+      "notes": "Notizen",
+      "monday": "Montag",
+      "tuesday": "Dienstag",
+      "wednesday": "Mittwoch",
+      "thursday": "Donnerstag",
+      "friday": "Freitag",
+      "saturday": "Samstag",
+      "sunday": "Sonntag"
+    },
+    "perDiemType": {
+      "auto": "Automatisch",
+      "partial": "Teilpauschale (€14)",
+      "full": "Vollpauschale (€28)",
+      "none": "Keine"
+    },
+    "estimate": {
+      "title": "Hochrechnung (vertraulich)",
+      "basePayLabel": "Wochengage",
+      "dailyOtLabel": "Tagesüberstunden",
+      "weeklyOtLabel": "Wochenüberstunden",
+      "nightLabel": "Nachtzuschlag",
+      "saturdayLabel": "Samstagszuschlag",
+      "sundayLabel": "Sonntagszuschlag",
+      "holidayLabel": "Feiertagszuschlag",
+      "perDiemLabel": "Verpflegungsmehraufwand",
+      "totalLabel": "Gesamt brutto",
+      "adminOnly": "Nur für Dich und Admins sichtbar"
+    },
+    "pdf": {
+      "pageTitle": "Stundenzettel",
+      "weeklyHours": "Wochenstunden",
+      "totalHours": "Gesamtstunden",
+      "signature": "Unterschrift",
+      "date": "Datum"
+    },
+    "projectTab": {
+      "title": "Stundenzettel",
+      "noTimesheets": "Keine Stundenzettel für dieses Projekt",
+      "totalHours": "Gesamt Stunden"
+    },
+    "deleteConfirm": "Stundenzettel löschen?",
+    "deleteConfirmHint": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "submit": "Einreichen",
+    "approve": "Genehmigen",
+    "exportPdf": "PDF exportieren"
   },
   "admin": {
     "title": "Administration",

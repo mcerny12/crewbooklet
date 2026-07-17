@@ -61,11 +61,14 @@ Supabase DB → SupabaseService (static class) → Zustand stores → React comp
 - `lib/supabase/client.ts` — browser client (used by service layer). `lib/supabase/server.ts` — SSR client (API routes). `lib/supabase/admin.ts` — service-role client (admin API only).
 - `proxy.ts` — Contains middleware logic (auth enforcement, admin-only route guard) **but is NOT active**. The file is named `proxy.ts` (not `middleware.ts`) and exports `proxy` (not `middleware`), so Next.js does not run it automatically. There is no `middleware.ts` at the project root. Auth is enforced client-side by `MainLayout` and `AuthProvider`.
 
-### Admin panel
+### Settings page
 
-`/admin` (guarded to `admin` role by `MainLayout`) has two tabs:
-- **Users** — lists all Supabase users, lets admins change roles. Backed by `/api/admin/users` (GET + PATCH), which uses `createSupabaseAdminClient` (service-role key) to read/write `app_metadata.role`.
-- **Job Types** — CRUD for the database-driven job type list via `useJobTypesStore`.
+`/settings` (`components/settings/settings-shell.tsx`) is the unified settings hub. It shows three sections, with admin-only sections hidden from non-admins:
+- **General** — user preferences (language switcher backed by `user_settings` DB table via `useUserSettings()`).
+- **Admin: Users** — lists all Supabase users, lets admins change roles. Backed by `/api/admin/users` (GET + PATCH), which uses `createSupabaseAdminClient` (service-role key) to read/write `app_metadata.role`.
+- **Admin: Job Types** — CRUD for the database-driven job type list via `useJobTypesStore`.
+
+`/admin` is a legacy redirect: admins land at `/settings?section=admin-users`, everyone else at `/settings`. The `/api/admin/*` routes still enforce admin-only access independently.
 
 ### Auth & permissions
 
@@ -110,11 +113,15 @@ Job types are **database-driven**, not purely static. `useJobTypesStore` holds `
 
 ### Invoice printing
 
-Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel. Uses `jspdf` / `pdf-lib`.
+Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel. Uses `jspdf` / `pdf-lib`. Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
 
-### Aconto invoices
+### Aconto, storno, and revision invoices
 
-An "aconto" (advance payment) invoice has `is_aconto: true` and its `aconto_invoice_ids` array references the IDs of the invoices it covers. Handle this flag when rendering invoice totals or linking invoice records.
+**Aconto** (advance payment): `is_aconto: true` marks an advance invoice. Final invoices deduct acontos via the `invoice_aconto_applications` table (snapshots the source amount/number/date at link time). The legacy `aconto_invoice_ids` array field on `Invoice` is deprecated — read `aconto_applications` instead.
+
+**Storno** (Rechnungskorrektur): a cancellation invoice linked via `storno_invoice_id` on the original and `storno_reason` / `storno_date` on the storno record. Status `StornoInvoice` / `RevisionDraft`.
+
+**Revision**: a corrected replacement invoice linked via `revision_of_invoice_id` (points back to the original). `revision_sequence` tracks the revision number (1 = first revision); invoice numbers get `-rev` / `-rev-01` suffixes. When creating a revision, copy the original's aconto applications via `SupabaseService.copyAcontoApplicationsForRevision`.
 
 ### Calendar ICS feed
 
@@ -126,7 +133,7 @@ The app ships in German (default) and English via [`next-intl`](https://next-int
 
 - **Config:** [`i18n/routing.ts`](i18n/routing.ts) (locale list, cookie name, default) + [`i18n/request.ts`](i18n/request.ts) (reads the cookie server-side, loads `messages/<locale>.json`).
 - **Provider:** [`app/layout.tsx`](app/layout.tsx) is now an async server component that fetches the locale and wraps everything in `<NextIntlClientProvider>`. All client components below can `useTranslations(...)` directly.
-- **Switcher:** [`components/i18n/language-switcher.tsx`](components/i18n/language-switcher.tsx). Sits in the sidebar footer above feedback / sign-out. Writes the cookie and triggers a `window.location.reload()` so the server-rendered messages refresh (next-intl reads the cookie at render time).
+- **Switcher:** [`components/i18n/language-switcher.tsx`](components/i18n/language-switcher.tsx). Sits in the sidebar footer above feedback / sign-out. Writes both the `cb_locale` cookie (read by `next-intl` at render time) **and** `user_settings.app_language` in the DB (via `useUserSettings()`) so the preference persists across devices. Triggers `window.location.reload()` to refresh server-rendered messages.
 - **Translation files:** [`messages/de.json`](messages/de.json) and [`messages/en.json`](messages/en.json). Keys are organised by domain (`common`, `navigation`, `auth`, `dashboard`, `people`, `projects`, `organizations`, `invoices`, `invoicePdf`, `calendar`, `admin`, `search`, plus enum dictionaries `assignmentStatus`, `departments`, `gender`, `languages`, `roles`). Both files must keep the same key shape.
 - **Status badges** in [`components/ui/status-badge.tsx`](components/ui/status-badge.tsx) translate their *labels* but keep the colour classes keyed on the raw enum value, so colours never change across locales.
 
@@ -159,6 +166,10 @@ Use `useFormatter()` from `next-intl` (it picks up the current locale automatica
 ### `AssignmentStatus` enum key naming
 
 The enum keys use German words (`Gebucht`, `Angefragt`, etc.) but the values are English display strings (`"Booked"`, `"Inquired"`, etc.). Always use the enum key in code; never hardcode the string value.
+
+### Audit guide
+
+`AUDIT.md` at the repo root is an operating manual for diagnosing the codebase, DB schema, data integrity, RLS, and accounting invariants. Consult it before any data-repair or schema-change work. It is read-only by design — repair operations require separate explicit approval.
 
 ---
 

@@ -34,6 +34,7 @@ import { format } from 'date-fns';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { ProjectMobileDetail } from './project-mobile-detail';
 import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
+import { TimesheetProjectTab } from '@/components/timesheets/timesheet-project-tab';
 
 interface ProjectDetailPanelProps {
   project: Project;
@@ -857,6 +858,12 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                 updatedAt={project.updated_at}
                 userId={project.user_id}
               />
+            </DetailFrame>
+          </DetailSlide>
+
+          <DetailSlide ariaLabel="Project timesheets" tabLabel="Timesheets">
+            <DetailFrame title="Timesheets" className="flex-1" data-cb-area="Timesheets">
+              <TimesheetProjectTab projectId={project.id} />
             </DetailFrame>
           </DetailSlide>
 

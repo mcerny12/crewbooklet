@@ -49,6 +49,7 @@
     "projects": "Projects",
     "organizations": "Organizations",
     "invoices": "Invoices",
+    "timesheets": "Timesheets",
     "calendar": "Calendar",
     "search": "Search",
     "admin": "Administration",
@@ -589,6 +590,98 @@
       "show": "Show",
       "hide": "Hide"
     }
+  },
+  "timesheets": {
+    "title": "Timesheets",
+    "newTimesheet": "New Timesheet",
+    "addTimesheet": "Add Timesheet",
+    "noTimesheets": "No timesheets yet",
+    "noTimesheetsHint": "Create a new timesheet for a working week.",
+    "week": "Week",
+    "weekOf": "Week of",
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "approved": "Approved"
+    },
+    "calcMode": {
+      "full_tarif": "TV FFS (Standard)",
+      "custom_tarif": "Custom"
+    },
+    "rateType": {
+      "standard": "Standard rate (50 h/week)",
+      "reduced": "Reduced rate (40 h/week)"
+    },
+    "fields": {
+      "weekStart": "Week start (Monday)",
+      "project": "Project",
+      "personName": "Name",
+      "positionTitle": "Position / Job title",
+      "department": "Department",
+      "calcMode": "Calculation mode",
+      "rateType": "Contract type",
+      "weeklyRate": "Weekly rate (€)",
+      "dailyMinimum8h": "Daily 8 h minimum",
+      "perDiemEnabled": "Per diem",
+      "perDiemFullDay": "Full day rate (€)",
+      "perDiemPartialDay": "Partial day rate (€)",
+      "notes": "Notes"
+    },
+    "day": {
+      "workStart": "Start",
+      "workEnd": "End",
+      "break": "Break (min)",
+      "travelTo": "Travel to (min)",
+      "travelBack": "Travel back (min)",
+      "travelQualifies": "Travel qualifies",
+      "placeOfWork": "Place of work",
+      "bundesland": "Federal state",
+      "perDiem": "Per diem",
+      "notes": "Notes",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "perDiemType": {
+      "auto": "Automatic",
+      "partial": "Partial day (€14)",
+      "full": "Full day (€28)",
+      "none": "None"
+    },
+    "estimate": {
+      "title": "Pay estimate (confidential)",
+      "basePayLabel": "Weekly rate",
+      "dailyOtLabel": "Daily overtime",
+      "weeklyOtLabel": "Weekly overtime",
+      "nightLabel": "Night surcharge",
+      "saturdayLabel": "Saturday surcharge",
+      "sundayLabel": "Sunday surcharge",
+      "holidayLabel": "Holiday surcharge",
+      "perDiemLabel": "Per diem",
+      "totalLabel": "Total gross",
+      "adminOnly": "Visible only to you and admins"
+    },
+    "pdf": {
+      "pageTitle": "Timesheet",
+      "weeklyHours": "Weekly hours",
+      "totalHours": "Total hours",
+      "signature": "Signature",
+      "date": "Date"
+    },
+    "projectTab": {
+      "title": "Timesheets",
+      "noTimesheets": "No timesheets for this project",
+      "totalHours": "Total hours"
+    },
+    "deleteConfirm": "Delete timesheet?",
+    "deleteConfirmHint": "This action cannot be undone.",
+    "submit": "Submit",
+    "approve": "Approve",
+    "exportPdf": "Export PDF"
   },
   "admin": {
     "title": "Admin Panel",

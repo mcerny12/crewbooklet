@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Search,
   Settings as SettingsIcon,
+  Clock,
 } from 'lucide-react';
 
 export type NavVisibility = 'all' | 'desktop-only' | 'mobile-only';
@@ -29,6 +30,7 @@ export const primaryNavItems: NavItem[] = [
   { href: '/projects', labelKey: 'projects', icon: Briefcase },
   { href: '/organizations', labelKey: 'organizations', icon: Building2 },
   { href: '/invoices', labelKey: 'invoices', icon: FileText, visibility: 'desktop-only' },
+  { href: '/timesheets', labelKey: 'timesheets', icon: Clock, visibility: 'desktop-only' },
   { href: '/calendar', labelKey: 'calendar', icon: CalendarDays },
   { href: '/search', labelKey: 'search', icon: Search, visibility: 'mobile-only' },
   { href: '/settings', labelKey: 'settings', icon: SettingsIcon },
