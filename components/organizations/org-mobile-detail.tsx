@@ -472,7 +472,12 @@ export function OrgMobileDetail({
     {
       value: 'overview',
       label: 'Overview',
-      content: <OverviewTab editedOrg={editedOrg} updateField={updateField} />,
+      content: (
+        <div className="space-y-4">
+          <OverviewTab editedOrg={editedOrg} updateField={updateField} />
+          <OrgStructureSection organization={organization} />
+        </div>
+      ),
     },
     {
       value: 'people',
@@ -509,11 +514,6 @@ export function OrgMobileDetail({
           onOpenProject={onOpenProject}
         />
       ),
-    },
-    {
-      value: 'structure',
-      label: 'Structure',
-      content: <OrgStructureSection organization={organization} />,
     },
     {
       value: 'financial',

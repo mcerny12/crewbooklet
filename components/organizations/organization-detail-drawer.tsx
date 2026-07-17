@@ -179,6 +179,9 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
               <MultiSearchSelect options={orgTypeOptions} selected={editedOrg.jobs || []} onChange={jobs => updateField('jobs', jobs as OrganizationJobType[])} placeholder="Search types…" maxSelections={3} />
             </div>
           </div>
+          <div className="mt-3">
+            <OrgStructureSection organization={organization} />
+          </div>
         </DetailFrame>
 
         <DetailFrame title="Contact" className="flex-1">
@@ -202,12 +205,6 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           </div>
         </DetailFrame>
-        </DetailSlide>
-
-        <DetailSlide ariaLabel="Organization structure" tabLabel="Structure">
-          <DetailFrame title="Organization Structure" className="flex-1">
-            <OrgStructureSection organization={organization} />
-          </DetailFrame>
         </DetailSlide>
 
         <DetailSlide ariaLabel="Organization people" tabLabel="People">
