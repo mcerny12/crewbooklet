@@ -220,6 +220,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
                   value={newProjectId}
                   onChange={setNewProjectId}
                   placeholder="Search project…"
+                  showOptionsWhenEmpty
                 />
               </div>
               <div className="flex gap-2">
@@ -332,6 +333,7 @@ function PersonDetailContent({ person, onClose, onOpenProject, onOpenOrg, active
                 value={newOrgId}
                 onChange={setNewOrgId}
                 placeholder="Search organization…"
+                showOptionsWhenEmpty
               />
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => { setAddingOrg(false); setNewOrgId(null); }} className="flex-1 h-7 text-xs">Cancel</Button>

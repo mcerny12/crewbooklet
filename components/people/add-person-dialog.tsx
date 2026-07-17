@@ -14,9 +14,11 @@ import { useJobTypesStore } from '@/lib/stores/job-types-store';
 interface AddPersonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  organizationId?: string | null;
+  onCreated?: (personId: string) => void;
 }
 
-export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
+export function AddPersonDialog({ open, onOpenChange, organizationId, onCreated }: AddPersonDialogProps) {
   const t = useTranslations('people');
   const tCommon = useTranslations('common');
   const [name, setName] = useState('');
@@ -45,7 +47,7 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
     if (!name.trim()) return;
     setIsSubmitting(true);
     try {
-      await addPerson({
+      const created = await addPerson({
         name: name.trim(),
         email: email || null,
         mobile_phone: mobilePhone || null,
@@ -53,7 +55,9 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
         languages: languages as Language[],
         address: (city || country) ? { city: city || null, country: country || null } : null,
         notes: null,
+        organization_id: organizationId ?? null,
       });
+      if (created && onCreated) onCreated(created.id);
       resetForm();
       onOpenChange(false);
     } catch (error) {

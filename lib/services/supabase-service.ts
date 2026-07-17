@@ -206,7 +206,7 @@ export class SupabaseService {
 
   static async updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | null> {
     // Remove fields that don't exist as DB columns
-    const { user_id: _uid2, website: _w, financial_details: _fd, ...cleanUpdates } = updates as Record<string, unknown>;
+    const { user_id: _uid2, financial_details: _fd, ...cleanUpdates } = updates as Record<string, unknown>;
 
     const { data, error } = await supabase
       .from('organizations')

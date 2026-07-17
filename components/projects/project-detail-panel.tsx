@@ -817,6 +817,7 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
                     value={null}
                     onChange={(id) => { if (id) updateField('client_organization_id', id); }}
                     placeholder="Search organization..."
+                    showOptionsWhenEmpty
                   />
                 </div>
               )}

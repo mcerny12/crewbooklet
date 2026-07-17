@@ -20,6 +20,7 @@ import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { OrgMobileDetail } from './org-mobile-detail';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
+import { AddPersonDialog } from '@/components/people/add-person-dialog';
 
 interface OrgDetailContentProps {
   organization: Organization;
@@ -33,6 +34,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
   const [editedOrg, setEditedOrg] = useState<Organization>(organization);
   const [useCustomInvoice, setUseCustomInvoice] = useState(hasCustomInvoice(organization));
   const [addingPerson, setAddingPerson] = useState(false);
+  const [addPersonDialogOpen, setAddPersonDialogOpen] = useState(false);
   const [addingProject, setAddingProject] = useState(false);
   const [newPersonId, setNewPersonId] = useState<string | null>(null);
   const [newProjectId, setNewProjectId] = useState<string | null>(null);
@@ -193,16 +195,26 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
           }
         >
           {addingPerson && (
-            <div className="mb-3 flex gap-2 items-center">
-              <SearchableSelect
-                options={people.map(p => ({ id: p.id, label: p.name, sublabel: p.jobs?.[0] }))}
-                value={newPersonId}
-                onChange={setNewPersonId}
-                placeholder="Search person…"
-                className="flex-1"
-              />
-              <Button size="sm" disabled={!newPersonId} onClick={async () => { if (!newPersonId) return; await updatePerson(newPersonId, { organization_id: organization.id }); setNewPersonId(null); setAddingPerson(false); }} className="h-7 text-xs">Add</Button>
-              <Button size="sm" variant="ghost" onClick={() => { setAddingPerson(false); setNewPersonId(null); }} className="h-7 text-xs">Cancel</Button>
+            <div className="mb-3 space-y-2">
+              <div className="flex gap-2 items-center">
+                <SearchableSelect
+                  options={people.filter(p => p.organization_id !== organization.id).map(p => ({ id: p.id, label: p.name, sublabel: p.jobs?.[0] }))}
+                  value={newPersonId}
+                  onChange={setNewPersonId}
+                  placeholder="Search existing person…"
+                  showOptionsWhenEmpty
+                  className="flex-1"
+                />
+                <Button size="sm" disabled={!newPersonId} onClick={async () => { if (!newPersonId) return; await updatePerson(newPersonId, { organization_id: organization.id }); setNewPersonId(null); setAddingPerson(false); }} className="h-7 text-xs">Link</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setAddingPerson(false); setNewPersonId(null); }} className="h-7 text-xs">Cancel</Button>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setAddingPerson(false); setAddPersonDialogOpen(true); }}
+                className="text-xs text-primary hover:underline"
+              >
+                + Create new person
+              </button>
             </div>
           )}
           {orgPeople.length === 0 ? (
@@ -436,6 +448,12 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
         </DetailSlide>
 
       </DesktopDetailSnapCanvas>
+
+      <AddPersonDialog
+        open={addPersonDialogOpen}
+        onOpenChange={setAddPersonDialogOpen}
+        organizationId={organization.id}
+      />
     </div>
   );
 }
