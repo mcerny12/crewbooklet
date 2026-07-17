@@ -1,6 +1,7 @@
 'use client';
 
 import type { Organization } from '@/lib/types/models';
+import { OrgRole } from '@/lib/types/models';
 import { Mail, Phone, Globe, MapPin } from 'lucide-react';
 import { OrgLogo } from './org-logo';
 import { cn } from '@/lib/utils';
@@ -52,7 +53,15 @@ export function CompactOrganizationListItem({
           <OrgLogo organization={organization} size="sm" />
           <div className="min-w-0 flex-1">
             <div className={cn('font-medium mobile-truncate text-[13.5px]', isSelected && 'text-primary')}>{organization.name}</div>
-            {primaryJob && <div className="text-xs text-muted-foreground truncate">{primaryJob}</div>}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {primaryJob && <span className="text-xs text-muted-foreground truncate">{primaryJob}</span>}
+              {organization.org_role === OrgRole.Mother && (
+                <span className="text-[10px] px-1 rounded bg-primary/10 text-primary font-medium shrink-0">Mother</span>
+              )}
+              {organization.org_role === OrgRole.Subsidiary && (
+                <span className="text-[10px] px-1 rounded bg-muted text-muted-foreground shrink-0">Subsidiary</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -118,7 +127,15 @@ export function CompactOrganizationListItem({
         {/* Name & type */}
         <div className="min-w-0">
           <div className={cn('font-medium truncate text-[13.5px]', isSelected && 'text-primary')}>{organization.name}</div>
-          {primaryJob && <div className="text-xs text-muted-foreground truncate">{primaryJob}</div>}
+          <div className="flex items-center gap-1.5">
+            {primaryJob && <span className="text-xs text-muted-foreground truncate">{primaryJob}</span>}
+            {organization.org_role === OrgRole.Mother && (
+              <span className="text-[10px] px-1 rounded bg-primary/10 text-primary font-medium shrink-0">Mother</span>
+            )}
+            {organization.org_role === OrgRole.Subsidiary && (
+              <span className="text-[10px] px-1 rounded bg-muted text-muted-foreground shrink-0">Subsidiary</span>
+            )}
+          </div>
         </div>
 
         {/* Email */}

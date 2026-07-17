@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import type { Organization } from '@/lib/types/models';
+import { OrgRole } from '@/lib/types/models';
 import { SupabaseService } from '@/lib/services/supabase-service';
 
 interface OrganizationsState {
@@ -20,6 +21,8 @@ interface OrganizationsState {
   deleteOrganization: (id: string) => Promise<void>;
   setSelectedOrganization: (organization: Organization | null) => void;
   setSearchQuery: (query: string) => void;
+  /** Returns an error message string on failure, null on success. */
+  setOrganizationRole: (orgId: string, role: OrgRole, parentId: string | null) => Promise<string | null>;
 }
 
 export const useOrganizationsStore = create<OrganizationsState>((set, get) => ({
@@ -101,5 +104,18 @@ export const useOrganizationsStore = create<OrganizationsState>((set, get) => ({
 
   setSearchQuery: (query: string) => {
     set({ searchQuery: query });
+  },
+
+  setOrganizationRole: async (orgId, role, parentId) => {
+    try {
+      const updated = await SupabaseService.setOrganizationRole(orgId, role, parentId);
+      set(state => ({
+        organizations: state.organizations.map(o => o.id === updated.id ? updated : o),
+        selectedOrganization: state.selectedOrganization?.id === updated.id ? updated : state.selectedOrganization,
+      }));
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Failed to update organization role';
+    }
   },
 }));

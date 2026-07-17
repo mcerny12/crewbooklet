@@ -17,6 +17,7 @@ import { EntryMetadata } from '@/components/ui/entry-metadata';
 import { OrgLogo } from './org-logo';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { Trash2, Plus, X, ExternalLink, Users, Briefcase } from 'lucide-react';
+import { OrgStructureSection } from './org-structure-section';
 
 export type OrgMobileDetailProps = {
   organization: Organization;
@@ -508,6 +509,11 @@ export function OrgMobileDetail({
           onOpenProject={onOpenProject}
         />
       ),
+    },
+    {
+      value: 'structure',
+      label: 'Structure',
+      content: <OrgStructureSection organization={organization} />,
     },
     {
       value: 'financial',

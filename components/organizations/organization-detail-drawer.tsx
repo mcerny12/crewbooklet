@@ -21,6 +21,8 @@ import { OrgMobileDetail } from './org-mobile-detail';
 import { ProjectStatusBadge } from '@/components/ui/status-badge';
 import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
 import { AddPersonDialog } from '@/components/people/add-person-dialog';
+import { OrgStructureSection } from './org-structure-section';
+import { OrgRole } from '@/lib/types/models';
 
 interface OrgDetailContentProps {
   organization: Organization;
@@ -42,6 +44,7 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
 
   const updateOrganization = useOrganizationsStore(state => state.updateOrganization);
   const deleteOrganization = useOrganizationsStore(state => state.deleteOrganization);
+  const organizations = useOrganizationsStore(state => state.organizations);
   const people = usePeopleStore(state => state.people);
   const fetchPeople = usePeopleStore(state => state.fetchPeople);
   const updatePerson = usePeopleStore(state => state.updatePerson);
@@ -63,6 +66,17 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
     if (people.length === 0) fetchPeople();
     if (projects.length === 0) fetchProjects();
   }, [organization.id, fetchPeople, people.length, fetchProjects, projects.length]);
+
+  // Keep hierarchy fields in editedOrg current after OrgStructureSection saves them
+  // independently — prevents the auto-save below from reverting a role change.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEditedOrg(prev => ({
+      ...prev,
+      org_role: organization.org_role,
+      parent_organization_id: organization.parent_organization_id,
+    }));
+  }, [organization.org_role, organization.parent_organization_id]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -90,6 +104,9 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
 
   const orgTypeOptions = Object.values(OrganizationJobType).map(t => ({ value: t, label: t }));
   const fdBase = { id: editedOrg.financial_details?.id ?? '', ...editedOrg.financial_details };
+  const parentOrg = organization.org_role === OrgRole.Subsidiary && organization.parent_organization_id
+    ? organizations.find(o => o.id === organization.parent_organization_id) ?? null
+    : null;
 
   if (isMobile) {
     return (
@@ -131,6 +148,12 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
           <div className="font-semibold text-[15px] truncate">{editedOrg.name}</div>
           <div className="flex items-center gap-3 mt-0.5 text-[12px] text-muted-foreground flex-wrap">
             {editedOrg.jobs?.[0] && <span>{editedOrg.jobs[0]}</span>}
+            {organization.org_role === OrgRole.Mother && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">Mother</span>
+            )}
+            {parentOrg && (
+              <span className="text-[11px] text-muted-foreground">↳ {parentOrg.name}</span>
+            )}
             {editedOrg.contact_email && <a href={`mailto:${editedOrg.contact_email}`} className="flex items-center gap-1 hover:text-primary hover:underline"><Mail className="h-3 w-3" />{editedOrg.contact_email}</a>}
             {editedOrg.contact_phone && <a href={`tel:${editedOrg.contact_phone}`} className="flex items-center gap-1 hover:text-primary hover:underline"><Phone className="h-3 w-3" />{editedOrg.contact_phone}</a>}
             {editedOrg.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{editedOrg.city}{editedOrg.country ? `, ${editedOrg.country}` : ''}</span>}
@@ -179,6 +202,12 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             </div>
           </div>
         </DetailFrame>
+        </DetailSlide>
+
+        <DetailSlide ariaLabel="Organization structure" tabLabel="Structure">
+          <DetailFrame title="Organization Structure" className="flex-1">
+            <OrgStructureSection organization={organization} />
+          </DetailFrame>
         </DetailSlide>
 
         <DetailSlide ariaLabel="Organization people" tabLabel="People">

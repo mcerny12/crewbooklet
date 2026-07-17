@@ -270,6 +270,13 @@ export function isAddressEmpty(address: Address | null | undefined): boolean {
     .some(val => val && val.trim().length > 0);
 }
 
+// MARK: - Organization Role (hierarchy)
+export enum OrgRole {
+  Standalone = 'standalone',
+  Mother = 'mother',
+  Subsidiary = 'subsidiary',
+}
+
 // MARK: - Organization Model
 export interface Organization {
   id: string;
@@ -302,6 +309,10 @@ export interface Organization {
 
   // Professional Info
   jobs: OrganizationJobType[];
+
+  // Hierarchy
+  org_role?: OrgRole | null;
+  parent_organization_id?: string | null;
 
   // Additional
   notes?: string | null;

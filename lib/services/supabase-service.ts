@@ -25,7 +25,7 @@ import type {
   CalendarEvent,
   UserSettings,
 } from '@/lib/types/models';
-import { InvoiceDocumentType, InvoiceItemType, InvoiceStatus } from '@/lib/types/models';
+import { InvoiceDocumentType, InvoiceItemType, InvoiceStatus, OrgRole } from '@/lib/types/models';
 import { calculateInvoiceTotals } from '@/lib/invoice/totals';
 
 // Accounting tolerance for cent-level rounding when reconciling computed vs stored totals.
@@ -238,6 +238,93 @@ export class SupabaseService {
     }
 
     return true;
+  }
+
+  // MARK: - Organization Hierarchy
+
+  static async fetchSubOrganizations(parentId: string): Promise<Organization[]> {
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('parent_organization_id', parentId)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  /**
+   * Validates all business rules then atomically updates org_role and
+   * parent_organization_id. Throws with a user-facing message on violations.
+   *
+   * Business rules enforced here (server-side):
+   *  Rule 2 – subsidiary cannot itself have sub-orgs (single-level only)
+   *  Rule 3 – self-reference and circular reference prevention
+   *  Rule 4 – cannot switch away from 'mother' while subsidiaries are attached
+   */
+  static async setOrganizationRole(
+    orgId: string,
+    newRole: OrgRole,
+    parentId: string | null,
+  ): Promise<Organization> {
+    // Rule 4: switching away from 'mother' requires no attached subsidiaries
+    if (newRole !== OrgRole.Mother) {
+      const { data: subs, error: subErr } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('parent_organization_id', orgId)
+        .limit(1);
+      if (subErr) throw subErr;
+      if (subs && subs.length > 0) {
+        throw new Error(
+          'Cannot change role: this organization still has sub-organizations attached. Detach them first.',
+        );
+      }
+    }
+
+    if (newRole === OrgRole.Subsidiary) {
+      if (!parentId) throw new Error('A parent organization is required.');
+
+      // Rule 3: self-reference (also enforced by DB constraint)
+      if (parentId === orgId) throw new Error('An organization cannot be its own parent.');
+
+      // Parent must be a mother org
+      const { data: parent, error: parentErr } = await supabase
+        .from('organizations')
+        .select('id, org_role')
+        .eq('id', parentId)
+        .single();
+      if (parentErr || !parent) throw new Error('Parent organization not found.');
+      if (parent.org_role !== OrgRole.Mother) {
+        throw new Error('The selected organization must have the "Mother" role to accept subsidiaries.');
+      }
+
+      // Rule 2: org being made a subsidiary must not itself be a mother
+      const { data: ownSubs, error: ownSubErr } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('parent_organization_id', orgId)
+        .limit(1);
+      if (ownSubErr) throw ownSubErr;
+      if (ownSubs && ownSubs.length > 0) {
+        throw new Error(
+          'A mother organization cannot be made a subsidiary (single-level hierarchy only). Detach its sub-organizations first.',
+        );
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('organizations')
+      .update({
+        org_role: newRole,
+        parent_organization_id: newRole === OrgRole.Subsidiary ? parentId : null,
+      })
+      .eq('id', orgId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 
   // MARK: - Project Operations
