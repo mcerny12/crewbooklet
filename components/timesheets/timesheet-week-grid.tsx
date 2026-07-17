@@ -185,14 +185,14 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 {/* Bundesland */}
                 <td className="px-2 py-1.5">
                   <Select
-                    value={entry.bundesland ?? ''}
-                    onValueChange={v => onEntryChange(date, 'bundesland', v || null)}
+                    value={entry.bundesland ?? '__none__'}
+                    onValueChange={v => onEntryChange(date, 'bundesland', v === '__none__' ? null : v)}
                   >
                     <SelectTrigger className={cellCn('w-40')}>
                       <SelectValue placeholder="—" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">—</SelectItem>
+                      <SelectItem value="__none__">—</SelectItem>
                       {BUNDESLAENDER.map(bl => (
                         <SelectItem key={bl.code} value={bl.code}>{bl.label}</SelectItem>
                       ))}
