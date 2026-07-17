@@ -113,7 +113,9 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelBack')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelQualifies')}</th>
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground w-32">{t('day.placeOfWork')}</th>
-            <th className="px-2 py-2 text-left font-semibold text-muted-foreground">{t('day.perDiem')}</th>
+            {timesheet.per_diem_enabled && (
+              <th className="px-2 py-2 text-left font-semibold text-muted-foreground">{t('day.perDiem')}</th>
+            )}
             <th className="px-2 py-2 text-right font-semibold text-muted-foreground w-24">Verdienst</th>
           </tr>
         </thead>
@@ -222,9 +224,9 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                   />
                 </td>
 
-                {/* Per diem */}
-                <td className="px-2 py-1.5">
-                  {timesheet.per_diem_enabled ? (
+                {/* Per diem — column hidden entirely when per_diem_enabled is off */}
+                {timesheet.per_diem_enabled && (
+                  <td className="px-2 py-1.5">
                     <Select
                       value={entry.per_diem_type ?? 'auto'}
                       onValueChange={v => onEntryChange(date, 'per_diem_type', v as PerDiemType)}
@@ -239,10 +241,8 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                         <SelectItem value="none">{tPD('none')}</SelectItem>
                       </SelectContent>
                     </Select>
-                  ) : (
-                    <span className="text-muted-foreground px-1">—</span>
-                  )}
-                </td>
+                  </td>
+                )}
 
                 {/* Per-day pay (Bug #6): shown only for days with an entry; includes
                     base pay + daily OT + day-type surcharges + per diem for that day.

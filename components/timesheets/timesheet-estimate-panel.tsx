@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { calculateWeek } from '@/lib/timesheets/calculation';
 import { buildRuleset } from '@/lib/timesheets/ruleset';
 import { getWeekHolidays } from '@/lib/timesheets/holidays';
-import type { Timesheet, TimesheetEntry, PerDiemType, WeekResult } from '@/lib/timesheets/types';
+import type { Timesheet, TimesheetEntry, PerDiemType, Ruleset, WeekResult } from '@/lib/timesheets/types';
 
 function centsToEuro(cents: number): string {
   return new Intl.NumberFormat('de-DE', {
@@ -24,26 +24,10 @@ function minutesToHours(min: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
-interface AggregateRowProps {
-  label: string;
-  cents: number;
-  minuteLabel?: string;
-  highlight?: boolean;
-}
-
-function AggregateRow({ label, cents, minuteLabel, highlight }: AggregateRowProps) {
-  if (cents === 0) return null;
-  return (
-    <div className="flex items-center justify-between py-0.5 text-xs">
-      <span className={cn('text-muted-foreground', highlight && 'text-amber-600')}>
-        {label}
-        {minuteLabel && <span className="ml-1 text-[10px] opacity-60">({minuteLabel})</span>}
-      </span>
-      <span className={cn('font-medium tabular-nums', highlight && 'text-amber-600')}>
-        {centsToEuro(cents)}
-      </span>
-    </div>
-  );
+/** Re-compute a surcharge component using the same formula as calculateDay. */
+function surcharge(minutes: number, hourlyCents: number, pct: number): number {
+  if (minutes <= 0 || pct <= 0) return 0;
+  return Math.round((minutes / 60) * hourlyCents * pct / 100);
 }
 
 interface Props {
@@ -52,10 +36,9 @@ interface Props {
 }
 
 export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
-  const result = useMemo((): WeekResult | null => {
+  const computed = useMemo((): { result: WeekResult; ruleset: Ruleset } | null => {
     if (timesheet.weekly_rate_cents === 0) return null;
 
-    // Determine the primary bundesland from entries (most common non-null value)
     const bundeslandCounts: Record<string, number> = {};
     for (const e of entries) {
       if (e.bundesland) bundeslandCounts[e.bundesland] = (bundeslandCounts[e.bundesland] ?? 0) + 1;
@@ -83,10 +66,10 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
       };
     });
 
-    return calculateWeek(allDays, ruleset);
+    return { result: calculateWeek(allDays, ruleset), ruleset };
   }, [timesheet, entries]);
 
-  if (!result) {
+  if (!computed) {
     return (
       <div className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
         Wochengage nicht hinterlegt — Hochrechnung nicht verfügbar
@@ -94,20 +77,15 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
     );
   }
 
-  const workedDays = result.days.filter(d => d.isWorked);
+  const { result, ruleset } = computed;
+  const hc = result.hourlyRateCents;
 
-  // Running total: sum of per-day pays + weekly OT + rest violations.
-  // Each day's dayTotalCents already includes base (hourly × billed hours) + all
-  // day-level surcharges (daily OT, night, sat/sun/hol) + per diem — so OT hours
-  // appear at their full value (base + surcharge), not just the surcharge delta.
-  // (Fixes Bug #5: no more surcharge-only display for OT hours.)
+  const workedDays = result.days.filter(d => d.isWorked);
   const perDaySum = workedDays.reduce((s, d) => s + d.dayTotalCents, 0);
   const weeklyOtCents = result.weeklyOtBand1Cents + result.weeklyOtBand2Cents;
   const weeklyOtMinutes = result.weeklyOtBand1Minutes + result.weeklyOtBand2Minutes;
   const runningTotal = perDaySum + weeklyOtCents + result.restViolationCents;
 
-  // In standard (fixed weekly rate) mode, the guarantee may exceed the running total
-  // for short weeks. Note it as context.
   const guaranteeApplies =
     timesheet.daily_minimum_8h &&
     timesheet.weekly_rate_cents > 0 &&
@@ -134,93 +112,118 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
         </div>
         <div>
           <div className="text-muted-foreground">Stundensatz</div>
-          <div className="font-semibold">{centsToEuro(result.hourlyRateCents)}/h</div>
+          <div className="font-semibold">{centsToEuro(hc)}/h</div>
         </div>
         {weeklyOtMinutes > 0 && (
           <div>
             <div className="text-muted-foreground">Wochen-ÜZ</div>
-            <div className="font-semibold text-amber-600">
-              {minutesToHours(weeklyOtMinutes)}
-            </div>
+            <div className="font-semibold text-amber-600">{minutesToHours(weeklyOtMinutes)}</div>
           </div>
         )}
       </div>
 
-      {/* Per-day breakdown (Bug #6): each worked day on its own row.
-          dayTotalCents = billed hours × hourly rate + daily OT surcharge + night +
-          day-type surcharge + per diem. OT hours appear at full value = base + surcharge,
-          so no separate "OT surcharge only" ambiguity (Bug #5). */}
+      {/* Per-day breakdown with component detail */}
       {workedDays.length > 0 && (
-        <div className="divide-y divide-border/30 mb-3">
+        <div className="divide-y divide-border/40 mb-3">
           {workedDays.map(d => {
             const dayLabel = format(parseISO(d.date), 'EEE d. MMM', { locale: de });
-            const hours = d.billedMinutes / 60;
-            const hoursLabel = Number.isInteger(hours)
-              ? `${hours} h`
-              : `${(hours).toFixed(1).replace('.', ',')} h`;
+
+            // Compute each pay component (mirrors calculateDay logic exactly)
+            const dayBase = Math.round((d.billedMinutes / 60) * hc);
+            const band1S = surcharge(d.dailyOtBand1Minutes, hc, ruleset.dailyOtBand1Pct);
+            const band2S = surcharge(d.dailyOtBand2Minutes, hc, ruleset.dailyOtBand2Pct);
+            const nightS = ruleset.nightEnabled ? surcharge(d.nightMinutes, hc, ruleset.nightPct) : 0;
+            const satS   = d.isSaturday && ruleset.saturdayEnabled ? surcharge(d.billedMinutes, hc, ruleset.saturdayPct) : 0;
+            const sunS   = d.isSunday  && ruleset.sundayEnabled   ? surcharge(d.billedMinutes, hc, ruleset.sundayPct)   : 0;
+            const holS   = d.isHoliday && ruleset.holidayEnabled  ? surcharge(d.billedMinutes, hc, ruleset.holidayPct)  : 0;
+
+            type Line = { label: string; cents: number; amber?: boolean };
+            const lines: Line[] = [
+              { label: `${minutesToHours(d.billedMinutes)} × ${centsToEuro(hc)}/h`, cents: dayBase },
+            ];
+            if (band1S > 0) lines.push({ label: `+ ${minutesToHours(d.dailyOtBand1Minutes)} tägl. ÜZ ${ruleset.dailyOtBand1Pct}%`, cents: band1S });
+            if (band2S > 0) lines.push({ label: `+ ${minutesToHours(d.dailyOtBand2Minutes)} tägl. ÜZ ${ruleset.dailyOtBand2Pct}%`, cents: band2S });
+            if (nightS > 0) lines.push({ label: `+ ${minutesToHours(d.nightMinutes)} Nacht ${ruleset.nightPct}%`, cents: nightS });
+            if (satS   > 0) lines.push({ label: `+ Sa-Zuschlag ${ruleset.saturdayPct}%`, cents: satS });
+            if (sunS   > 0) lines.push({ label: `+ So-Zuschlag ${ruleset.sundayPct}%`, cents: sunS });
+            if (holS   > 0) lines.push({ label: `+ Feiertag ${ruleset.holidayPct}%`, cents: holS });
+            if (d.perDiemCents > 0) lines.push({ label: 'VMA', cents: d.perDiemCents });
+            if (d.restViolationMinutes > 0) lines.push({
+              label: `⚠ Ruhezeit ${minutesToHours(d.restViolationMinutes)}`,
+              cents: d.restViolationCents,
+              amber: true,
+            });
+
             return (
-              <div key={d.date} className="flex items-center justify-between py-1 text-xs">
-                <div className="flex items-center gap-2">
+              <div key={d.date} className="py-1.5">
+                {/* Day header row */}
+                <div className="flex items-center justify-between text-xs">
                   <span className={cn(
-                    'text-muted-foreground w-28',
+                    'font-medium w-28',
                     d.restViolationMinutes > 0 && 'text-amber-600',
                   )}>
                     {dayLabel}
+                    {d.isSaturday && <span className="ml-1 text-[10px] text-muted-foreground font-normal">Sa</span>}
+                    {d.isSunday   && <span className="ml-1 text-[10px] text-muted-foreground font-normal">So</span>}
+                    {d.isHoliday  && <span className="ml-1 text-[10px] text-amber-400 font-normal">Feiertag</span>}
                   </span>
-                  <span className="text-muted-foreground/60">{hoursLabel}</span>
-                  {d.isSaturday && <span className="text-[10px] text-slate-400">Sa</span>}
-                  {d.isSunday && <span className="text-[10px] text-slate-400">So</span>}
-                  {d.isHoliday && <span className="text-[10px] text-amber-400">Feiertag</span>}
-                  {(d.dailyOtBand1Minutes + d.dailyOtBand2Minutes > 0) && (
-                    <span className="text-[10px] text-primary/70">
-                      +{minutesToHours(d.dailyOtBand1Minutes + d.dailyOtBand2Minutes)} ÜZ
-                    </span>
-                  )}
-                  {d.perDiemCents > 0 && (
-                    <span className="text-[10px] text-muted-foreground/60">
-                      +VMA
-                    </span>
-                  )}
-                  {d.restViolationMinutes > 0 && (
-                    <span className="text-[10px] text-amber-500" title="Ruhezeit-Verstoß (ArbZG § 5)">
-                      ⚠ Ruhezeit
-                    </span>
-                  )}
+                  <span className="font-semibold tabular-nums">{centsToEuro(d.dayTotalCents)}</span>
                 </div>
-                <span className="font-medium tabular-nums">{centsToEuro(d.dayTotalCents)}</span>
+                {/* Component sub-rows */}
+                {lines.map((line, i) => (
+                  <div key={i} className={cn(
+                    'flex items-center justify-between text-[10px] mt-0.5 pl-3',
+                    line.amber ? 'text-amber-600' : 'text-muted-foreground',
+                  )}>
+                    <span>{line.label}</span>
+                    <span className="tabular-nums">{centsToEuro(line.cents)}</span>
+                  </div>
+                ))}
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Weekly aggregates: OT and rest violations */}
-      {(weeklyOtCents > 0 || result.restViolationCents > 0) && (
-        <div className="divide-y divide-border/50 mb-3">
-          <AggregateRow
-            label="Wochenüberstunden (+25 / +50 %)"
-            cents={weeklyOtCents}
-            minuteLabel={weeklyOtMinutes > 0 ? minutesToHours(weeklyOtMinutes) : undefined}
-          />
-          <AggregateRow
-            label="Ruhezeit-Vergütung (ArbZG § 5)"
-            cents={result.restViolationCents}
-            highlight
-          />
+      {/* Weekly OT aggregate */}
+      {weeklyOtCents > 0 && (
+        <div className="mb-3 text-xs">
+          <div className="flex items-center justify-between py-0.5">
+            <span className="text-muted-foreground">
+              Wochenüberstunden
+              <span className="ml-1 text-[10px] opacity-60">({minutesToHours(weeklyOtMinutes)})</span>
+            </span>
+            <span className="font-medium tabular-nums">{centsToEuro(weeklyOtCents)}</span>
+          </div>
+          {result.weeklyOtBand1Minutes > 0 && (
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground pl-3 mt-0.5">
+              <span>+ {minutesToHours(result.weeklyOtBand1Minutes)} Wochen-ÜZ {ruleset.weeklyOtBand1Pct}%</span>
+              <span className="tabular-nums">{centsToEuro(result.weeklyOtBand1Cents)}</span>
+            </div>
+          )}
+          {result.weeklyOtBand2Minutes > 0 && (
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground pl-3 mt-0.5">
+              <span>+ {minutesToHours(result.weeklyOtBand2Minutes)} Wochen-ÜZ {ruleset.weeklyOtBand2Pct}%</span>
+              <span className="tabular-nums">{centsToEuro(result.weeklyOtBand2Cents)}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rest violation aggregate */}
+      {result.restViolationCents > 0 && (
+        <div className="mb-3 flex items-center justify-between text-xs text-amber-600">
+          <span>Ruhezeit-Vergütung (ArbZG § 5)</span>
+          <span className="font-medium tabular-nums">{centsToEuro(result.restViolationCents)}</span>
         </div>
       )}
 
       {/* Running total */}
       <div className="pt-2 border-t border-border flex items-center justify-between">
-        <span className="text-sm font-semibold">
-          Summe eingetragene Tage
-        </span>
-        <span className={cn('text-sm font-bold tabular-nums', 'text-primary')}>
-          {centsToEuro(runningTotal)}
-        </span>
+        <span className="text-sm font-semibold">Summe eingetragene Tage</span>
+        <span className="text-sm font-bold tabular-nums text-primary">{centsToEuro(runningTotal)}</span>
       </div>
 
-      {/* Weekly rate guarantee note — shown when actual hours sum to less than guarantee */}
       {guaranteeApplies && (
         <div className="mt-1.5 text-[10px] text-muted-foreground">
           Wochengage-Garantie greift: mind. {centsToEuro(timesheet.weekly_rate_cents)}/Woche
