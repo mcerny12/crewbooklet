@@ -85,19 +85,19 @@ describe('calculateDay — basic', () => {
     expect(r.dailyOtBand1Minutes).toBe(0);
   });
 
-  it('8 h day → billed exactly 8 h (already at the floor)', () => {
-    // § 5.2.4 / § 5.3.1 TV FFS: minimum per called day = 8h — a separate number
-    // from dailyOtStartH (10h), which is only the daily-OT premium threshold.
+  it('8 h day → billed 10 h (dailyOtStartH minimum)', () => {
+    // Minimum per called day = dailyOtStartH (10h) — a film day is contractually 10h.
+    // The weekly rate is structured around 5 × 10h = 50h.
     const r = calculateDay(day('2026-07-13', '08:00', '16:00'), BASE_RULESET);
     expect(r.rawWorkMinutes).toBe(480);
-    expect(r.billedMinutes).toBe(480); // exactly at the 8h floor, no flooring needed
+    expect(r.billedMinutes).toBe(600); // floored to 10h
     expect(r.dailyOtBand1Minutes).toBe(0);
   });
 
-  it('3 h day → billed 8 h (daily minimum floor)', () => {
+  it('3 h day → billed 10 h (dailyOtStartH minimum)', () => {
     const r = calculateDay(day('2026-07-13', '09:00', '12:00'), BASE_RULESET);
     expect(r.rawWorkMinutes).toBe(180);
-    expect(r.billedMinutes).toBe(480); // floored to the 8h minimum
+    expect(r.billedMinutes).toBe(600); // floored to dailyOtStartH = 10h
   });
 
   it('3 h day → billed 3 h when dailyMinimum8h=false', () => {
@@ -112,7 +112,7 @@ describe('calculateDay — basic', () => {
       day('2026-07-13', '09:00', '12:00', { dailyMinimumOverride: true }),
       ruleset
     );
-    expect(r.billedMinutes).toBe(480); // floored to 8h despite the ruleset default being off
+    expect(r.billedMinutes).toBe(600); // floored to 10h despite the ruleset default being off
   });
 
   it('per-day dailyMinimumOverride=false bills actual hours even when ruleset.dailyMinimum8h=true', () => {
@@ -127,15 +127,15 @@ describe('calculateDay — basic', () => {
     const onRuleset = { ...BASE_RULESET, dailyMinimum8h: true };
     const offRuleset = { ...BASE_RULESET, dailyMinimum8h: false };
     const dayInput = day('2026-07-13', '09:00', '12:00', { dailyMinimumOverride: null });
-    expect(calculateDay(dayInput, onRuleset).billedMinutes).toBe(480);
+    expect(calculateDay(dayInput, onRuleset).billedMinutes).toBe(600);
     expect(calculateDay(dayInput, offRuleset).billedMinutes).toBe(180);
   });
 
   it('break reduces raw work minutes', () => {
-    // 10h window − 60min break = 9h actual, already above the 8h floor → billed 9h
+    // 10h window − 60min break = 9h actual; minimum = 10h → billed 10h
     const r = calculateDay(day('2026-07-13', '08:00', '18:00', { breakMinutes: 60 }), BASE_RULESET);
     expect(r.rawWorkMinutes).toBe(540);
-    expect(r.billedMinutes).toBe(540); // above the 8h floor, billed at actual
+    expect(r.billedMinutes).toBe(600); // floor to 10h dailyOtStartH
   });
 });
 
@@ -217,7 +217,7 @@ describe('calculateDay — travel', () => {
   });
 
   it('qualifying travel adds to work minutes', () => {
-    // 8h work + 90min travel = 9.5h actual, already above the 8h floor → billed 9.5h
+    // 8h work + 90min travel = 9.5h actual; minimum = 10h → billed 10h
     const r = calculateDay(
       day('2026-07-13', '08:00', '16:00', {
         travelToMinutes: 60,
@@ -228,7 +228,7 @@ describe('calculateDay — travel', () => {
     );
     expect(r.travelMinutes).toBe(90);
     expect(r.totalWorkMinutes).toBe(570);
-    expect(r.billedMinutes).toBe(570); // above the 8h floor, billed at actual
+    expect(r.billedMinutes).toBe(600); // floor to 10h
   });
 
   it('§ 12.4 TV FFS: qualifying travel is billed but never triggers daily OT surcharge', () => {
@@ -279,15 +279,15 @@ describe('calculateDay — per diem auto threshold (Bug #3)', () => {
   // placeOfWork is set away from BASE_RULESET's home base (Berlin) in every
   // case that expects a nonzero per diem, so these tests isolate the hours
   // threshold from the home-base suppression logic (see Bug #7 below).
-  it('auto: 7h actual → no per diem even though billed to the 8h daily minimum', () => {
-    // 09:00–16:00 = 7h actual, billed to the 8h daily minimum floor
+  it('auto: 7h actual → no per diem even though billed to dailyOtStartH (10h)', () => {
+    // 09:00–16:00 = 7h actual, billed to 10h (dailyOtStartH) by daily minimum
     // § 12.2 TV FFS: threshold is actual absence time, NOT the billing floor
     const r = calculateDay(
       day('2026-07-13', '09:00', '16:00', { perDiemType: 'auto', placeOfWork: 'Hamburg' }),
       BASE_RULESET
     );
     expect(r.totalWorkMinutes).toBe(420); // 7h actual
-    expect(r.billedMinutes).toBe(480);    // floored to the 8h minimum
+    expect(r.billedMinutes).toBe(600);    // floored to 10h
     expect(r.perDiemCents).toBe(0);       // no per diem: 7h actual < 8h threshold
   });
 
@@ -436,6 +436,47 @@ describe('calculateWeek — normal week', () => {
   });
 });
 
+// ─── calculateWeek — partial week (fewer than 5 days worked) ─────────────
+
+describe('calculateWeek — partial week pays proportionally, not the full weekly rate', () => {
+  it('2 of 5 days worked → only those 2 days are paid, not the flat weekly rate', () => {
+    // Real-world bug report: a 2-day week was expected to pay only the
+    // "daily salary" for the days actually worked, not the full guaranteed
+    // Wochengage. § 5.7.2 TV FFS converts the Wochengage by the number of
+    // days actually worked/contracted, it isn't paid in full regardless.
+    const week: DayInput[] = [
+      day('2026-07-13', null, null),        // Mon off
+      day('2026-07-14', '08:00', '18:00'),  // Tue 10h
+      day('2026-07-15', null, null),        // Wed off
+      day('2026-07-16', '08:00', '18:00'),  // Thu 10h
+      day('2026-07-17', null, null),        // Fri off
+      day('2026-07-18', null, null),
+      day('2026-07-19', null, null),
+    ];
+    const r = calculateWeek(week, BASE_RULESET);
+    // 2 days × 10h × €40/h = €800 — well under the €2000 flat weekly rate
+    expect(r.totalBilledMinutes).toBe(2 * 10 * 60);
+    expect(r.basePayCents).toBe(80000);
+    expect(r.totalGrossCents).toBe(80000);
+  });
+
+  it('1 short day worked → billed at the 10h daily minimum, paid proportionally for that one day only', () => {
+    const week: DayInput[] = [
+      day('2026-07-13', '09:00', '12:00'), // Mon 3h actual → floored to 10h
+      day('2026-07-14', null, null),
+      day('2026-07-15', null, null),
+      day('2026-07-16', null, null),
+      day('2026-07-17', null, null),
+      day('2026-07-18', null, null),
+      day('2026-07-19', null, null),
+    ];
+    const r = calculateWeek(week, BASE_RULESET);
+    expect(r.totalBilledMinutes).toBe(600); // 10h, floored
+    expect(r.basePayCents).toBe(40000); // 10h × €40 = €400
+    expect(r.totalGrossCents).toBe(40000);
+  });
+});
+
 // ─── calculateWeek — daily OT + weekly OT ────────────────────────────────
 
 describe('calculateWeek — daily OT + weekly OT', () => {
@@ -503,31 +544,31 @@ describe('calculateWeek — weekly OT via Saturday', () => {
     day('2026-07-15', '08:00', '18:00'), // Wed 10h
     day('2026-07-16', '08:00', '18:00'), // Thu 10h
     day('2026-07-17', '08:00', '18:00'), // Fri 10h
-    day('2026-07-18', '09:00', '13:00'), // Sat worked 4h → billed 8h (minimum)
+    day('2026-07-18', '09:00', '13:00'), // Sat worked 4h → billed 10h (minimum)
     day('2026-07-19', null, null),
   ];
 
-  it('Sat billed as 8h due to the daily minimum floor', () => {
-    // Sat 4h worked → floored to the 8h daily minimum (§ 5.2.4 / § 5.3.1), not dailyOtStartH
+  it('Sat billed as 10h due to dailyOtStartH minimum', () => {
+    // Sat 4h worked → floored to dailyOtStartH (10h) — a film day is contractually 10h
     const r = calculateWeek(week, BASE_RULESET);
-    expect(r.days[5].billedMinutes).toBe(480);
+    expect(r.days[5].billedMinutes).toBe(600);
   });
 
-  it('weeklyCountMinutes = 58h (50h weekdays + 8h Sat minimum)', () => {
+  it('weeklyCountMinutes = 60h (50h weekdays + 10h Sat minimum)', () => {
     const r = calculateWeek(week, BASE_RULESET);
-    expect(r.weeklyCountMinutes).toBe(58 * 60);
+    expect(r.weeklyCountMinutes).toBe(60 * 60);
   });
 
-  it('weeklyOtBand1 = 5h (300 min), band2 = 3h (180 min)', () => {
-    // 58h - 50h = 8h OT. band1 = 50h→55h = 5h; band2 = 55h→58h = 3h
+  it('weeklyOtBand1 = 5h (300 min), band2 = 5h (300 min)', () => {
+    // 60h - 50h = 10h OT. band1 = 50h→55h = 5h; band2 = 55h+ = 5h
     const r = calculateWeek(week, BASE_RULESET);
     expect(r.weeklyOtBand1Minutes).toBe(300);
-    expect(r.weeklyOtBand2Minutes).toBe(180);
+    expect(r.weeklyOtBand2Minutes).toBe(300);
   });
 
-  it('Saturday surcharge = 8h × €40 × 25% = €80', () => {
+  it('Saturday surcharge = 10h × €40 × 25% = €100', () => {
     const r = calculateWeek(week, BASE_RULESET);
-    expect(r.saturdaySurchargeCents).toBe(8000);
+    expect(r.saturdaySurchargeCents).toBe(10000);
   });
 
   it('weekly OT band1 surcharge = 5h × €40 × 25% = €50', () => {
@@ -551,29 +592,29 @@ describe('calculateWeek — weekly OT via Saturday', () => {
     expect(r.weeklyOtBand2Cents).toBe(0);
     // Minutes are still tracked (e.g. for display), only the surcharge cents are gated.
     expect(r.weeklyOtBand1Minutes).toBe(300);
-    expect(r.weeklyOtBand2Minutes).toBe(180);
+    expect(r.weeklyOtBand2Minutes).toBe(300);
     // Saturday's own flat surcharge (§ 5.6.4) is unaffected — separate mechanism.
-    expect(r.saturdaySurchargeCents).toBe(8000);
+    expect(r.saturdaySurchargeCents).toBe(10000);
   });
 
-  it('with all surcharges enabled, base pay reflects the actual 58h worked (not just the flat rate)', () => {
+  it('base pay is always proportional to actual billed hours (60h), not floored or capped at the flat weekly rate', () => {
     const r = calculateWeek(week, BASE_RULESET);
-    expect(r.basePayCents).toBe(232000); // 58h × €40, exceeds the €2000 flat rate
-    expect(r.totalGrossCents).toBe(232000 + 5000 + 6000 + 8000); // base + weekly OT band1/2 + Saturday
+    expect(r.basePayCents).toBe(240000); // 60h × €40
+    expect(r.totalGrossCents).toBe(240000 + 5000 + 10000 + 10000); // base + weekly OT band1/2 + Saturday
   });
 
   it('disabling BOTH weeklyOtEnabled and saturdayEnabled still pays the 6th day at 100% base rate — a Zuschlag toggle controls only the premium, never the underlying pay for hours worked', () => {
-    // This is the exact real-world bug report: a 6-day, 58h week with both
+    // This is the exact real-world bug report: a 6-day, 60h week with both
     // premiums switched off in custom mode was paying out only the flat
-    // €2000 rate, as if the Saturday had been worked for free. It must
-    // instead pay for the 8 extra hours at the plain hourly rate.
+    // €2000 rate, as if the Saturday had been worked for free. Base pay is
+    // proportional to all 60 billed hours regardless of which Zuschläge apply.
     const ruleset = { ...BASE_RULESET, weeklyOtEnabled: false, saturdayEnabled: false };
     const r = calculateWeek(week, ruleset);
     expect(r.weeklyOtBand1Cents).toBe(0);
     expect(r.weeklyOtBand2Cents).toBe(0);
     expect(r.saturdaySurchargeCents).toBe(0);
-    expect(r.basePayCents).toBe(232000); // €2000 flat rate + 8h × €40 = €2320
-    expect(r.totalGrossCents).toBe(232000);
+    expect(r.basePayCents).toBe(240000); // 60h × €40 = €2400
+    expect(r.totalGrossCents).toBe(240000);
   });
 });
 
@@ -701,17 +742,17 @@ describe('dayTotalCents — full OT hour value (Bug #5)', () => {
     expect(r.days[0].dayTotalCents).toBe(45000);
   });
 
-  it('Saturday 8h worked: dayTotalCents = 8h × €40 + 8h × 25% sat = €320 + €80 = €400', () => {
-    // 8h actual work is already at the 8h daily minimum floor; all 8h get the Sat surcharge
+  it('Saturday 8h worked: dayTotalCents = 10h × €40 + 10h × 25% sat = €400 + €100 = €500', () => {
+    // 8h actual work → floored to 10h (dailyOtStartH); all 10h get the Sat surcharge
     const r = calculateWeek(
       [
         ...Array.from({ length: 5 }, (_, i) => day(`2026-07-1${i + 3}`, null, null)),
-        day('2026-07-18', '08:00', '16:00'), // Sat 8h → billed 8h
+        day('2026-07-18', '08:00', '16:00'), // Sat 8h → billed 10h
         day('2026-07-19', null, null),
       ],
       BASE_RULESET
     );
-    expect(r.days[5].dayTotalCents).toBe(32000 + 8000); // 8h × €40 + 8h × 25% = €400
+    expect(r.days[5].dayTotalCents).toBe(40000 + 10000); // 10h × €40 + 10h × 25% = €500
   });
 
   it('off day: dayTotalCents = 0', () => {
@@ -956,18 +997,18 @@ describe('calculateWeek — Sunday surcharge', () => {
     day('2026-07-19', '08:00', '16:00'), // Sun 8h
   ];
 
-  it('Sunday surcharge = 8h × €40 × 75% = €240', () => {
-    // Sun 8h worked is already at the 8h daily minimum floor
+  it('Sunday surcharge = 10h × €40 × 75% = €300', () => {
+    // Sun 8h worked → floored to 10h
     const r = calculateWeek(week, BASE_RULESET);
-    expect(r.sundaySurchargeCents).toBe(24000);
+    expect(r.sundaySurchargeCents).toBe(30000);
   });
 
-  it('Sunday hours trigger weekly OT (weeklyCount = 58h)', () => {
-    // 50h weekdays + 8h Sun minimum = 58h. OT = 8h. band1 = 5h, band2 = 3h.
+  it('Sunday hours trigger weekly OT (weeklyCount = 60h)', () => {
+    // 50h weekdays + 10h Sun minimum = 60h. OT = 10h. band1 = 5h, band2 = 5h.
     const r = calculateWeek(week, BASE_RULESET);
-    expect(r.weeklyCountMinutes).toBe(58 * 60);
+    expect(r.weeklyCountMinutes).toBe(60 * 60);
     expect(r.weeklyOtBand1Minutes).toBe(5 * 60);
-    expect(r.weeklyOtBand2Minutes).toBe(3 * 60);
+    expect(r.weeklyOtBand2Minutes).toBe(5 * 60);
   });
 });
 
@@ -1050,17 +1091,17 @@ describe('surcharge stacking', () => {
       day('2026-07-15', '08:00', '18:00'),
       day('2026-07-16', '08:00', '18:00'),
       day('2026-07-17', '08:00', '18:00'),
-      day('2026-07-18', '08:00', '14:00'), // Sat worked 6h → billed 8h (daily minimum floor)
+      day('2026-07-18', '08:00', '14:00'), // Sat worked 6h → billed 10h
       day('2026-07-19', null, null),
     ];
     const r = calculateWeek(week, BASE_RULESET);
 
-    // Sat billed 8h: 8h × €40 × 25% = €80
-    expect(r.saturdaySurchargeCents).toBe(8000);
-    // 50h weekdays + 8h Sat = 58h. band1 = 5h × €40 × 25% = €50
+    // Sat billed 10h: 10h × €40 × 25% = €100
+    expect(r.saturdaySurchargeCents).toBe(10000);
+    // 50h weekdays + 10h Sat = 60h. band1 = 5h × €40 × 25% = €50
     expect(r.weeklyOtBand1Cents).toBe(5000);
-    // band2 = 3h × €40 × 50% = €60
-    expect(r.weeklyOtBand2Cents).toBe(6000);
+    // band2 = 5h × €40 × 50% = €100
+    expect(r.weeklyOtBand2Cents).toBe(10000);
   });
 });
 

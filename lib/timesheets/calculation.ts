@@ -8,7 +8,10 @@
 //   1. rawWorkMinutes  = workEnd - workStart - breakMinutes  (0 if not worked)
 //   2. travelMinutes   = (travelToMinutes + travelBackMinutes) if travelQualifies, else 0
 //   3. totalWorkMinutes = rawWorkMinutes + travelMinutes
-//   4. billedMinutes   = max(totalWorkMinutes, 480) if dailyMinimum8h, else totalWorkMinutes
+//   4. billedMinutes   = max(totalWorkMinutes, dailyOtStartH×60) if dailyMinimum8h, else totalWorkMinutes
+//      A "called day" is billed at a minimum of dailyOtStartH hours (TV FFS default: 10h —
+//      a film day is contractually 10h; this is distinct from the general ArbZG/§5.2.4
+//      8h floor, which this app does not separately model).
 //   5. surchargeEligibleMinutes = billedMinutes - travelMinutes.
 //      § 12.4 TV FFS: qualifying travel is paid like working time (counts toward
 //      billedMinutes, the daily minimum, and base pay) but "ohne jegliche Zuschläge" —
@@ -44,20 +47,16 @@
 // dayTotalCents (per-day display):
 //   For each worked day: billedMinutes × hourlyCents + day-level surcharges + perDiemCents.
 //   This shows the full per-day contribution including the OT hour's base + surcharge.
-//   Note: in standard (fixed weekly rate) mode, the sum of dayTotalCents still undershoots
-//   totalGrossCents for SHORT weeks (it has no guaranteed-floor top-up — that only exists
-//   at the week level); for weeks at or beyond the 50h baseline the two agree exactly, since
-//   basePayCents there is max(weeklyRateCents, actualHoursPayCents). totalGrossCents remains
-//   the one authoritative total — UI must read it directly rather than re-deriving its own.
+//   Σ dayTotalCents + weeklyOtBand1Cents + weeklyOtBand2Cents + restViolationCents always
+//   equals totalGrossCents — weekly-OT premiums and rest-violation pay are week-level
+//   components, not attributed to any single day. totalGrossCents remains the one
+//   authoritative total — UI must read it directly rather than re-deriving its own.
 
 import type { DayInput, Ruleset, DayResult, WeekResult } from './types';
 import { hourlyRateCents } from './ruleset';
 
 const MINUTES_PER_HOUR = 60;
 const MIN_REST_MINUTES = 11 * 60; // ArbZG § 5 / TV FFS § 5.8
-// § 5.2.4 / § 5.3.1 TV FFS: every started work day is billed at a minimum of
-// 8 hours, regardless of dailyOtStartH (the separate daily-OT premium threshold).
-const DAILY_MINIMUM_BILLING_HOURS = 8;
 
 /** Parse 'HH:MM' → total minutes since 00:00. Returns null if null input. */
 function parseTime(t: string | null): number | null {
@@ -164,17 +163,12 @@ export function calculateDay(
 
   const totalWorkMinutes = rawWorkMinutes + travelMinutes;
 
-  // Daily minimum billing floor = 8h (§ 5.2.4 / § 5.3.1 TV FFS: "Jeder angefangene
-  // Arbeitstag ... wird mit mindestens 8 Stunden berechnet"), when the flag is on.
-  // This is a DIFFERENT number from dailyOtStartH (§ 5.4.3.2, default 10h) — that's
-  // only the threshold above which the daily-OT Zuschlag kicks in, not the minimum
-  // a called day is billed for. Conflating the two previously over-billed (and thus
-  // over-paid, once the weekly floor was exceeded) any day between the 8h floor and
-  // a customized dailyOtStartH override.
-  // A day's own dailyMinimumOverride (if set) takes precedence over the
-  // timesheet-level ruleset.dailyMinimum8h default.
+  // Daily minimum = dailyOtStartH (TV FFS default: 10h — a film day is contractually
+  // 10h) when the flag is on. Each called day is billed for at least that many hours
+  // regardless of actual time worked. A day's own dailyMinimumOverride (if set) takes
+  // precedence over the timesheet-level ruleset.dailyMinimum8h default.
   const useDailyMinimum = day.dailyMinimumOverride ?? ruleset.dailyMinimum8h;
-  const dailyMinimumMinutes = DAILY_MINIMUM_BILLING_HOURS * MINUTES_PER_HOUR;
+  const dailyMinimumMinutes = ruleset.dailyOtStartH * MINUTES_PER_HOUR;
   const billedMinutes = isWorked
     ? (useDailyMinimum ? Math.max(totalWorkMinutes, dailyMinimumMinutes) : totalWorkMinutes)
     : 0;
@@ -317,19 +311,16 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
   const sunMinutes = dayResults.filter((d) => d.isSunday && d.isWorked).reduce((s, d) => s + (d.billedMinutes - d.travelMinutes), 0);
   const holMinutes = dayResults.filter((d) => d.isHoliday && d.isWorked).reduce((s, d) => s + (d.billedMinutes - d.travelMinutes), 0);
 
-  // Base pay:
-  //   standard/full_tarif: weekly rate is a guaranteed FLOOR, not a cap — it
-  //     covers up to 5 × dailyOtStartH (50h) of billed time. A week whose
-  //     actual billed hours are worth more than that (daily-OT hours, a
-  //     6th/7th day worked, etc.) is paid for those actual hours instead.
-  //     The dailyOt*/weeklyOt* Zuschlag surcharges below are premiums
-  //     layered on top of whichever applies — disabling a Zuschlag toggle
-  //     zeroes only the premium, never the base pay for the hours worked.
-  //   custom no-8h-min: no floor, always bill actual hours at hourly rate.
-  const actualHoursPayCents = Math.round((totalBilledMinutes / MINUTES_PER_HOUR) * hourlyCents);
-  const basePayCents = ruleset.dailyMinimum8h
-    ? Math.max(ruleset.weeklyRateCents, actualHoursPayCents)
-    : actualHoursPayCents;
+  // Base pay is always proportional to actual billed hours — weeklyRateCents is not
+  // a floor or a cap, it only defines the hourly rate (weeklyRateCents / 50 or / 40).
+  // § 5.7.2 TV FFS: a Wochengage is converted per the number of days actually worked/
+  // contracted, not paid in full regardless of days worked. A full 5 × dailyOtStartH
+  // (50h) week naturally comes out to exactly weeklyRateCents; fewer days pay
+  // proportionally less (only the "daily wage" for days actually worked), and a
+  // 6th/7th day or daily-OT hours naturally pay proportionally more, on top of
+  // whatever dailyOt*/weeklyOt* Zuschlag premiums apply (those are separate,
+  // additive surcharges — see below).
+  const basePayCents = Math.round((totalBilledMinutes / MINUTES_PER_HOUR) * hourlyCents);
 
   const dailyOtBand1Cents = surchargeCents(totalDailyOtBand1, hourlyCents, ruleset.dailyOtBand1Pct);
   const dailyOtBand2Cents = surchargeCents(totalDailyOtBand2, hourlyCents, ruleset.dailyOtBand2Pct);
