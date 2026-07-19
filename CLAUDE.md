@@ -33,7 +33,7 @@ npx supabase migration list                 # confirm local == remote
 
 Do **not** run SQL directly in the Supabase Dashboard once a migration is needed — it bypasses tracking and creates drift. If a remote change has already happened manually, use `npx supabase db pull` to capture it as a baseline migration before adding new files on top.
 
-Historical pre-CLI migration files live in `_legacy-migrations/` for reference only — they were applied via Dashboard before the CLI workflow was adopted and are now baked into the first `supabase/migrations/` file. **Do not re-run them.**
+Pre-CLI migrations were applied via Dashboard before the CLI workflow was adopted and are now baked into the first `supabase/migrations/` file — there is no separate `_legacy-migrations/` directory in the repo. **Do not re-run them.**
 
 ### Environment variables (`.env.local`)
 
