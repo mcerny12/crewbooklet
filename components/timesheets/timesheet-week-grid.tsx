@@ -44,6 +44,7 @@ function centsToEuro(cents: number): string {
 export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading }: Props) {
   const t = useTranslations('timesheets');
   const tPD = useTranslations('timesheets.perDiemType');
+  const tDailyMin = useTranslations('timesheets.dailyMinOverride');
   const locale = useLocale();
   const dateLocale = locale === 'de' ? de : enUS;
 
@@ -86,6 +87,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
         placeOfWork: e?.place_of_work ?? null,
         bundesland: e?.bundesland ?? null,
         perDiemType: (e?.per_diem_type ?? 'auto') as PerDiemType,
+        dailyMinimumOverride: e?.daily_minimum_override ?? null,
       };
     });
 
@@ -113,7 +115,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.break')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelTo')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelBack')}</th>
-            <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.travelQualifies')}</th>
+            <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.dailyMin')}</th>
             <th className="px-2 py-2 text-left font-semibold text-muted-foreground w-32">{t('day.placeOfWork')}</th>
             {timesheet.per_diem_enabled && (
               <th className="px-2 py-2 text-left font-semibold text-muted-foreground">{t('day.perDiem')}</th>
@@ -144,7 +146,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 </td>
 
                 {/* Work start */}
-                <td className="px-2 py-1.5">
+                <td className="px-2 py-1.5 text-center">
                   <Input
                     type="time"
                     value={entry.work_start ?? ''}
@@ -154,7 +156,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 </td>
 
                 {/* Work end */}
-                <td className="px-2 py-1.5">
+                <td className="px-2 py-1.5 text-center">
                   <Input
                     type="time"
                     value={entry.work_end ?? ''}
@@ -164,7 +166,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 </td>
 
                 {/* Break */}
-                <td className="px-2 py-1.5">
+                <td className="px-2 py-1.5 text-center">
                   <Input
                     type="number"
                     min="0"
@@ -176,7 +178,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 </td>
 
                 {/* Travel to */}
-                <td className="px-2 py-1.5">
+                <td className="px-2 py-1.5 text-center">
                   <Input
                     type="number"
                     min="0"
@@ -188,7 +190,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                 </td>
 
                 {/* Travel back */}
-                <td className="px-2 py-1.5">
+                <td className="px-2 py-1.5 text-center">
                   <Input
                     type="number"
                     min="0"
@@ -199,15 +201,21 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                   />
                 </td>
 
-                {/* Travel qualifies checkbox */}
+                {/* Daily minimum override: inherit timesheet default, or force on/off for this day */}
                 <td className="px-2 py-1.5 text-center">
-                  <input
-                    type="checkbox"
-                    checked={entry.travel_qualifies ?? false}
-                    onChange={e => onEntryChange(date, 'travel_qualifies', e.target.checked)}
-                    className="h-4 w-4 accent-primary"
-                    aria-label={t('day.travelQualifies')}
-                  />
+                  <Select
+                    value={entry.daily_minimum_override === true ? 'on' : entry.daily_minimum_override === false ? 'off' : 'inherit'}
+                    onValueChange={v => onEntryChange(date, 'daily_minimum_override', v === 'inherit' ? null : v === 'on')}
+                  >
+                    <SelectTrigger className={cellCn('w-20 mx-auto')}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="inherit">{tDailyMin('inherit')}</SelectItem>
+                      <SelectItem value="on">{tDailyMin('on')}</SelectItem>
+                      <SelectItem value="off">{tDailyMin('off')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </td>
 
                 {/* Place of work — Bug #8: auto-derive Bundesland on change */}

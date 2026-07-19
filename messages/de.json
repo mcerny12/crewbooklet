@@ -655,13 +655,19 @@
       "satShort": "Sa",
       "sunShort": "So",
       "holidayShort": "Feiertag",
-      "restViolation": "Ruhezeit-Verstoß"
+      "restViolation": "Ruhezeit-Verstoß",
+      "dailyMin": "Tagesmin."
     },
     "perDiemType": {
       "auto": "Automatisch",
       "partial": "Teilpauschale (€14)",
       "full": "Vollpauschale (€28)",
       "none": "Keine"
+    },
+    "dailyMinOverride": {
+      "inherit": "Standard",
+      "on": "Min.",
+      "off": "Ist"
     },
     "estimate": {
       "title": "Vergütungsübersicht (vertraulich)",

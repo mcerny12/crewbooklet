@@ -67,6 +67,7 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
         placeOfWork: e?.place_of_work ?? null,
         bundesland: e?.bundesland ?? null,
         perDiemType: (e?.per_diem_type ?? 'auto') as PerDiemType,
+        dailyMinimumOverride: e?.daily_minimum_override ?? null,
       };
     });
 

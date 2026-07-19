@@ -655,13 +655,19 @@
       "satShort": "Sat",
       "sunShort": "Sun",
       "holidayShort": "Holiday",
-      "restViolation": "Rest period violation"
+      "restViolation": "Rest period violation",
+      "dailyMin": "Daily min."
     },
     "perDiemType": {
       "auto": "Automatic",
       "partial": "Partial day (€14)",
       "full": "Full day (€28)",
       "none": "None"
+    },
+    "dailyMinOverride": {
+      "inherit": "Default",
+      "on": "Min.",
+      "off": "Actual"
     },
     "estimate": {
       "title": "Pay estimate (confidential)",

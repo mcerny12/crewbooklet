@@ -67,6 +67,9 @@ export interface TimesheetEntry {
   bundesland: string | null; // DE-BY, DE-NW, etc.
   per_diem_type: PerDiemType;
   notes: string | null;
+  /** Per-day override of the timesheet's daily_minimum_8h setting.
+   *  null = inherit the timesheet-level default; true/false = force on/off for this day. */
+  daily_minimum_override: boolean | null;
 }
 
 export interface ProjectTimesheetDefaults {
@@ -96,6 +99,8 @@ export interface DayInput {
   placeOfWork: string | null; // used to compare against homeBase for per-diem eligibility
   bundesland: string | null;
   perDiemType: PerDiemType;
+  /** null = inherit ruleset.dailyMinimum8h; true/false = force on/off for this day. */
+  dailyMinimumOverride: boolean | null;
 }
 
 /** Fully resolved ruleset passed to the calculation engine. */

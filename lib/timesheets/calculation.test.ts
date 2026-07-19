@@ -53,6 +53,7 @@ function day(
     placeOfWork: null,
     bundesland: null,
     perDiemType: 'none',
+    dailyMinimumOverride: null,
     ...opts,
   };
 }
@@ -102,6 +103,31 @@ describe('calculateDay — basic', () => {
     const ruleset = { ...BASE_RULESET, dailyMinimum8h: false };
     const r = calculateDay(day('2026-07-13', '09:00', '12:00'), ruleset);
     expect(r.billedMinutes).toBe(180);
+  });
+
+  it('per-day dailyMinimumOverride=true floors billing even when ruleset.dailyMinimum8h=false', () => {
+    const ruleset = { ...BASE_RULESET, dailyMinimum8h: false };
+    const r = calculateDay(
+      day('2026-07-13', '09:00', '12:00', { dailyMinimumOverride: true }),
+      ruleset
+    );
+    expect(r.billedMinutes).toBe(600); // floored to 10h despite the ruleset default being off
+  });
+
+  it('per-day dailyMinimumOverride=false bills actual hours even when ruleset.dailyMinimum8h=true', () => {
+    const r = calculateDay(
+      day('2026-07-13', '09:00', '12:00', { dailyMinimumOverride: false }),
+      BASE_RULESET
+    );
+    expect(r.billedMinutes).toBe(180); // actual hours despite the ruleset default being on
+  });
+
+  it('per-day dailyMinimumOverride=null (unset) inherits the ruleset default', () => {
+    const onRuleset = { ...BASE_RULESET, dailyMinimum8h: true };
+    const offRuleset = { ...BASE_RULESET, dailyMinimum8h: false };
+    const dayInput = day('2026-07-13', '09:00', '12:00', { dailyMinimumOverride: null });
+    expect(calculateDay(dayInput, onRuleset).billedMinutes).toBe(600);
+    expect(calculateDay(dayInput, offRuleset).billedMinutes).toBe(180);
   });
 
   it('break reduces raw work minutes', () => {
