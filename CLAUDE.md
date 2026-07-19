@@ -59,7 +59,7 @@ Supabase DB → SupabaseService (static class) → Zustand stores → React comp
 - `lib/services/supabase-service.ts` — all DB operations in one static class. Never query Supabase directly from components.
 - `lib/stores/` — one Zustand store per domain (people, projects, organizations, invoices, calendar, project-assignments, job-types, auth). Stores call `SupabaseService` and hold client-side state.
 - `lib/supabase/client.ts` — browser client (used by service layer). `lib/supabase/server.ts` — SSR client (API routes). `lib/supabase/admin.ts` — service-role client (admin API only).
-- `proxy.ts` — Contains middleware logic (auth enforcement, admin-only route guard) **but is NOT active**. The file is named `proxy.ts` (not `middleware.ts`) and exports `proxy` (not `middleware`), so Next.js does not run it automatically. There is no `middleware.ts` at the project root. Auth is enforced client-side by `MainLayout` and `AuthProvider`.
+- `proxy.ts` — **Is active.** In Next.js 16, `middleware.ts` was renamed to `proxy.ts` as the framework convention (a root-level `proxy.ts` exporting a named `proxy` function plus `config.matcher` is auto-detected and run on every matched request — confirmed by `ƒ Proxy (Middleware)` in `next build` output). It validates the Supabase session server-side (`getUser()`), redirects unauthenticated requests to `/login`, exempts the public `/api/calendar/[token]` ICS endpoint and the auth pages, and redirects non-admins away from `/admin`. Auth is therefore enforced **both** server-side here **and** client-side by `MainLayout`/`AuthProvider` — not client-side only.
 
 ### Settings page
 

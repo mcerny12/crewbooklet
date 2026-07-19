@@ -28,13 +28,16 @@ export async function proxy(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
+          );
+          Object.entries(headers).forEach(([key, value]) =>
+            response.headers.set(key, value)
           );
         },
       },
@@ -52,11 +55,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin-only routes
+  // Admin-only routes — non-admins land on /settings, matching the
+  // legacy /admin redirect's documented intent (see app/admin/page.tsx)
   if (ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
     const role = user.app_metadata?.role as string | undefined;
     if (role !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/settings', request.url));
     }
   }
 
