@@ -628,6 +628,8 @@
       "notes": "Notes"
     },
     "day": {
+      "day": "Day",
+      "earnings": "Earnings",
       "workStart": "Start",
       "workEnd": "End",
       "break": "Break (min)",
@@ -644,7 +646,10 @@
       "thursday": "Thursday",
       "friday": "Friday",
       "saturday": "Saturday",
-      "sunday": "Sunday"
+      "sunday": "Sunday",
+      "satShort": "Sat",
+      "sunShort": "Sun",
+      "holidayShort": "Holiday"
     },
     "perDiemType": {
       "auto": "Automatic",

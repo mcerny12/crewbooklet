@@ -628,6 +628,8 @@
       "notes": "Anmerkungen"
     },
     "day": {
+      "day": "Tag",
+      "earnings": "Verdienst",
       "workStart": "Beginn",
       "workEnd": "Ende",
       "break": "Pause (min)",
@@ -644,7 +646,10 @@
       "thursday": "Donnerstag",
       "friday": "Freitag",
       "saturday": "Samstag",
-      "sunday": "Sonntag"
+      "sunday": "Sonntag",
+      "satShort": "Sa",
+      "sunShort": "So",
+      "holidayShort": "Feiertag"
     },
     "perDiemType": {
       "auto": "Automatisch",
@@ -653,7 +658,12 @@
       "none": "Keine"
     },
     "estimate": {
-      "title": "Hochrechnung (vertraulich)",
+      "title": "Vergütungsübersicht (vertraulich)",
+      "adminOnly": "Nur für Dich und Admins sichtbar",
+      "noRate": "Wochengage nicht hinterlegt — Hochrechnung nicht verfügbar",
+      "totalHoursLabel": "Stunden gesamt",
+      "hourlyRateLabel": "Stundensatz",
+      "weeklyOtShort": "Wochen-ÜZ",
       "basePayLabel": "Wochengage",
       "dailyOtLabel": "Tagesüberstunden",
       "weeklyOtLabel": "Wochenüberstunden",
@@ -663,7 +673,17 @@
       "holidayLabel": "Feiertagszuschlag",
       "perDiemLabel": "Verpflegungsmehraufwand",
       "totalLabel": "Gesamt brutto",
-      "adminOnly": "Nur für Dich und Admins sichtbar"
+      "baseHoursLine": "{hours} × {rate}/h",
+      "dailyOtLine": "+ {hours} tägl. ÜZ {pct}%",
+      "nightLine": "+ {hours} Nacht {pct}%",
+      "saturdayLine": "+ Sa-Zuschlag {pct}%",
+      "sundayLine": "+ So-Zuschlag {pct}%",
+      "holidayLine": "+ Feiertag {pct}%",
+      "restViolationLine": "⚠ Ruhezeit {hours}",
+      "weeklyOtLine": "+ {hours} Wochen-ÜZ {pct}%",
+      "restViolationTotal": "Ruhezeit-Vergütung (ArbZG § 5)",
+      "subtotal": "Summe eingetragene Tage",
+      "guarantee": "Wochengage-Garantie greift: mind. {amount}/Woche"
     },
     "pdf": {
       "pageTitle": "Stundenzettel",
