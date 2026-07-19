@@ -1,5 +1,5 @@
 {
-  "last_audit_commit": "65207b7bdb80506055287e8fcba9fc127fff15a7",
+  "last_audit_commit": "ec168f8d3ed0adb11c6b2da1cdf28f00c503f34f",
   "last_audit_date": "2026-07-19",
   "file_hashes": {
     "app/admin/page.tsx": {
@@ -166,10 +166,6 @@
       "hash": "521cf8bdd2ccb7a7d21c2f5979a610673e8293d3",
       "verdict": "clean"
     },
-    "components/i18n/language-switcher.tsx": {
-      "hash": "62ada52d33357ff0ef9a07fdb90a8b5ada02b727",
-      "verdict": "findings"
-    },
     "components/invoices/add-invoice-dialog.tsx": {
       "hash": "0bb749bb309d6106b628cbecd4af6171afbbfdf8",
       "verdict": "clean"
@@ -206,10 +202,6 @@
       "hash": "c4f2ef6835553d45a70c0bbf548b6b4f7ebc5770",
       "verdict": "clean"
     },
-    "components/mobile/index.ts": {
-      "hash": "30392d6ca626daec284dc4c5cad5d670ac3878ca",
-      "verdict": "findings"
-    },
     "components/mobile/mobile-app-header.tsx": {
       "hash": "5572cedb07bf563b83d3e481cfc5b5da21df904b",
       "verdict": "clean"
@@ -239,8 +231,8 @@
       "verdict": "clean"
     },
     "components/mobile/mobile-swipe-tabs.tsx": {
-      "hash": "f246b6ce3e7df5894a3b7fa030f887a95d7a3b4c",
-      "verdict": "findings"
+      "hash": "2f0c26bcb9c29e3dbb188f23bd5461b10ade7791",
+      "verdict": "clean"
     },
     "components/organizations/add-organization-dialog.tsx": {
       "hash": "96aa60252ddf55e68bb6e8e29032e6fb97850078",
@@ -262,17 +254,9 @@
       "hash": "3d023274659edf3da383f9f0811652aba39cae6b",
       "verdict": "clean"
     },
-    "components/organizations/organization-detail-dialog.tsx": {
-      "hash": "3a7067d6d2faac0664d2b2d94114b50bda7a7172",
-      "verdict": "findings"
-    },
     "components/organizations/organization-detail-drawer.tsx": {
       "hash": "c17a2478e8cb9bde6cc21a03d2b83f4196d0e943",
       "verdict": "clean"
-    },
-    "components/organizations/organization-list-item.tsx": {
-      "hash": "58909cd2c11c315a3110d6e693499fad8cd72533",
-      "verdict": "findings"
     },
     "components/people/add-person-dialog.tsx": {
       "hash": "10436e2260ae9ffc0d063a9692c247de53fe3eac",
@@ -282,17 +266,9 @@
       "hash": "4651dc74eeac91635f77741af6730cbf5bde7001",
       "verdict": "clean"
     },
-    "components/people/person-detail-dialog.tsx": {
-      "hash": "7067dd506956d432f658924f72652ec4549496bd",
-      "verdict": "findings"
-    },
     "components/people/person-detail-drawer.tsx": {
       "hash": "f8380c42dfc46c8905fa9bbf886aca24e7ae0fb3",
       "verdict": "clean"
-    },
-    "components/people/person-list-item.tsx": {
-      "hash": "4734ed1e16b7743d5aa01a83176c48704d1b2753",
-      "verdict": "findings"
     },
     "components/people/person-mobile-detail.tsx": {
       "hash": "6899b94f3283d1ac17cd118b4be0e917f5aff573",
@@ -314,21 +290,9 @@
       "hash": "a1473b7b88429319b05fb86c2bc2657fe59db628",
       "verdict": "clean"
     },
-    "components/projects/project-detail-dialog.tsx": {
-      "hash": "ce153e0ebe28b9ab5e5925f491dfd1091ac40f18",
-      "verdict": "findings"
-    },
-    "components/projects/project-detail-drawer.tsx": {
-      "hash": "b2406e1d65e5559f66b3cd287da11468acf821b2",
-      "verdict": "findings"
-    },
     "components/projects/project-detail-panel.tsx": {
       "hash": "e690567fbb944c8d0c7ff04dbae5855a129017a3",
       "verdict": "clean"
-    },
-    "components/projects/project-list-item.tsx": {
-      "hash": "71a57aaffb40da6e7545d4099be4eae6f3bdd4ba",
-      "verdict": "findings"
     },
     "components/projects/project-mobile-detail.tsx": {
       "hash": "51d2c46ab2b12473775f669afef2b97e443885b7",
@@ -398,10 +362,6 @@
       "hash": "a3ec184106ba37378f68e7c8ad0a47b13f82727c",
       "verdict": "clean"
     },
-    "components/ui/date-picker.tsx": {
-      "hash": "0b7ec0970f333c3f3297a5bbba406f0287115ab9",
-      "verdict": "findings"
-    },
     "components/ui/date-range-picker.tsx": {
       "hash": "980d985c05b00d14a1070e9703cf05d15d174619",
       "verdict": "clean"
@@ -466,17 +426,9 @@
       "hash": "bc628de27b1372c1b8db2f23057a115c2df6e642",
       "verdict": "clean"
     },
-    "components/ui/separator.tsx": {
-      "hash": "4c24b2a884d7526faa0e527ddf84fb5beb99289b",
-      "verdict": "findings"
-    },
     "components/ui/status-badge.tsx": {
       "hash": "6f552ea44d03291df6aff50ee05b5763cae45e34",
       "verdict": "clean"
-    },
-    "components/ui/table.tsx": {
-      "hash": "51b74dd52570a0268d78870be270dd460cef41db",
-      "verdict": "findings"
     },
     "components/ui/tabs.tsx": {
       "hash": "7f73dcda316d3e3b34ef0f9c6b77fa47f7be503e",
@@ -603,8 +555,8 @@
       "verdict": "clean"
     },
     "lib/types/models.ts": {
-      "hash": "55809fd167ee5cd989847e69e0cef1aab6d6750a",
-      "verdict": "findings"
+      "hash": "a0058c262802453307378db8aa4585901e8284d2",
+      "verdict": "clean"
     },
     "lib/utils.ts": {
       "hash": "bd0c391ddd1088e9067844c48835bf4abcd61783",
@@ -623,12 +575,12 @@
       "verdict": "clean"
     },
     "package-lock.json": {
-      "hash": "b98d2ef07946b849c1a87d76b3eab911db8b13b1",
+      "hash": "ad8e29f2272fa264271bcbb0153c86fe57a746af",
       "verdict": "clean"
     },
     "package.json": {
-      "hash": "80aa3667b78da8693271551e2670be985f136c24",
-      "verdict": "findings"
+      "hash": "92534d36808e85687983d77d8d5ccceb82ddcf84",
+      "verdict": "clean"
     },
     "postcss.config.mjs": {
       "hash": "61e36849cf7cfa9f1f71b4a3964a4953e3e243d3",
@@ -696,36 +648,95 @@
     }
   },
   "context7_cache": {},
-  "open_findings": [
-    { "id": "DEAD-01", "area": "dead_code", "severity": "low", "file": "components/i18n/language-switcher.tsx", "summary": "Orphaned component, zero imports anywhere. Superseded by inline switcher in components/settings/general-section.tsx (sidebar.tsx has a comment confirming the move). CLAUDE.md's i18n section still describes it as living in the sidebar footer — doc is stale." },
-    { "id": "DEAD-02", "area": "dead_code", "severity": "low", "file": "components/mobile/index.ts", "summary": "Barrel file with zero consumers — every *-mobile-detail.tsx imports individual files directly (e.g. @/components/mobile/mobile-entity-detail-layout), never via @/components/mobile. CLAUDE.md's mobile section says the barrel is how these are built; doc is stale." },
-    { "id": "DEAD-03", "area": "dead_code", "severity": "low", "file": "components/people/person-list-item.tsx", "summary": "Zero imports. Superseded by components/people/compact-person-list-item.tsx." },
-    { "id": "DEAD-04", "area": "dead_code", "severity": "low", "file": "components/organizations/organization-list-item.tsx", "summary": "Zero imports. Superseded by components/organizations/compact-organization-list-item.tsx." },
-    { "id": "DEAD-05", "area": "dead_code", "severity": "low", "file": "components/projects/project-list-item.tsx", "summary": "Zero imports. Superseded by components/projects/compact-project-list-item.tsx." },
-    { "id": "DEAD-06", "area": "dead_code", "severity": "low", "file": "components/projects/project-detail-drawer.tsx", "summary": "Only consumer was project-list-item.tsx (DEAD-05), which is itself dead. Cascades to dead." },
-    { "id": "DEAD-07", "area": "dead_code", "severity": "low", "file": "components/people/person-detail-dialog.tsx", "summary": "Legacy dialog-based detail view, zero imports. Superseded by the drawer/panel master-detail pattern documented in CLAUDE.md." },
-    { "id": "DEAD-08", "area": "dead_code", "severity": "low", "file": "components/organizations/organization-detail-dialog.tsx", "summary": "Legacy dialog-based detail view, zero imports. Same pattern as DEAD-07." },
-    { "id": "DEAD-09", "area": "dead_code", "severity": "low", "file": "components/projects/project-detail-dialog.tsx", "summary": "Legacy dialog-based detail view, zero imports. Same pattern as DEAD-07." },
-    { "id": "DEAD-10", "area": "dead_code", "severity": "low", "file": "components/ui/date-picker.tsx", "summary": "Zero imports. Unused shadcn primitive (date-range-picker.tsx is the one actually used)." },
-    { "id": "DEAD-11", "area": "dead_code", "severity": "low", "file": "components/ui/table.tsx", "summary": "Zero imports. Unused shadcn scaffold primitive." },
-    { "id": "DEAD-12", "area": "dead_code", "severity": "low", "file": "components/ui/separator.tsx", "summary": "Zero imports. Unused shadcn scaffold primitive." },
-    { "id": "DEAD-13", "area": "dead_code", "severity": "low", "file": "lib/types/models.ts", "summary": "17 exports (GenderDisplay, LanguageDisplay, JobCategoryColors/Icons, getJobCategory, formatAddress, isAddressEmpty, OrganizationCategoryColors/Icons, getOrganizationCategory, ProjectStatusColors/Icons, AssignmentStatusColors, CrewDepartmentIcons/Colors, getDepartmentFromJob, UserRoleDisplay, InvoiceStatusColors) plus a few types have zero usages. CLAUDE.md calls this file a deliberate 'reference/fallback' for the DB-driven job-types store, so ambiguous whether this is intentional retained fallback or leftover pre-refactor cruft — needs your call, not auto-deleted." },
-    { "id": "DRIFT-01", "area": "quality", "severity": "low", "file": "components/ui/form-section.tsx", "summary": "CLAUDE.md documents <FormSection> as an actively-used reusable component; zero usages found anywhere in the app." },
-    { "id": "DRIFT-02", "area": "quality", "severity": "low", "file": "components/ui/detail-tabs.tsx", "summary": "CLAUDE.md documents <DetailTabs> as an actively-used reusable component; only consumer was project-detail-drawer.tsx (DEAD-06), itself dead, so effectively zero live usages." },
-    { "id": "DRIFT-03", "area": "quality", "severity": "low", "file": "components/ui/resizable-bottom-pane.tsx", "summary": "CLAUDE.md documents <ResizableBottomPane> as an actively-used reusable component; zero usages found anywhere in the app." },
-    { "id": "ROBUST-01", "area": "correctness", "severity": "medium", "file": "components/mobile/mobile-swipe-tabs.tsx", "summary": "Imports '@radix-ui/react-tabs' directly, but that package is not a declared dependency in package.json — it only resolves because it's a transitive dependency of the bundled 'radix-ui' package (which every other primitive, e.g. components/ui/tabs.tsx and dialog.tsx, imports from instead). A future radix-ui version bump that stops re-exporting react-tabs, or a lockfile change, would silently break this file. Fix: import { Tabs as TabsPrimitive } from 'radix-ui' for consistency." },
-    { "id": "DEP-01", "area": "dead_code", "severity": "low", "file": "package.json", "summary": "6 unused dependencies verified by grep (zero source references): @radix-ui/react-dialog and @radix-ui/react-popover (superseded by the bundled 'radix-ui' package used everywhere else), @hookform/resolvers and react-hook-form (only consumer is components/ui/form.tsx, itself unused — CLAUDE.md confirms the app deliberately uses plain useState for forms, not react-hook-form), cmdk (zero usage, no command.tsx exists), jspdf and pdf-lib (zero usage — invoice/timesheet PDFs are actually generated via window.print() in the print pages; CLAUDE.md's invoice-printing section incorrectly says 'Uses jspdf / pdf-lib')." }
-  ],
+  "open_findings": [],
   "resolved_findings": [
-    { "id": "FIXED-01", "resolution": "Fixed in commit 3886069: TimesheetEstimatePanel hardcoded all UI strings in German instead of calling useTranslations, unlike every sibling timesheets component. This left en.json missing 15 keys added alongside de.json in 07c37a8, breaking tsc/next build, and meant English-locale users saw German text. Wired the component to next-intl and added the missing English translations." },
-    { "id": "LINT-01", "resolution": "Fixed in commit 65207b7: removed 9 stale/unused eslint-disable directives via `npm run lint -- --fix`. No behavior change." }
+    {
+      "id": "FIXED-01",
+      "resolution": "Fixed in commit 3886069: TimesheetEstimatePanel hardcoded all UI strings in German instead of calling useTranslations, unlike every sibling timesheets component. This left en.json missing 15 keys added alongside de.json in 07c37a8, breaking tsc/next build, and meant English-locale users saw German text. Wired the component to next-intl and added the missing English translations."
+    },
+    {
+      "id": "LINT-01",
+      "resolution": "Fixed in commit 65207b7: removed 9 stale/unused eslint-disable directives via `npm run lint -- --fix`. No behavior change."
+    },
+    {
+      "id": "DEAD-01",
+      "resolution": "Deleted components/i18n/language-switcher.tsx (zero imports). Corrected CLAUDE.md i18n section, which pointed to it as living in the sidebar footer — the switcher actually lives inline in components/settings/general-section.tsx."
+    },
+    {
+      "id": "DEAD-02",
+      "resolution": "Deleted components/mobile/index.ts barrel (zero consumers). Corrected CLAUDE.md mobile section, which described a barrel-import pattern no file actually used."
+    },
+    {
+      "id": "DEAD-03",
+      "resolution": "Deleted components/people/person-list-item.tsx (zero imports, superseded by compact-person-list-item.tsx)."
+    },
+    {
+      "id": "DEAD-04",
+      "resolution": "Deleted components/organizations/organization-list-item.tsx (zero imports, superseded by compact-organization-list-item.tsx)."
+    },
+    {
+      "id": "DEAD-05",
+      "resolution": "Deleted components/projects/project-list-item.tsx (zero imports, superseded by compact-project-list-item.tsx)."
+    },
+    {
+      "id": "DEAD-06",
+      "resolution": "Deleted components/projects/project-detail-drawer.tsx (only consumer was DEAD-05, deleted in the same commit)."
+    },
+    {
+      "id": "DEAD-07",
+      "resolution": "Deleted components/people/person-detail-dialog.tsx (legacy dialog view, zero imports)."
+    },
+    {
+      "id": "DEAD-08",
+      "resolution": "Deleted components/organizations/organization-detail-dialog.tsx (legacy dialog view, zero imports)."
+    },
+    {
+      "id": "DEAD-09",
+      "resolution": "Deleted components/projects/project-detail-dialog.tsx (legacy dialog view, zero imports)."
+    },
+    {
+      "id": "DEAD-10",
+      "resolution": "Deleted components/ui/date-picker.tsx (unused shadcn scaffold primitive)."
+    },
+    {
+      "id": "DEAD-11",
+      "resolution": "Deleted components/ui/table.tsx (unused shadcn scaffold primitive; original zero-usage grep had false-positive noise from the word \"table\" — re-verified against actual import statements before deleting)."
+    },
+    {
+      "id": "DEAD-12",
+      "resolution": "Deleted components/ui/separator.tsx. Its only importers were the three dialog files (DEAD-07/08/09) deleted in the same commit, so it is genuinely dead once those land."
+    },
+    {
+      "id": "DEAD-13",
+      "resolution": "Trimmed 17 confirmed-unused exports (GenderDisplay, LanguageDisplay, JobCategoryColors/Icons, getJobCategory, formatAddress, isAddressEmpty, OrganizationCategoryColors/Icons, getOrganizationCategory, ProjectStatusColors/Icons, AssignmentStatusColors, CrewDepartmentIcons/Colors, getDepartmentFromJob, UserRoleDisplay, InvoiceStatusColors) from lib/types/models.ts. Re-verified after DEAD-01–12 landed, since 3 of these (JobCategoryColors, isAddressEmpty, ProjectStatusColors) had misleading grep hits from files deleted in that same run. Kept JobCategory enum and JOB_CATEGORY_TO_DEPARTMENT — both are live, consumed by lib/stores/job-types-store.ts."
+    },
+    {
+      "id": "DRIFT-01",
+      "resolution": "Annotated CLAUDE.md’s design-system table: <FormSection> is currently unused (kept as an available alternative, file not deleted)."
+    },
+    {
+      "id": "DRIFT-02",
+      "resolution": "Annotated CLAUDE.md’s design-system table: <DetailTabs> is currently unused (its only consumer, DEAD-06, was deleted this run)."
+    },
+    {
+      "id": "DRIFT-03",
+      "resolution": "Annotated CLAUDE.md’s design-system table: <ResizableBottomPane> is currently unused (file not deleted)."
+    },
+    {
+      "id": "ROBUST-01",
+      "resolution": "Fixed components/mobile/mobile-swipe-tabs.tsx to import { Tabs as TabsPrimitive } from \"radix-ui\" instead of the undeclared transitive @radix-ui/react-tabs, matching tabs.tsx/dialog.tsx."
+    },
+    {
+      "id": "DEP-01",
+      "resolution": "Removed 6 of the 7 flagged packages (@radix-ui/react-dialog, @hookform/resolvers, cmdk, jspdf, pdf-lib, react-hook-form) plus the newly-discovered dead components/ui/form.tsx (only consumer of react-hook-form, itself zero-consumer). CORRECTION to the original finding: @radix-ui/react-popover was misidentified as unused — it is imported directly by components/ui/searchable-select.tsx (12 live consumers), multi-search-select.tsx, popover.tsx, and project-detail-panel.tsx. Left installed; removing it would have broken the build. Also corrected CLAUDE.md’s invoice-printing section, which incorrectly claimed jspdf/pdf-lib power PDF generation (actual mechanism is window.print())."
+    }
   ],
   "wontfix": [],
   "baseline": {
     "typecheck": "pass",
     "lint": {
       "errors": 0,
-      "warnings": 91
+      "warnings": 89
     },
     "build": "pass",
     "test": {
@@ -733,6 +744,6 @@
       "passed": 85,
       "failed": 0
     },
-    "checked_at": "2026-07-19T09:06:53.440Z"
+    "checked_at": "2026-07-19T11:36:00.000Z"
   }
 }

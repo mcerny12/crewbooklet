@@ -90,3 +90,67 @@ prefixed `_` params in `lib/services/supabase-service.ts`, unused `get` in
 Zustand stores) and a handful of `react-hooks/exhaustive-deps` warnings across
 detail-drawer components. None block build; several sit inside files proposed
 for deletion above (DEAD-03, DEAD-06), so left as-is pending your decision.
+
+---
+
+## Run 2 — 2026-07-19 (findings resolution)
+
+Branch: `audit/full-baseline`, continuing from Run 1. Walked every open finding
+through go/no-go with the user, applied what was approved, and re-ran
+typecheck/lint/build/test after each change. Commits: `cd18f33`, `520ceff`,
+`35f4528`, `8f2907b`, `62b1c10`, `ec168f8`.
+
+### Resolved this run
+
+- **DEAD-01 → DEAD-12**: all 12 dead files deleted in one commit (`cd18f33`).
+  Re-verified zero-import status against actual import statements (not
+  filename substring matches) before deleting — this caught that an initial
+  substring-based check would have false-positived on `components/mobile/index.ts`
+  and `components/ui/table.tsx` (the words "index" and "table" appear in
+  unrelated code), and confirmed `components/ui/separator.tsx`'s only
+  importers were the three dialog files removed in the same commit. Corrected
+  two CLAUDE.md lines tied to these deletions (language-switcher's actual
+  location, mobile's direct-import pattern in place of a nonexistent barrel).
+- **DEAD-13** (`520ceff`): trimmed the 17 confirmed-unused exports from
+  `lib/types/models.ts`. Re-verification after the DEAD-01–12 deletion landed
+  was necessary — 3 of the 17 (`JobCategoryColors`, `isAddressEmpty`,
+  `ProjectStatusColors`) had misleading grep hits from files deleted in that
+  same run. Kept `JobCategory` and `JOB_CATEGORY_TO_DEPARTMENT`, both
+  consumed live by `lib/stores/job-types-store.ts`.
+- **ROBUST-01** (`35f4528`): `components/mobile/mobile-swipe-tabs.tsx` now
+  imports `{ Tabs as TabsPrimitive } from 'radix-ui'`, matching every other
+  primitive, instead of the undeclared transitive `@radix-ui/react-tabs`.
+- **DRIFT-01/02/03** (`8f2907b`): annotated `<FormSection>`, `<DetailTabs>`,
+  `<ResizableBottomPane>` as currently unused in CLAUDE.md's design-system
+  table rather than deleting the files (user's call — doc-only fix, lower
+  blast radius than removing UI primitives a future feature might reach for).
+  Also corrected the invoice-printing section's incorrect `jspdf`/`pdf-lib`
+  claim in the same commit.
+- **DEP-01, corrected** (`62b1c10`, `ec168f8`): removed 6 of the 7 flagged
+  packages — `@radix-ui/react-dialog`, `@hookform/resolvers`, `cmdk`,
+  `jspdf`, `pdf-lib`, `react-hook-form` — and deleted `components/ui/form.tsx`
+  (react-hook-form's only importer, a zero-consumer file not on the original
+  DEAD list, discovered while verifying this finding).
+
+### Correction to a Run 1 finding
+
+Re-verifying DEP-01 against actual import statements (the same discipline
+that caught the DEAD-02/DEAD-11 false positives above) found that
+**`@radix-ui/react-popover` was misidentified as unused**. It's imported
+directly by `components/ui/searchable-select.tsx` (12 live consumers — this
+is the CLAUDE.md-mandated component for option lists over ~8 items),
+`multi-search-select.tsx`, `popover.tsx`, and `project-detail-panel.tsx`.
+Removing it would have broken the build immediately. Left installed;
+flagged to the user before proceeding rather than executing the original
+finding as stated.
+
+### Post-run state
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | ✅ pass |
+| `npm run lint` | ✅ 0 errors, 89 warnings (pre-existing, 2 fewer than Run 1 since two warning-bearing files were deleted) |
+| `npm run build` | ✅ pass |
+| `npm run test` | ✅ 85/85 |
+
+`open_findings` is now empty. Branch is awaiting the user's merge decision.
