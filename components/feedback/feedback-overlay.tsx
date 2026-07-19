@@ -216,7 +216,6 @@ export function FeedbackOverlay() {
           onMouseDown={swallow}
           onClick={handleInterceptClick}
           onContextMenu={swallow}
-          data-radix-focus-guard=""
         />
       )}
 
@@ -232,11 +231,6 @@ export function FeedbackOverlay() {
             background: 'rgba(37,99,235,0.08)',
             zIndex: HIGHLIGHT_Z,
           }}
-          // Radix sweeps siblings with aria-hidden when a Dialog opens; opt
-          // this node out so screen readers still see the highlight overlay
-          // (and so any tooling that turns aria-hidden into inert doesn't
-          // disable it).
-          data-radix-focus-guard=""
         />
       )}
 
@@ -247,7 +241,6 @@ export function FeedbackOverlay() {
           'fixed bottom-4 right-4 flex items-center gap-2 rounded-xl border bg-card p-2 shadow-lg'
         )}
         style={{ zIndex: TOOLBAR_Z, pointerEvents: 'auto' }}
-        data-radix-focus-guard=""
       >
         <button
           type="button"
