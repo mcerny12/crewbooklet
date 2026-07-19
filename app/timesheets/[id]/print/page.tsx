@@ -1,8 +1,12 @@
 'use client';
 
-// Timesheet print/PDF page.
-// Does NOT include any pay figures, rates, or accounting columns — only working time.
-// The pay estimate is visible exclusively in the detail panel (never in PDF).
+// Timesheet print page — reproduces the paper "Stundenzettel / Time Sheet" template.
+// Columns 1-8 (day/date/travel/work-time/break/place) are filled in from the
+// timesheet data. Columns 9-11 (Std. gesamt / Überstunden / Überstunden-
+// Nachtzuschläge) are boxed "ACCOUNTING USE ONLY" on the original paper form and
+// are printed as blank cells here by design — no pay figures, rates, or OT/
+// premium calculations are ever rendered on this page. The pay estimate is
+// visible exclusively in the detail panel.
 //
 // Triggered via window.open('/timesheets/[id]/print', '_blank') from the detail panel.
 
@@ -13,26 +17,11 @@ import { format, parseISO, addDays } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import type { Timesheet, TimesheetEntry } from '@/lib/timesheets/types';
+import type { Project } from '@/lib/types/models';
 
 function parseHHMM(t: string | null): string {
-  if (!t) return '—';
+  if (!t) return '';
   return t.slice(0, 5);
-}
-
-function rawMinutes(entry: TimesheetEntry): number {
-  if (!entry.work_start || !entry.work_end) return 0;
-  const [sh, sm] = entry.work_start.split(':').map(Number);
-  const [eh, em] = entry.work_end.split(':').map(Number);
-  const start = sh * 60 + sm;
-  const end = eh < sh ? (eh + 24) * 60 + em : eh * 60 + em;
-  return Math.max(0, end - start - entry.break_minutes);
-}
-
-function formatMinutes(min: number): string {
-  if (min === 0) return '—';
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return m === 0 ? `${h}:00` : `${h}:${String(m).padStart(2, '0')}`;
 }
 
 export default function TimesheetPrintPage() {
@@ -43,6 +32,7 @@ export default function TimesheetPrintPage() {
   const dateLocale = locale === 'de' ? de : enUS;
   const [timesheet, setTimesheet] = useState<Timesheet | null>(null);
   const [entries, setEntries] = useState<TimesheetEntry[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -52,6 +42,9 @@ export default function TimesheetPrintPage() {
     ]).then(([ts, ents]) => {
       setTimesheet(ts);
       setEntries(ents);
+      if (ts?.project_id) {
+        SupabaseService.fetchProject(ts.project_id).then(setProject);
+      }
     });
   }, [id]);
 
@@ -81,113 +74,129 @@ export default function TimesheetPrintPage() {
     return { date, label: dayLabels[i], dayOfMonth: format(addDays(monday, i), 'dd.MM.'), entry };
   });
 
-  const totalMinutes = days.reduce((s, d) => s + (d.entry ? rawMinutes(d.entry) : 0), 0);
-  const totalTravelMinutes = days.reduce((s, d) => {
-    if (!d.entry?.travel_qualifies) return s;
-    return s + d.entry.travel_to_minutes + d.entry.travel_back_minutes;
-  }, 0);
-
   return (
-    <div className="print-page" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#000', maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '20px', borderBottom: '2px solid #000', paddingBottom: '10px' }}>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>{t('pdf.pageTitle')}</h1>
-        <div style={{ marginTop: '6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-          <div>
-            <span style={{ color: '#666' }}>{t('fields.personName')}: </span>
-            <strong>{timesheet.person_name || '—'}</strong>
-          </div>
-          <div>
-            <span style={{ color: '#666' }}>{t('week')}: </span>
-            <strong>
-              {format(monday, 'd. MMM', { locale: dateLocale })} – {format(weekEnd, 'd. MMM yyyy', { locale: dateLocale })}
-              {' '}({t('weekAbbr')} {format(monday, 'w', { locale: dateLocale })})
-            </strong>
-          </div>
-          {timesheet.position_title && (
-            <div>
-              <span style={{ color: '#666' }}>{t('pdf.position')}: </span>
-              {timesheet.position_title}
-            </div>
+    <div className="print-page" style={{ fontFamily: 'Arial, sans-serif', fontSize: '9px', color: '#000', width: '100%', maxWidth: '277mm', margin: '0 auto', padding: '10mm' }}>
+      {/* Header: project name (stands in for a fixed company brand) + document title, accounting box top-right */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+        <div>
+          {project?.name && (
+            <div style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase' }}>{project.name}</div>
           )}
-          {timesheet.department && (
-            <div>
-              <span style={{ color: '#666' }}>{t('fields.department')}: </span>
-              {timesheet.department}
-            </div>
-          )}
+          <div style={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase' }}>{t('pdf.pageTitle')}</div>
+        </div>
+        <div style={{ border: '1px solid #000', padding: '6px 10px', minWidth: '200px' }}>
+          <div style={{ fontSize: '9px', fontWeight: 'bold', marginBottom: '6px' }}>{t('pdf.accountingUseOnly')}:</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', rowGap: '10px', fontSize: '9px' }}>
+            <span>{t('pdf.coding')}</span>
+            <span style={{ borderBottom: '1px solid #000' }} />
+            <span>{t('pdf.euro')}</span>
+            <span style={{ borderBottom: '1px solid #000' }} />
+          </div>
         </div>
       </div>
 
-      {/* Time table — NO pay figures (columns 9-11 from template excluded) */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+      {/* Person / position / department + week */}
+      <div style={{ marginBottom: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px', fontSize: '10px' }}>
+        <div><span style={{ color: '#666' }}>{t('fields.personName')}: </span><strong>{timesheet.person_name || ''}</strong></div>
+        <div>
+          <span style={{ color: '#666' }}>{t('week')}: </span>
+          <strong>
+            {format(monday, 'd. MMM', { locale: dateLocale })} – {format(weekEnd, 'd. MMM yyyy', { locale: dateLocale })}
+            {' '}({t('weekAbbr')} {format(monday, 'w', { locale: dateLocale })})
+          </strong>
+        </div>
+        <div><span style={{ color: '#666' }}>{t('pdf.position')}: </span>{timesheet.position_title || ''}</div>
+        <div><span style={{ color: '#666' }}>{t('fields.department')}: </span>{timesheet.department || ''}</div>
+      </div>
+
+      {/* Time table — 14 physical columns matching the template's numbering 1-11 (col. 11 has 4 sub-columns) */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '10px' }}>
         <thead>
           <tr style={{ backgroundColor: '#f0f0f0' }}>
-            <th style={thStyle}>{t('day.day')}</th>
-            <th style={thStyle}>{t('pdf.date')}</th>
-            <th style={thStyle}>{t('day.workStart')}</th>
-            <th style={thStyle}>{t('day.workEnd')}</th>
-            <th style={thStyle}>{t('day.break')}</th>
-            <th style={thStyle}>{t('day.travelTo')}</th>
-            <th style={thStyle}>{t('day.travelBack')}</th>
-            <th style={thStyle}>{t('pdf.netHours')}</th>
-            <th style={{ ...thStyle, minWidth: '100px' }}>{t('day.placeOfWork')}</th>
+            <th style={numStyle}>1</th>
+            <th style={numStyle}>2</th>
+            <th style={numStyle}>3</th>
+            <th style={numStyle}>4</th>
+            <th style={numStyle}>5</th>
+            <th style={numStyle}>6</th>
+            <th style={numStyle}>7</th>
+            <th style={numStyle}>8</th>
+            <th style={numStyle}>9</th>
+            <th style={numStyle}>10</th>
+            <th style={numStyle} colSpan={4}>11</th>
+          </tr>
+          <tr style={{ backgroundColor: '#f0f0f0' }}>
+            <th style={thStyle} rowSpan={2}>{t('day.day')}</th>
+            <th style={thStyle} rowSpan={2}>{t('pdf.date')}</th>
+            <th style={thStyle} rowSpan={2}>{t('day.travelTo')}</th>
+            <th style={thStyle} colSpan={2}>{t('pdf.workedHeader')}</th>
+            <th style={thStyle} rowSpan={2}>{t('day.break')}</th>
+            <th style={thStyle} rowSpan={2}>{t('day.travelBack')}</th>
+            <th style={{ ...thStyle, minWidth: '90px' }} rowSpan={2}>{t('day.placeOfWork')}</th>
+            <th style={thStyle} rowSpan={2}>{t('pdf.stdGesamt')}</th>
+            <th style={thStyle} rowSpan={2}>{t('pdf.overtimeCol')}</th>
+            <th style={thStyle} colSpan={4}>{t('pdf.premiumsCol')}</th>
+          </tr>
+          <tr style={{ backgroundColor: '#f0f0f0' }}>
+            <th style={subThStyle}>{t('pdf.inLabel')}</th>
+            <th style={subThStyle}>{t('pdf.outLabel')}</th>
+            <th style={subThStyle}>%</th>
+            <th style={subThStyle}>%</th>
+            <th style={subThStyle}>%</th>
+            <th style={subThStyle}></th>
           </tr>
         </thead>
         <tbody>
           {days.map(({ label, dayOfMonth, entry }, idx) => {
-            const net = entry ? rawMinutes(entry) : 0;
             const isWeekend = idx >= 5;
             return (
               <tr key={dayOfMonth} style={{ backgroundColor: isWeekend ? '#f9f9f9' : '#fff' }}>
                 <td style={tdStyle}><strong>{label}</strong></td>
                 <td style={tdStyle}>{dayOfMonth}</td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>{entry?.travel_qualifies ? entry.travel_to_minutes || '' : ''}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>{parseHHMM(entry?.work_start ?? null)}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>{parseHHMM(entry?.work_end ?? null)}</td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>{entry?.break_minutes || '—'}</td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>{entry?.travel_qualifies ? entry.travel_to_minutes || '—' : '—'}</td>
-                <td style={{ ...tdStyle, textAlign: 'center' }}>{entry?.travel_qualifies ? entry.travel_back_minutes || '—' : '—'}</td>
-                <td style={{ ...tdStyle, textAlign: 'center', fontWeight: net > 0 ? 'bold' : 'normal' }}>
-                  {formatMinutes(net)}
-                </td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>{entry?.break_minutes || ''}</td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>{entry?.travel_qualifies ? entry.travel_back_minutes || '' : ''}</td>
                 <td style={tdStyle}>{entry?.place_of_work || ''}</td>
+                {/* Columns 9-11: accounting use only — intentionally blank */}
+                <td style={tdStyle}></td>
+                <td style={tdStyle}></td>
+                <td style={tdStyle}></td>
+                <td style={tdStyle}></td>
+                <td style={tdStyle}></td>
+                <td style={tdStyle}></td>
               </tr>
             );
           })}
         </tbody>
         <tfoot>
           <tr style={{ backgroundColor: '#e8e8e8', fontWeight: 'bold' }}>
-            <td colSpan={7} style={{ ...tdStyle, textAlign: 'right' }}>{t('pdf.sum')}:</td>
-            <td style={{ ...tdStyle, textAlign: 'center' }}>{formatMinutes(totalMinutes)}</td>
+            <td colSpan={8} style={{ ...tdStyle, textAlign: 'right' }}>{t('pdf.totalPayableHours')}</td>
             <td style={tdStyle}></td>
+            <td style={tdStyle}></td>
+            <td style={tdStyle} colSpan={4}></td>
           </tr>
         </tfoot>
       </table>
 
-      {/* Travel summary (if any) */}
-      {totalTravelMinutes > 0 && (
-        <div style={{ marginBottom: '12px', fontSize: '10px', color: '#555' }}>
-          {t('pdf.totalTravelTime', { minutes: formatMinutes(totalTravelMinutes) })}
-        </div>
-      )}
-
       {/* Signature block */}
-      <div style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-        <div>
-          <div style={{ borderTop: '1px solid #000', paddingTop: '4px', color: '#666' }}>
-            {t('pdf.signatureContractor')}
+      <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '30px' }}>
+          <div style={{ width: '160px' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '4px', fontSize: '9px' }}>{t('pdf.signatureEmployee')}</div>
+          </div>
+          <div style={{ width: '160px' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '4px', fontSize: '9px' }}>{t('pdf.signatureHod')}</div>
+            <div style={{ fontSize: '8px', fontWeight: 'bold', marginTop: '2px' }}>Production</div>
           </div>
         </div>
-        <div>
-          <div style={{ borderTop: '1px solid #000', paddingTop: '4px', color: '#666' }}>
-            {t('pdf.signatureClient')}
-          </div>
-        </div>
+        <div style={{ fontSize: '8px', fontWeight: 'bold' }}>Accounting</div>
       </div>
 
       <style>{`
         @media print {
-          @page { margin: 15mm; }
+          @page { size: landscape; margin: 12mm; }
           body { margin: 0; }
           .print-page { max-width: 100%; padding: 0; }
         }
@@ -196,16 +205,32 @@ export default function TimesheetPrintPage() {
   );
 }
 
+const numStyle: React.CSSProperties = {
+  padding: '2px 4px',
+  textAlign: 'center',
+  fontWeight: 'bold',
+  fontSize: '8px',
+  border: '1px solid #ccc',
+};
+
 const thStyle: React.CSSProperties = {
-  padding: '6px 8px',
+  padding: '4px 6px',
   textAlign: 'left',
   fontWeight: 'bold',
-  fontSize: '10px',
+  fontSize: '8px',
+  border: '1px solid #ccc',
+};
+
+const subThStyle: React.CSSProperties = {
+  padding: '3px 4px',
+  textAlign: 'center',
+  fontWeight: 'bold',
+  fontSize: '8px',
   border: '1px solid #ccc',
 };
 
 const tdStyle: React.CSSProperties = {
-  padding: '5px 8px',
+  padding: '5px 6px',
   border: '1px solid #ddd',
-  fontSize: '10px',
+  fontSize: '9px',
 };

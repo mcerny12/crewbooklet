@@ -5,13 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev        # Dev server (Turbopack) — http://localhost:3000
-npm run build      # Production build
-npm run typecheck  # TypeScript check (no emit)
-npm run lint       # ESLint
+npm run dev         # Dev server (Turbopack) — http://localhost:3000
+npm run build       # Production build
+npm run typecheck   # TypeScript check (no emit)
+npm run lint        # ESLint
+npm run test        # Vitest — runs once and exits
+npm run test:watch  # Vitest — watch mode
 ```
 
-No test suite exists. Validate changes by running `npm run typecheck` and `npm run lint`.
+Vitest coverage is limited to the timesheets pay-calculation engine (`lib/timesheets/*.test.ts` — no config file, uses Vitest defaults). Nothing else in the app has tests. Validate changes elsewhere by running `npm run typecheck` and `npm run lint`; run `npm run test` whenever touching `lib/timesheets/`. To run a single test file: `npx vitest run lib/timesheets/calculation.test.ts`.
 
 ### Database migrations
 
@@ -57,7 +59,7 @@ Supabase DB → SupabaseService (static class) → Zustand stores → React comp
 ```
 
 - `lib/services/supabase-service.ts` — all DB operations in one static class. Never query Supabase directly from components.
-- `lib/stores/` — one Zustand store per domain (people, projects, organizations, invoices, calendar, project-assignments, job-types, auth). Stores call `SupabaseService` and hold client-side state.
+- `lib/stores/` — one Zustand store per domain (people, projects, organizations, invoices, calendar, timesheets, project-assignments, job-types, auth). Stores call `SupabaseService` and hold client-side state.
 - `lib/supabase/client.ts` — browser client (used by service layer). `lib/supabase/server.ts` — SSR client (API routes). `lib/supabase/admin.ts` — service-role client (admin API only).
 - `proxy.ts` — **Is active.** In Next.js 16, `middleware.ts` was renamed to `proxy.ts` as the framework convention (a root-level `proxy.ts` exporting a named `proxy` function plus `config.matcher` is auto-detected and run on every matched request — confirmed by `ƒ Proxy (Middleware)` in `next build` output). It validates the Supabase session server-side (`getClaims()` — validated locally against the project's asymmetric JWT signing keys, no Auth-server round-trip), redirects unauthenticated requests to `/login`, exempts the public `/api/calendar/[token]` ICS endpoint and the auth pages, and redirects non-admins away from `/admin`. Auth is therefore enforced **both** server-side here **and** client-side by `MainLayout`/`AuthProvider` — not client-side only.
 
@@ -123,6 +125,18 @@ Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized pa
 
 **Revision**: a corrected replacement invoice linked via `revision_of_invoice_id` (points back to the original). `revision_sequence` tracks the revision number (1 = first revision); invoice numbers get `-rev` / `-rev-01` suffixes. When creating a revision, copy the original's aconto applications via `SupabaseService.copyAcontoApplicationsForRevision`.
 
+### Timesheets
+
+`/timesheets` (`lib/stores/timesheets-store.ts`, `components/timesheets/`) implements weekly pay calculation for film crew under the German **TV FFS (ver.di) Gagentarifvertrag 2024–2026**. The domain is split from the rest of the app:
+
+- **Calculation engine** (`lib/timesheets/`) is pure, framework-free TypeScript — no Supabase/React imports — so it's independently unit-tested (`calculation.test.ts`, `week-result.test.ts`, run via `npm run test`). Don't reach into it from components; go through `calculateWeek` / the exported types in `lib/timesheets/types.ts`.
+- **`ruleset.ts`** builds a fully-resolved `Ruleset` from a `Timesheet` DB row. `calc_mode: 'full_tarif'` hard-codes the contract defaults (`TV_FFS_DEFAULTS`); `calc_mode: 'custom_tarif'` starts from the same defaults and layers the per-timesheet JSONB overrides in `timesheets.custom_rules` (`CustomRulesOverride`) — e.g. toggling `weeklyOtEnabled` off or changing surcharge percentages. Never hard-code a TV FFS number in a component — read it from the resolved `Ruleset`.
+- **`calculation.ts`** computes one `DayResult` per entry (daily OT bands, night/Saturday/Sunday/holiday surcharges, per-diem eligibility vs. `homeBase`, ArbZG § 5 / TV FFS § 5.8 rest-period violations) and `week-result.ts` aggregates a week into `WeekResult` (weekly OT bands stack on top of, and are separate from, the day-type surcharges — see the comment block in `types.ts`). All money is integer euro-cents; hourly rate is `weeklyRateCents / 50` (standard) or `/ 40` (reduced) per § 5.7.1.
+- **`holidays.ts`** / **`location.ts`** resolve German public holidays and `Bundesland`-dependent rules per entry.
+- Each `TimesheetEntry` (one row per day) can override the timesheet-level `daily_minimum_8h` via `daily_minimum_override` (`null` = inherit).
+- UI: timesheets are clustered by project + week (`timesheet-project-cluster.tsx` / `timesheet-project-tab.tsx`), edited in a week grid (`timesheet-week-grid.tsx`) with per-day expandable settings, and a separate `timesheet-estimate-panel.tsx` projects pay before entries are finalized. Print output lives at `/timesheets/[id]/print`, following the same `window.print()` pattern as invoices.
+- Status flow: `draft` → `submitted` → `approved` (`TimesheetStatus`).
+
 ### Calendar ICS feed
 
 `/api/calendar/[token]` is a **public** endpoint (no auth, bypassed in middleware) that serves an ICS file for a shared `ProjectCalendar`. The `share_token` on `ProjectCalendar` acts as the bearer credential.
@@ -134,7 +148,7 @@ The app ships in German (default) and English via [`next-intl`](https://next-int
 - **Config:** [`i18n/routing.ts`](i18n/routing.ts) (locale list, cookie name, default) + [`i18n/request.ts`](i18n/request.ts) (reads the cookie server-side, loads `messages/<locale>.json`).
 - **Provider:** [`app/layout.tsx`](app/layout.tsx) is now an async server component that fetches the locale and wraps everything in `<NextIntlClientProvider>`. All client components below can `useTranslations(...)` directly.
 - **Switcher:** lives inline in [`components/settings/general-section.tsx`](components/settings/general-section.tsx) (Settings → General), not in the sidebar. Writes both the `cb_locale` cookie (read by `next-intl` at render time) **and** `user_settings.app_language` in the DB (via `useUserSettings()`) so the preference persists across devices. Triggers `window.location.reload()` to refresh server-rendered messages.
-- **Translation files:** [`messages/de.json`](messages/de.json) and [`messages/en.json`](messages/en.json). Keys are organised by domain (`common`, `navigation`, `auth`, `dashboard`, `people`, `projects`, `organizations`, `invoices`, `invoicePdf`, `calendar`, `admin`, `search`, plus enum dictionaries `assignmentStatus`, `departments`, `gender`, `languages`, `roles`). Both files must keep the same key shape.
+- **Translation files:** [`messages/de.json`](messages/de.json) and [`messages/en.json`](messages/en.json). Keys are organised by domain (`common`, `navigation`, `auth`, `dashboard`, `people`, `projects`, `organizations`, `invoices`, `invoicePdf`, `calendar`, `timesheets`, `admin`, `search`, `settings`, `feedback`, plus enum dictionaries `assignmentStatus`, `departments`, `gender`, `languages`, `roles`). Both files must keep the same key shape.
 - **Status badges** in [`components/ui/status-badge.tsx`](components/ui/status-badge.tsx) translate their *labels* but keep the colour classes keyed on the raw enum value, so colours never change across locales.
 
 #### Jobs / roles are data, not UI
@@ -289,7 +303,7 @@ Every main page must use `<PageHeader>` from `components/ui/page-header.tsx` ins
 
 ### Sidebar navigation
 
-The sidebar (`components/layout/sidebar.tsx`) is 252px wide with white background. Nav items use `h-9 rounded-lg` and the active state applies `bg-primary/10 text-primary` with a 3px left shadow accent. Nav items are defined in `components/layout/nav-config.ts` (`primaryNavItems` / `adminNavItems`) — update that file to add or remove routes, not `sidebar.tsx` directly.
+The sidebar (`components/layout/sidebar.tsx`) is 252px wide with white background. Nav items use `h-9 rounded-lg` and the active state applies `bg-primary/10 text-primary` with a 3px left shadow accent. Nav items are defined in `components/layout/nav-config.ts` (`primaryNavItems`) — update that file to add or remove routes, not `sidebar.tsx` directly. Each item can set `visibility: 'desktop-only' | 'mobile-only'` (filtered via `getVisibleNavItems`) — e.g. Invoices/Timesheets are desktop-only, Search is mobile-only (desktop uses the header search slot instead). `adminNavItems` is a deprecated empty export kept only so old imports still build; admin routes now live under `/settings`.
 
 The sidebar has a three-state responsive model managed by `SidebarProvider` / `useSidebar()` from `components/layout/sidebar-context.tsx`: desktop-expanded, desktop-collapsed (icon-only), and mobile (full-width overlay). On mobile, `MainLayout` renders a `MobileNavBar` with a hamburger that opens the overlay. Use the breakpoint hooks from `lib/hooks/use-media-query.ts` for conditional rendering:
 

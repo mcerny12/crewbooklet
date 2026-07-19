@@ -730,11 +730,18 @@
       "signature": "Unterschrift",
       "date": "Datum",
       "position": "Position",
-      "netHours": "Netto Std.",
-      "sum": "Summe",
-      "totalTravelTime": "Anrechenbare Fahrtzeit gesamt: {minutes} min",
-      "signatureContractor": "Datum, Unterschrift Auftragnehmer",
-      "signatureClient": "Datum, Unterschrift Auftraggeber"
+      "accountingUseOnly": "Nur für Buchhaltung",
+      "coding": "Kontierung",
+      "euro": "Euro",
+      "workedHeader": "gearbeitet",
+      "inLabel": "von",
+      "outLabel": "bis",
+      "stdGesamt": "Std. gesamt",
+      "overtimeCol": "Überstunden",
+      "premiumsCol": "Überstunden-/Nachtzuschläge",
+      "totalPayableHours": "Gesamt zu bezahlende Stunden",
+      "signatureEmployee": "Unterschrift",
+      "signatureHod": "Abteilungsleiter"
     },
     "projectTab": {
       "title": "Stundenzettel",
