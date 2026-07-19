@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { format, parseISO, startOfWeek, endOfWeek } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
+import { formatEuroCents } from '@/lib/timesheets/week-result';
 import type { Timesheet, TimesheetStatus } from '@/lib/timesheets/types';
 
 const STATUS_COLORS: Record<TimesheetStatus, string> = {
@@ -16,6 +17,8 @@ interface Props {
   timesheet: Timesheet;
   onSelect: (t: Timesheet) => void;
   isSelected?: boolean;
+  /** This week's total pay, if computable (weekly_rate_cents set and entries loaded). */
+  payCents?: number | null;
 }
 
 function formatWeekRange(weekStart: string, dateLocale: typeof de): string {
@@ -37,7 +40,7 @@ function weekNumber(weekStart: string, dateLocale: typeof de): string {
   }
 }
 
-export function CompactTimesheetListItem({ timesheet, onSelect, isSelected }: Props) {
+export function CompactTimesheetListItem({ timesheet, onSelect, isSelected, payCents }: Props) {
   const t = useTranslations('timesheets');
   const locale = useLocale();
   const dateLocale = locale === 'de' ? de : enUS;
@@ -70,6 +73,13 @@ export function CompactTimesheetListItem({ timesheet, onSelect, isSelected }: Pr
           {timesheet.position_title ? ` · ${timesheet.position_title}` : ''}
         </div>
       </div>
+
+      {/* Pay at a glance (confidential — same visibility as the estimate panel) */}
+      {payCents != null && (
+        <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+          {formatEuroCents(payCents)}
+        </span>
+      )}
 
       {/* Status badge */}
       <span className={cn(

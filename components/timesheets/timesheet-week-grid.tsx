@@ -15,9 +15,7 @@ import {
 // Bundesland is derived in the background from place_of_work and stored on the entry
 // for holiday detection (§ 5.6.1 TV FFS). It is never shown as a UI column.
 import { cn } from '@/lib/utils';
-import { calculateWeek } from '@/lib/timesheets/calculation';
-import { buildRuleset } from '@/lib/timesheets/ruleset';
-import { getWeekHolidays } from '@/lib/timesheets/holidays';
+import { computeTimesheetWeekResult, formatEuroCents } from '@/lib/timesheets/week-result';
 import { deriveBundesland } from '@/lib/timesheets/location';
 import type { Timesheet, TimesheetEntry, PerDiemType, DayResult } from '@/lib/timesheets/types';
 
@@ -31,14 +29,6 @@ interface Props {
 
 function cellCn(extraClass?: string) {
   return cn('h-7 text-xs border border-border/60 rounded px-1.5', extraClass);
-}
-
-function centsToEuro(cents: number): string {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
 }
 
 export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading }: Props) {
@@ -63,41 +53,13 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
   // Compute per-day totals for the Pay column (Bug #6).
   // dayResultMap maps date → DayResult (only worked days have meaningful dayTotalCents).
   const dayResultMap = useMemo((): Record<string, DayResult> => {
-    if (timesheet.weekly_rate_cents === 0) return {};
-
-    const bundeslandCounts: Record<string, number> = {};
-    for (const e of entries) {
-      if (e.bundesland) bundeslandCounts[e.bundesland] = (bundeslandCounts[e.bundesland] ?? 0) + 1;
-    }
-    const primaryBl = Object.entries(bundeslandCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'DE-BE';
-
-    const publicHolidays = getWeekHolidays(timesheet.week_start, primaryBl);
-    const ruleset = buildRuleset(timesheet, publicHolidays);
-
-    const dayInputs = days.map(({ date }) => {
-      const e = entries.find(en => en.entry_date === date);
-      return {
-        date,
-        workStart: e?.work_start ?? null,
-        workEnd: e?.work_end ?? null,
-        breakMinutes: e?.break_minutes ?? 0,
-        travelToMinutes: e?.travel_to_minutes ?? 0,
-        travelBackMinutes: e?.travel_back_minutes ?? 0,
-        travelQualifies: e?.travel_qualifies ?? false,
-        placeOfWork: e?.place_of_work ?? null,
-        bundesland: e?.bundesland ?? null,
-        perDiemType: (e?.per_diem_type ?? 'auto') as PerDiemType,
-        dailyMinimumOverride: e?.daily_minimum_override ?? null,
-      };
-    });
-
-    const result = calculateWeek(dayInputs, ruleset);
+    const computed = computeTimesheetWeekResult(timesheet, entries);
+    if (!computed) return {};
     const map: Record<string, DayResult> = {};
-    for (const dr of result.days) {
+    for (const dr of computed.result.days) {
       map[dr.date] = dr;
     }
     return map;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timesheet, entries]);
 
   if (isLoading) {
@@ -263,7 +225,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                       'font-medium text-xs',
                       dr.restViolationMinutes > 0 && 'text-amber-600',
                     )}>
-                      {centsToEuro(dr.dayTotalCents)}
+                      {formatEuroCents(dr.dayTotalCents)}
                       {dr.restViolationMinutes > 0 && (
                         <span className="ml-1 text-[10px] text-amber-500" title={t('day.restViolation')}>⚠</span>
                       )}

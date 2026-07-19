@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, Search } from 'lucide-react';
 import { MainLayout } from '@/components/layout/main-layout';
@@ -12,10 +12,22 @@ import { MobileDesktopOnlyPlaceholder } from '@/components/mobile/mobile-desktop
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
-import { CompactTimesheetListItem } from '@/components/timesheets/compact-timesheet-list-item';
+import { useProjectsStore } from '@/lib/stores/projects-store';
+import { TimesheetProjectCluster } from '@/components/timesheets/timesheet-project-cluster';
 import { AddTimesheetDialog } from '@/components/timesheets/add-timesheet-dialog';
 import { TimesheetDetailPanel } from '@/components/timesheets/timesheet-detail-panel';
+import { computeTimesheetWeekResult } from '@/lib/timesheets/week-result';
 import type { Timesheet } from '@/lib/timesheets/types';
+
+const UNASSIGNED_KEY = '__unassigned__';
+
+interface TimesheetCluster {
+  projectId: string | null;
+  projectName: string | null;
+  timesheets: Timesheet[];
+  totalPayCents: number | null;
+  mostRecentWeek: string;
+}
 
 export default function TimesheetsPage() {
   const t = useTranslations('timesheets');
@@ -30,12 +42,27 @@ export default function TimesheetsPage() {
   const isLoading = useTimesheetsStore(s => s.isLoading);
   const loadTimesheets = useTimesheetsStore(s => s.loadTimesheets);
   const selectTimesheet = useTimesheetsStore(s => s.selectTimesheet);
+  const entriesByTimesheetId = useTimesheetsStore(s => s.entriesByTimesheetId);
+  const loadAllEntriesForTimesheets = useTimesheetsStore(s => s.loadAllEntriesForTimesheets);
   // Derive the displayed timesheet directly from the store so updates via updateTimesheet
   // (e.g. checkbox toggles) propagate to the detail panel without needing a separate local
   // state copy that would go stale. (Bug #4)
   const selectedTimesheet: Timesheet | null = useTimesheetsStore(s => s.selectedTimesheet);
 
+  const projects = useProjectsStore(s => s.projects);
+  const fetchProjects = useProjectsStore(s => s.fetchProjects);
+
   useEffect(() => { loadTimesheets(); }, [loadTimesheets]);
+  useEffect(() => { if (projects.length === 0) fetchProjects(); }, [projects.length, fetchProjects]);
+
+  // Batch-load entries for the "pay at a glance" totals whenever the list view is showing
+  // (not while the detail panel is open, and not on every unrelated timesheets[] update).
+  useEffect(() => {
+    if (!selectedTimesheet && timesheets.length > 0) {
+      loadAllEntriesForTimesheets(timesheets.map(t => t.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTimesheet, timesheets, loadAllEntriesForTimesheets]);
 
   // Extract id before the JSX ternary so TypeScript doesn't narrow selectedTimesheet to null
   // inside the else-branch and then try to access .id on never.
@@ -49,6 +76,51 @@ export default function TimesheetsPage() {
       ts.week_start.includes(q)
     );
   });
+
+  // Per-timesheet weekly pay total, computed from the batch-loaded entries.
+  const payByTimesheetId = useMemo(() => {
+    const map: Record<string, number | null> = {};
+    for (const ts of timesheets) {
+      const computed = computeTimesheetWeekResult(ts, entriesByTimesheetId[ts.id] ?? []);
+      map[ts.id] = computed ? computed.result.totalGrossCents : null;
+    }
+    return map;
+  }, [timesheets, entriesByTimesheetId]);
+
+  // Cluster by project (timesheets already arrive sorted newest-week-first from the
+  // store, so each cluster's sub-list stays in that order without re-sorting).
+  const clusters = useMemo((): TimesheetCluster[] => {
+    const groups = new Map<string, Timesheet[]>();
+    for (const ts of filtered) {
+      const key = ts.project_id ?? UNASSIGNED_KEY;
+      const group = groups.get(key);
+      if (group) group.push(ts);
+      else groups.set(key, [ts]);
+    }
+
+    const result: TimesheetCluster[] = [];
+    for (const [key, group] of groups) {
+      const projectId = key === UNASSIGNED_KEY ? null : key;
+      const project = projectId ? projects.find(p => p.id === projectId) : undefined;
+      const payCentsList = group.map(ts => payByTimesheetId[ts.id]);
+      const hasAnyPay = payCentsList.some(p => p != null);
+      result.push({
+        projectId,
+        projectName: project?.name ?? null,
+        timesheets: group,
+        totalPayCents: hasAnyPay ? payCentsList.reduce<number>((sum, p) => sum + (p ?? 0), 0) : null,
+        mostRecentWeek: group[0]?.week_start ?? '',
+      });
+    }
+
+    // Unassigned cluster always last; otherwise most-recently-active project first.
+    result.sort((a, b) => {
+      if (a.projectId === null) return 1;
+      if (b.projectId === null) return -1;
+      return b.mostRecentWeek.localeCompare(a.mostRecentWeek);
+    });
+    return result;
+  }, [filtered, projects, payByTimesheetId]);
 
   function handleSelect(ts: Timesheet) {
     const next = selectedTimesheet?.id === ts.id ? null : ts;
@@ -134,12 +206,15 @@ export default function TimesheetsPage() {
                 )}
               </div>
             ) : (
-              filtered.map(ts => (
-                <CompactTimesheetListItem
-                  key={ts.id}
-                  timesheet={ts}
+              clusters.map(cluster => (
+                <TimesheetProjectCluster
+                  key={cluster.projectId ?? UNASSIGNED_KEY}
+                  projectName={cluster.projectName}
+                  timesheets={cluster.timesheets}
+                  totalPayCents={cluster.totalPayCents}
+                  payByTimesheetId={payByTimesheetId}
+                  selectedTimesheetId={selectedTimesheetId}
                   onSelect={handleSelect}
-                  isSelected={selectedTimesheetId === ts.id}
                 />
               ))
             )}

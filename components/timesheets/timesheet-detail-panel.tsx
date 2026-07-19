@@ -15,10 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { cn } from '@/lib/utils';
 import { TimesheetWeekGrid } from './timesheet-week-grid';
 import { TimesheetEstimatePanel } from './timesheet-estimate-panel';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
+import { useProjectsStore } from '@/lib/stores/projects-store';
 import { HOME_BASE_DEFAULT } from '@/lib/timesheets/ruleset';
 import type { Timesheet, TimesheetEntry, CustomRulesOverride } from '@/lib/timesheets/types';
 
@@ -418,6 +420,12 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
   const upsertEntry = useTimesheetsStore(s => s.upsertEntry);
   const updateTimesheet = useTimesheetsStore(s => s.updateTimesheet);
   const deleteTimesheet = useTimesheetsStore(s => s.deleteTimesheet);
+  const projects = useProjectsStore(s => s.projects);
+  const fetchProjects = useProjectsStore(s => s.fetchProjects);
+
+  useEffect(() => {
+    if (projects.length === 0) fetchProjects();
+  }, [projects.length, fetchProjects]);
 
   // Local entry state for debounced saves
   const [localEntries, setLocalEntries] = useState<Partial<TimesheetEntry>[]>([]);
@@ -538,6 +546,16 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
         <div className="section-card">
           <div className="section-card-header">{t('general')}</div>
           <div className="section-card-body space-y-3 detail-form-fields">
+            <div className="space-y-1">
+              <Label className="text-xs">{t('fields.project')}</Label>
+              <SearchableSelect
+                options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
+                value={timesheet.project_id}
+                onChange={v => updateTimesheet(timesheet.id, { project_id: v })}
+                placeholder={`${tCommon('search')}…`}
+              />
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">{t('fields.personName')}</Label>

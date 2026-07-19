@@ -2,22 +2,12 @@
 
 import { useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { parseISO, format, addDays } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { calculateWeek } from '@/lib/timesheets/calculation';
-import { buildRuleset } from '@/lib/timesheets/ruleset';
-import { getWeekHolidays } from '@/lib/timesheets/holidays';
-import type { Timesheet, TimesheetEntry, PerDiemType, Ruleset, WeekResult } from '@/lib/timesheets/types';
-
-function centsToEuro(cents: number): string {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-  }).format(cents / 100);
-}
+import { computeTimesheetWeekResult, formatEuroCents as centsToEuro } from '@/lib/timesheets/week-result';
+import type { Timesheet, TimesheetEntry } from '@/lib/timesheets/types';
 
 function minutesToHours(min: number): string {
   const h = Math.floor(min / 60);
@@ -40,39 +30,10 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
   const t = useTranslations('timesheets');
   const locale = useLocale();
   const dateLocale = locale === 'de' ? de : enUS;
-  const computed = useMemo((): { result: WeekResult; ruleset: Ruleset } | null => {
-    if (timesheet.weekly_rate_cents === 0) return null;
-
-    const bundeslandCounts: Record<string, number> = {};
-    for (const e of entries) {
-      if (e.bundesland) bundeslandCounts[e.bundesland] = (bundeslandCounts[e.bundesland] ?? 0) + 1;
-    }
-    const primaryBl = Object.entries(bundeslandCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'DE-BE';
-
-    const publicHolidays = getWeekHolidays(timesheet.week_start, primaryBl);
-    const ruleset = buildRuleset(timesheet, publicHolidays);
-
-    const monday = parseISO(timesheet.week_start);
-    const allDays = Array.from({ length: 7 }, (_, i) => {
-      const date = format(addDays(monday, i), 'yyyy-MM-dd');
-      const e = entries.find(en => en.entry_date === date);
-      return {
-        date,
-        workStart: e?.work_start ?? null,
-        workEnd: e?.work_end ?? null,
-        breakMinutes: e?.break_minutes ?? 0,
-        travelToMinutes: e?.travel_to_minutes ?? 0,
-        travelBackMinutes: e?.travel_back_minutes ?? 0,
-        travelQualifies: e?.travel_qualifies ?? false,
-        placeOfWork: e?.place_of_work ?? null,
-        bundesland: e?.bundesland ?? null,
-        perDiemType: (e?.per_diem_type ?? 'auto') as PerDiemType,
-        dailyMinimumOverride: e?.daily_minimum_override ?? null,
-      };
-    });
-
-    return { result: calculateWeek(allDays, ruleset), ruleset };
-  }, [timesheet, entries]);
+  const computed = useMemo(
+    () => computeTimesheetWeekResult(timesheet, entries),
+    [timesheet, entries]
+  );
 
   if (!computed) {
     return (
@@ -133,14 +94,19 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
           {workedDays.map(d => {
             const dayLabel = format(parseISO(d.date), 'EEE d. MMM', { locale: dateLocale });
 
-            // Compute each pay component (mirrors calculateDay logic exactly)
+            // Compute each pay component (mirrors calculateDay logic exactly).
+            // § 12.4 TV FFS: qualifying travel is billed but never surcharged, so
+            // Sat/Sun/holiday rates apply to (billedMinutes - travelMinutes), same
+            // as calculateDay's surchargeEligibleMinutes — dailyOtBand1/2Minutes
+            // are already travel-excluded at the source, no adjustment needed here.
+            const surchargeEligibleMinutes = d.billedMinutes - d.travelMinutes;
             const dayBase = Math.round((d.billedMinutes / 60) * hc);
             const band1S = surcharge(d.dailyOtBand1Minutes, hc, ruleset.dailyOtBand1Pct);
             const band2S = surcharge(d.dailyOtBand2Minutes, hc, ruleset.dailyOtBand2Pct);
             const nightS = ruleset.nightEnabled ? surcharge(d.nightMinutes, hc, ruleset.nightPct) : 0;
-            const satS   = d.isSaturday && ruleset.saturdayEnabled ? surcharge(d.billedMinutes, hc, ruleset.saturdayPct) : 0;
-            const sunS   = d.isSunday  && ruleset.sundayEnabled   ? surcharge(d.billedMinutes, hc, ruleset.sundayPct)   : 0;
-            const holS   = d.isHoliday && ruleset.holidayEnabled  ? surcharge(d.billedMinutes, hc, ruleset.holidayPct)  : 0;
+            const satS   = d.isSaturday && ruleset.saturdayEnabled ? surcharge(surchargeEligibleMinutes, hc, ruleset.saturdayPct) : 0;
+            const sunS   = d.isSunday  && ruleset.sundayEnabled   ? surcharge(surchargeEligibleMinutes, hc, ruleset.sundayPct)   : 0;
+            const holS   = d.isHoliday && ruleset.holidayEnabled  ? surcharge(surchargeEligibleMinutes, hc, ruleset.holidayPct)  : 0;
 
             type Line = { label: string; cents: number; amber?: boolean };
             const lines: Line[] = [

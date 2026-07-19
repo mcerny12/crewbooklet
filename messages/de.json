@@ -601,6 +601,7 @@
     "weekOf": "Woche vom",
     "weekAbbr": "KW",
     "general": "Allgemein",
+    "unassignedProject": "Kein Projekt",
     "status": {
       "draft": "Entwurf",
       "submitted": "Eingereicht",

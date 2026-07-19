@@ -1687,6 +1687,20 @@ export class SupabaseService {
     return data || [];
   }
 
+  /** Batch fetch entries for many timesheets at once (e.g. the overview's per-timesheet pay totals). */
+  static async fetchTimesheetEntriesForTimesheets(
+    timesheetIds: string[]
+  ): Promise<import('@/lib/timesheets/types').TimesheetEntry[]> {
+    if (timesheetIds.length === 0) return [];
+    const { data, error } = await supabase
+      .from('timesheet_entries')
+      .select('*')
+      .in('timesheet_id', timesheetIds)
+      .order('entry_date', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
   static async upsertTimesheetEntry(
     entry: Omit<import('@/lib/timesheets/types').TimesheetEntry, 'id' | 'created_at' | 'updated_at'>
   ): Promise<import('@/lib/timesheets/types').TimesheetEntry | null> {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { format, startOfWeek, parseISO } from 'date-fns';
 import {
@@ -20,8 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useProjectsStore } from '@/lib/stores/projects-store';
 import type { Timesheet } from '@/lib/timesheets/types';
 
 interface Props {
@@ -45,10 +47,17 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
   const tCommon = useTranslations('common');
   const session = useAuthStore(s => s.session);
   const addTimesheet = useTimesheetsStore(s => s.addTimesheet);
+  const projects = useProjectsStore(s => s.projects);
+  const fetchProjects = useProjectsStore(s => s.fetchProjects);
+
+  useEffect(() => {
+    if (projects.length === 0) fetchProjects();
+  }, [projects.length, fetchProjects]);
 
   const todayMonday = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
   const [weekStart, setWeekStart] = useState(todayMonday);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [personName, setPersonName] = useState('');
   const [positionTitle, setPositionTitle] = useState('');
   const [department, setDepartment] = useState('');
@@ -64,7 +73,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
       const rateCents = Math.round(parseFloat(weeklyRate.replace(',', '.')) * 100) || 0;
       const created = await addTimesheet({
         user_id: session.userId,
-        project_id: null,
+        project_id: projectId,
         week_start: mondayOfWeek(weekStart),
         status: 'draft',
         person_name: personName,
@@ -84,6 +93,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
         onOpenChange(false);
         // reset
         setWeekStart(todayMonday);
+        setProjectId(null);
         setPersonName('');
         setPositionTitle('');
         setDepartment('');
@@ -110,6 +120,16 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
               type="date"
               value={weekStart}
               onChange={e => setWeekStart(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>{t('fields.project')}</Label>
+            <SearchableSelect
+              options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
+              value={projectId}
+              onChange={setProjectId}
+              placeholder={`${tCommon('search')}…`}
             />
           </div>
 

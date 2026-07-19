@@ -6,13 +6,16 @@ interface TimesheetsState {
   timesheets: Timesheet[];
   selectedTimesheet: Timesheet | null;
   entries: TimesheetEntry[]; // entries for selectedTimesheet
+  entriesByTimesheetId: Record<string, TimesheetEntry[]>; // batch-loaded, for the overview's pay-at-a-glance
   isLoading: boolean;
   isLoadingEntries: boolean;
+  isLoadingAllEntries: boolean;
   error: string | null;
 
   // Actions
   loadTimesheets: () => Promise<void>;
   loadTimesheetsByProject: (projectId: string) => Promise<Timesheet[]>;
+  loadAllEntriesForTimesheets: (timesheetIds: string[]) => Promise<void>;
   selectTimesheet: (sheet: Timesheet | null) => void;
   loadEntries: (timesheetId: string) => Promise<void>;
   addTimesheet: (
@@ -30,8 +33,10 @@ export const useTimesheetsStore = create<TimesheetsState>((set, get) => ({
   timesheets: [],
   selectedTimesheet: null,
   entries: [],
+  entriesByTimesheetId: {},
   isLoading: false,
   isLoadingEntries: false,
+  isLoadingAllEntries: false,
   error: null,
 
   loadTimesheets: async () => {
@@ -47,6 +52,20 @@ export const useTimesheetsStore = create<TimesheetsState>((set, get) => ({
   loadTimesheetsByProject: async (projectId: string) => {
     const sheets = await SupabaseService.fetchTimesheetsByProject(projectId);
     return sheets;
+  },
+
+  loadAllEntriesForTimesheets: async (timesheetIds: string[]) => {
+    set({ isLoadingAllEntries: true });
+    try {
+      const entries = await SupabaseService.fetchTimesheetEntriesForTimesheets(timesheetIds);
+      const grouped: Record<string, TimesheetEntry[]> = {};
+      for (const e of entries) {
+        (grouped[e.timesheet_id] ??= []).push(e);
+      }
+      set({ entriesByTimesheetId: grouped, isLoadingAllEntries: false });
+    } catch {
+      set({ isLoadingAllEntries: false });
+    }
   },
 
   selectTimesheet: (sheet) => {

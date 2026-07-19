@@ -601,6 +601,7 @@
     "weekOf": "Week of",
     "weekAbbr": "Wk",
     "general": "General",
+    "unassignedProject": "No project",
     "status": {
       "draft": "Draft",
       "submitted": "Submitted",
