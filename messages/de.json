@@ -618,6 +618,8 @@
     "fields": {
       "weekStart": "Wochenbeginn (Montag)",
       "project": "Projekt",
+      "copySettingsFrom": "Einstellungen übernehmen von",
+      "copySettingsFromPlaceholder": "Bestehenden Stundenzettel wählen…",
       "status": "Status",
       "personName": "Name",
       "positionTitle": "Position/Funktion",

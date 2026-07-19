@@ -24,7 +24,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
-import type { Timesheet } from '@/lib/timesheets/types';
+import type { CustomRulesOverride, Timesheet } from '@/lib/timesheets/types';
 
 interface Props {
   open: boolean;
@@ -47,6 +47,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
   const tCommon = useTranslations('common');
   const session = useAuthStore(s => s.session);
   const addTimesheet = useTimesheetsStore(s => s.addTimesheet);
+  const loadTimesheetsByProject = useTimesheetsStore(s => s.loadTimesheetsByProject);
   const projects = useProjectsStore(s => s.projects);
   const fetchProjects = useProjectsStore(s => s.fetchProjects);
 
@@ -66,6 +67,45 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
   const [rateType, setRateType] = useState<'standard' | 'reduced'>('standard');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Settings not exposed as their own inputs here — carried through from either
+  // the hardcoded defaults or a copied sibling timesheet (see handleCopyFrom).
+  const [dailyMinimum8h, setDailyMinimum8h] = useState(true);
+  const [perDiemEnabled, setPerDiemEnabled] = useState(true);
+  const [perDiemFullDayCents, setPerDiemFullDayCents] = useState(2800);
+  const [perDiemPartialDayCents, setPerDiemPartialDayCents] = useState(1400);
+  const [customRules, setCustomRules] = useState<CustomRulesOverride | null>(null);
+
+  // "Copy settings from" — other timesheets already on the selected project,
+  // so entering a new week for a project doesn't mean re-entering the same
+  // rate/rules from scratch every time. A one-time copy, not a live link —
+  // every field stays independently editable afterward.
+  const [siblingTimesheets, setSiblingTimesheets] = useState<Timesheet[]>([]);
+  const [copyFromId, setCopyFromId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!projectId) {
+      setSiblingTimesheets([]);
+      setCopyFromId(null);
+      return;
+    }
+    loadTimesheetsByProject(projectId).then(setSiblingTimesheets);
+    setCopyFromId(null);
+  }, [projectId, loadTimesheetsByProject]);
+
+  function handleCopyFrom(id: string | null) {
+    setCopyFromId(id);
+    const source = siblingTimesheets.find(ts => ts.id === id);
+    if (!source) return;
+    setWeeklyRate(source.weekly_rate_cents > 0 ? (source.weekly_rate_cents / 100).toFixed(2) : '');
+    setCalcMode(source.calc_mode);
+    setRateType(source.rate_type);
+    setDailyMinimum8h(source.daily_minimum_8h);
+    setPerDiemEnabled(source.per_diem_enabled);
+    setPerDiemFullDayCents(source.per_diem_full_day_cents);
+    setPerDiemPartialDayCents(source.per_diem_partial_day_cents);
+    setCustomRules(source.custom_rules);
+  }
+
   async function handleCreate() {
     if (!session.userId) return;
     setIsSaving(true);
@@ -82,11 +122,11 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
         calc_mode: calcMode,
         rate_type: rateType,
         weekly_rate_cents: rateCents,
-        daily_minimum_8h: true,
-        per_diem_enabled: true,
-        per_diem_full_day_cents: 2800,
-        per_diem_partial_day_cents: 1400,
-        custom_rules: null,
+        daily_minimum_8h: dailyMinimum8h,
+        per_diem_enabled: perDiemEnabled,
+        per_diem_full_day_cents: perDiemFullDayCents,
+        per_diem_partial_day_cents: perDiemPartialDayCents,
+        custom_rules: customRules,
       });
       if (created) {
         onCreated(created);
@@ -100,6 +140,13 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
         setWeeklyRate('');
         setCalcMode('full_tarif');
         setRateType('standard');
+        setDailyMinimum8h(true);
+        setPerDiemEnabled(true);
+        setPerDiemFullDayCents(2800);
+        setPerDiemPartialDayCents(1400);
+        setCustomRules(null);
+        setSiblingTimesheets([]);
+        setCopyFromId(null);
       }
     } finally {
       setIsSaving(false);
@@ -132,6 +179,22 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
               placeholder={`${tCommon('search')}…`}
             />
           </div>
+
+          {siblingTimesheets.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>{t('fields.copySettingsFrom')}</Label>
+              <SearchableSelect
+                options={siblingTimesheets.map(ts => ({
+                  id: ts.id,
+                  label: ts.person_name || t('fields.personName'),
+                  sublabel: format(parseISO(ts.week_start), 'd MMM yyyy'),
+                }))}
+                value={copyFromId}
+                onChange={handleCopyFrom}
+                placeholder={t('fields.copySettingsFromPlaceholder')}
+              />
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label>{t('fields.personName')}</Label>

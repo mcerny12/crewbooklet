@@ -618,6 +618,8 @@
     "fields": {
       "weekStart": "Week start (Monday)",
       "project": "Project",
+      "copySettingsFrom": "Copy settings from",
+      "copySettingsFromPlaceholder": "Choose an existing timesheet…",
       "status": "Status",
       "personName": "Name",
       "positionTitle": "Position / Job title",
