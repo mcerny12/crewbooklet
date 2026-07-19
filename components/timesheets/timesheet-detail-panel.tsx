@@ -164,13 +164,15 @@ function CustomRulesPanel({
     onRulesChange(next);
   }
 
-  const fieldCn = 'h-7 text-xs border border-border/60 rounded px-1.5 w-20 text-right';
+  const fieldCn = 'h-6 text-xs border border-border/60 rounded px-1 w-14 text-right';
+  const sectionLabelCn = 'text-[10px] font-semibold text-muted-foreground uppercase tracking-wide shrink-0 w-22';
+  const rowCn = 'flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs';
   const overriddenBadge = (
-    <span className="ml-1 text-[10px] text-primary font-semibold">↑</span>
+    <span className="text-[10px] text-primary font-semibold">↑</span>
   );
 
   return (
-    <div className="rounded-md border border-primary/20 bg-primary/5 p-2 space-y-2">
+    <div className="rounded-md border border-primary/20 bg-primary/5 p-2 space-y-1.5">
       <button
         type="button"
         onClick={toggleExpanded}
@@ -185,260 +187,233 @@ function CustomRulesPanel({
       </button>
 
       {isExpanded && (
-        <>
+        <div className="space-y-1 pt-1 border-t border-primary/10">
           {/* OT daily */}
-          <div>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {t('dailyOtSectionTitle')}
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 text-xs">
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('otStartHour')} {!isDefault('dailyOtStartH') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="1" max="24" step="1"
-                  value={displayText('dailyOtStartH')}
-                  onChange={e => commitNum('dailyOtStartH', e.target.value, true)}
-                  onBlur={() => blurNum('dailyOtStartH')}
-                  className={cn(fieldCn, !isDefault('dailyOtStartH') && 'border-primary/50')}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('band1Pct')} {!isDefault('dailyOtBand1Pct') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('dailyOtBand1Pct')}
-                  onChange={e => commitNum('dailyOtBand1Pct', e.target.value)}
-                  onBlur={() => blurNum('dailyOtBand1Pct')}
-                  className={cn(fieldCn, !isDefault('dailyOtBand1Pct') && 'border-primary/50')}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('band2Pct')} {!isDefault('dailyOtBand2Pct') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('dailyOtBand2Pct')}
-                  onChange={e => commitNum('dailyOtBand2Pct', e.target.value)}
-                  onBlur={() => blurNum('dailyOtBand2Pct')}
-                  className={cn(fieldCn, !isDefault('dailyOtBand2Pct') && 'border-primary/50')}
-                />
-              </label>
-            </div>
+          <div className={rowCn}>
+            <span className={sectionLabelCn}>{t('dailyOtSectionTitle')}</span>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('otStartHour')}</span>
+              {!isDefault('dailyOtStartH') && overriddenBadge}
+              <Input
+                type="number" min="1" max="24" step="1"
+                value={displayText('dailyOtStartH')}
+                onChange={e => commitNum('dailyOtStartH', e.target.value, true)}
+                onBlur={() => blurNum('dailyOtStartH')}
+                className={cn(fieldCn, !isDefault('dailyOtStartH') && 'border-primary/50')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('band1Pct')}</span>
+              {!isDefault('dailyOtBand1Pct') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('dailyOtBand1Pct')}
+                onChange={e => commitNum('dailyOtBand1Pct', e.target.value)}
+                onBlur={() => blurNum('dailyOtBand1Pct')}
+                className={cn(fieldCn, !isDefault('dailyOtBand1Pct') && 'border-primary/50')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('band2Pct')}</span>
+              {!isDefault('dailyOtBand2Pct') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('dailyOtBand2Pct')}
+                onChange={e => commitNum('dailyOtBand2Pct', e.target.value)}
+                onBlur={() => blurNum('dailyOtBand2Pct')}
+                className={cn(fieldCn, !isDefault('dailyOtBand2Pct') && 'border-primary/50')}
+              />
+            </label>
           </div>
 
           {/* OT weekly */}
-          <div>
-            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+          <div className={rowCn}>
+            <label className="flex items-center gap-1 shrink-0 w-22">
               <input
                 type="checkbox"
                 checked={val('weeklyOtEnabled')}
                 onChange={e => setBool('weeklyOtEnabled', e.target.checked)}
-                className="h-3 w-3 accent-primary normal-case"
+                className="h-3 w-3 accent-primary shrink-0"
               />
-              {t('weeklyOtSectionTitle')} {!isDefault('weeklyOtEnabled') && overriddenBadge}
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                {t('weeklyOtSectionTitle')}
+              </span>
+              {!isDefault('weeklyOtEnabled') && overriddenBadge}
             </label>
-            <div className="grid grid-cols-4 gap-1.5 text-xs">
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('weeklyThresholdH')} {!isDefault('weeklyOtThresholdH') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="1" step="1"
-                  value={displayText('weeklyOtThresholdH')}
-                  onChange={e => commitNum('weeklyOtThresholdH', e.target.value, true)}
-                  onBlur={() => blurNum('weeklyOtThresholdH')}
-                  disabled={!val('weeklyOtEnabled')}
-                  className={cn(fieldCn, !isDefault('weeklyOtThresholdH') && 'border-primary/50')}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('band1EndH')} {!isDefault('weeklyOtBand1EndH') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="1" step="1"
-                  value={displayText('weeklyOtBand1EndH')}
-                  onChange={e => commitNum('weeklyOtBand1EndH', e.target.value, true)}
-                  onBlur={() => blurNum('weeklyOtBand1EndH')}
-                  disabled={!val('weeklyOtEnabled')}
-                  className={cn(fieldCn, !isDefault('weeklyOtBand1EndH') && 'border-primary/50')}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('band1Pct')} {!isDefault('weeklyOtBand1Pct') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('weeklyOtBand1Pct')}
-                  onChange={e => commitNum('weeklyOtBand1Pct', e.target.value)}
-                  onBlur={() => blurNum('weeklyOtBand1Pct')}
-                  disabled={!val('weeklyOtEnabled')}
-                  className={cn(fieldCn, !isDefault('weeklyOtBand1Pct') && 'border-primary/50')}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('band2Pct')} {!isDefault('weeklyOtBand2Pct') && overriddenBadge}
-                </span>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('weeklyOtBand2Pct')}
-                  onChange={e => commitNum('weeklyOtBand2Pct', e.target.value)}
-                  onBlur={() => blurNum('weeklyOtBand2Pct')}
-                  disabled={!val('weeklyOtEnabled')}
-                  className={cn(fieldCn, !isDefault('weeklyOtBand2Pct') && 'border-primary/50')}
-                />
-              </label>
-            </div>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('weeklyThresholdH')}</span>
+              {!isDefault('weeklyOtThresholdH') && overriddenBadge}
+              <Input
+                type="number" min="1" step="1"
+                value={displayText('weeklyOtThresholdH')}
+                onChange={e => commitNum('weeklyOtThresholdH', e.target.value, true)}
+                onBlur={() => blurNum('weeklyOtThresholdH')}
+                disabled={!val('weeklyOtEnabled')}
+                className={cn(fieldCn, !isDefault('weeklyOtThresholdH') && 'border-primary/50')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('band1EndH')}</span>
+              {!isDefault('weeklyOtBand1EndH') && overriddenBadge}
+              <Input
+                type="number" min="1" step="1"
+                value={displayText('weeklyOtBand1EndH')}
+                onChange={e => commitNum('weeklyOtBand1EndH', e.target.value, true)}
+                onBlur={() => blurNum('weeklyOtBand1EndH')}
+                disabled={!val('weeklyOtEnabled')}
+                className={cn(fieldCn, !isDefault('weeklyOtBand1EndH') && 'border-primary/50')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('band1Pct')}</span>
+              {!isDefault('weeklyOtBand1Pct') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('weeklyOtBand1Pct')}
+                onChange={e => commitNum('weeklyOtBand1Pct', e.target.value)}
+                onBlur={() => blurNum('weeklyOtBand1Pct')}
+                disabled={!val('weeklyOtEnabled')}
+                className={cn(fieldCn, !isDefault('weeklyOtBand1Pct') && 'border-primary/50')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{t('band2Pct')}</span>
+              {!isDefault('weeklyOtBand2Pct') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('weeklyOtBand2Pct')}
+                onChange={e => commitNum('weeklyOtBand2Pct', e.target.value)}
+                onBlur={() => blurNum('weeklyOtBand2Pct')}
+                disabled={!val('weeklyOtEnabled')}
+                className={cn(fieldCn, !isDefault('weeklyOtBand2Pct') && 'border-primary/50')}
+              />
+            </label>
           </div>
 
           {/* Surcharges */}
-          <div>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {t('surchargesSectionTitle')}
-            </div>
-            <div className="grid grid-cols-4 gap-1.5 text-xs">
-              {/* Night */}
-              <div className="flex flex-col gap-0.5">
-                <label className="flex items-center gap-1 text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={val('nightEnabled')}
-                    onChange={e => setBool('nightEnabled', e.target.checked)}
-                    className="h-3.5 w-3.5 accent-primary"
-                  />
-                  {t('night')} {!isDefault('nightEnabled') && overriddenBadge}
-                </label>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('nightPct')}
-                  onChange={e => commitNum('nightPct', e.target.value)}
-                  onBlur={() => blurNum('nightPct')}
-                  disabled={!val('nightEnabled')}
-                  className={cn(fieldCn, !isDefault('nightPct') && 'border-primary/50')}
-                  title={t('nightPctTitle')}
-                />
-              </div>
-              {/* Saturday */}
-              <div className="flex flex-col gap-0.5">
-                <label className="flex items-center gap-1 text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={val('saturdayEnabled')}
-                    onChange={e => setBool('saturdayEnabled', e.target.checked)}
-                    className="h-3.5 w-3.5 accent-primary"
-                  />
-                  {t('saturday')} {!isDefault('saturdayEnabled') && overriddenBadge}
-                </label>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('saturdayPct')}
-                  onChange={e => commitNum('saturdayPct', e.target.value)}
-                  onBlur={() => blurNum('saturdayPct')}
-                  disabled={!val('saturdayEnabled')}
-                  className={cn(fieldCn, !isDefault('saturdayPct') && 'border-primary/50')}
-                  title={t('saturdayPctTitle')}
-                />
-              </div>
-              {/* Sunday */}
-              <div className="flex flex-col gap-0.5">
-                <label className="flex items-center gap-1 text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={val('sundayEnabled')}
-                    onChange={e => setBool('sundayEnabled', e.target.checked)}
-                    className="h-3.5 w-3.5 accent-primary"
-                  />
-                  {t('sunday')} {!isDefault('sundayEnabled') && overriddenBadge}
-                </label>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('sundayPct')}
-                  onChange={e => commitNum('sundayPct', e.target.value)}
-                  onBlur={() => blurNum('sundayPct')}
-                  disabled={!val('sundayEnabled')}
-                  className={cn(fieldCn, !isDefault('sundayPct') && 'border-primary/50')}
-                  title={t('sundayPctTitle')}
-                />
-              </div>
-              {/* Holiday */}
-              <div className="flex flex-col gap-0.5">
-                <label className="flex items-center gap-1 text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={val('holidayEnabled')}
-                    onChange={e => setBool('holidayEnabled', e.target.checked)}
-                    className="h-3.5 w-3.5 accent-primary"
-                  />
-                  {t('holiday')} {!isDefault('holidayEnabled') && overriddenBadge}
-                </label>
-                <Input
-                  type="number" min="0" max="500" step="5"
-                  value={displayText('holidayPct')}
-                  onChange={e => commitNum('holidayPct', e.target.value)}
-                  onBlur={() => blurNum('holidayPct')}
-                  disabled={!val('holidayEnabled')}
-                  className={cn(fieldCn, !isDefault('holidayPct') && 'border-primary/50')}
-                  title={t('holidayPctTitle')}
-                />
-              </div>
-            </div>
+          <div className={rowCn}>
+            <span className={sectionLabelCn}>{t('surchargesSectionTitle')}</span>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={val('nightEnabled')}
+                onChange={e => setBool('nightEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary shrink-0"
+              />
+              <span className="text-muted-foreground">{t('night')}</span>
+              {!isDefault('nightEnabled') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('nightPct')}
+                onChange={e => commitNum('nightPct', e.target.value)}
+                onBlur={() => blurNum('nightPct')}
+                disabled={!val('nightEnabled')}
+                className={cn(fieldCn, !isDefault('nightPct') && 'border-primary/50')}
+                title={t('nightPctTitle')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={val('saturdayEnabled')}
+                onChange={e => setBool('saturdayEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary shrink-0"
+              />
+              <span className="text-muted-foreground">{t('saturday')}</span>
+              {!isDefault('saturdayEnabled') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('saturdayPct')}
+                onChange={e => commitNum('saturdayPct', e.target.value)}
+                onBlur={() => blurNum('saturdayPct')}
+                disabled={!val('saturdayEnabled')}
+                className={cn(fieldCn, !isDefault('saturdayPct') && 'border-primary/50')}
+                title={t('saturdayPctTitle')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={val('sundayEnabled')}
+                onChange={e => setBool('sundayEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary shrink-0"
+              />
+              <span className="text-muted-foreground">{t('sunday')}</span>
+              {!isDefault('sundayEnabled') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('sundayPct')}
+                onChange={e => commitNum('sundayPct', e.target.value)}
+                onBlur={() => blurNum('sundayPct')}
+                disabled={!val('sundayEnabled')}
+                className={cn(fieldCn, !isDefault('sundayPct') && 'border-primary/50')}
+                title={t('sundayPctTitle')}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={val('holidayEnabled')}
+                onChange={e => setBool('holidayEnabled', e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary shrink-0"
+              />
+              <span className="text-muted-foreground">{t('holiday')}</span>
+              {!isDefault('holidayEnabled') && overriddenBadge}
+              <Input
+                type="number" min="0" max="500" step="5"
+                value={displayText('holidayPct')}
+                onChange={e => commitNum('holidayPct', e.target.value)}
+                onBlur={() => blurNum('holidayPct')}
+                disabled={!val('holidayEnabled')}
+                className={cn(fieldCn, !isDefault('holidayPct') && 'border-primary/50')}
+                title={t('holidayPctTitle')}
+              />
+            </label>
           </div>
 
           {/* Per diem amounts + home base */}
-          <div>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {t('perDiemSectionTitle')}
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 text-xs">
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">{tFields('perDiemFullDay')}</span>
-                <Input
-                  type="text" inputMode="decimal"
-                  defaultValue={(perDiemFullCents / 100).toFixed(2)}
-                  onBlur={e => {
-                    const cents = Math.round(parseFloat(e.target.value.replace(',', '.')) * 100) || 0;
-                    onPerDiemFullChange(cents);
-                  }}
-                  className={fieldCn}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">{tFields('perDiemPartialDay')}</span>
-                <Input
-                  type="text" inputMode="decimal"
-                  defaultValue={(perDiemPartialCents / 100).toFixed(2)}
-                  onBlur={e => {
-                    const cents = Math.round(parseFloat(e.target.value.replace(',', '.')) * 100) || 0;
-                    onPerDiemPartialChange(cents);
-                  }}
-                  className={fieldCn}
-                />
-              </label>
-              <label className="flex flex-col gap-0.5">
-                <span className="text-muted-foreground">
-                  {t('homeBase')} {localRules.homeBase !== undefined && overriddenBadge}
-                </span>
-                <Input
-                  type="text"
-                  value={localRules.homeBase ?? HOME_BASE_DEFAULT}
-                  onChange={e => setHomeBase(e.target.value)}
-                  className={cn(
-                    'h-7 text-xs border border-border/60 rounded px-1.5 w-full',
-                    localRules.homeBase !== undefined && 'border-primary/50'
-                  )}
-                  placeholder={HOME_BASE_DEFAULT}
-                />
-              </label>
-            </div>
+          <div className={rowCn}>
+            <span className={sectionLabelCn}>{t('perDiemSectionTitle')}</span>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{tFields('perDiemFullDay')}</span>
+              <Input
+                type="text" inputMode="decimal"
+                defaultValue={(perDiemFullCents / 100).toFixed(2)}
+                onBlur={e => {
+                  const cents = Math.round(parseFloat(e.target.value.replace(',', '.')) * 100) || 0;
+                  onPerDiemFullChange(cents);
+                }}
+                className={fieldCn}
+              />
+            </label>
+            <label className="flex items-center gap-1 whitespace-nowrap">
+              <span className="text-muted-foreground">{tFields('perDiemPartialDay')}</span>
+              <Input
+                type="text" inputMode="decimal"
+                defaultValue={(perDiemPartialCents / 100).toFixed(2)}
+                onBlur={e => {
+                  const cents = Math.round(parseFloat(e.target.value.replace(',', '.')) * 100) || 0;
+                  onPerDiemPartialChange(cents);
+                }}
+                className={fieldCn}
+              />
+            </label>
+            <label className="flex items-center gap-1 flex-1 min-w-36">
+              <span className="text-muted-foreground whitespace-nowrap">{t('homeBase')}</span>
+              {localRules.homeBase !== undefined && overriddenBadge}
+              <Input
+                type="text"
+                value={localRules.homeBase ?? HOME_BASE_DEFAULT}
+                onChange={e => setHomeBase(e.target.value)}
+                className={cn(
+                  'h-6 text-xs border border-border/60 rounded px-1.5 flex-1 min-w-0',
+                  localRules.homeBase !== undefined && 'border-primary/50'
+                )}
+                placeholder={HOME_BASE_DEFAULT}
+              />
+            </label>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
