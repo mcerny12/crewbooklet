@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { parseISO, format, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Lock } from 'lucide-react';
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
+  const t = useTranslations('timesheets');
   const computed = useMemo((): { result: WeekResult; ruleset: Ruleset } | null => {
     if (timesheet.weekly_rate_cents === 0) return null;
 
@@ -72,7 +74,7 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
   if (!computed) {
     return (
       <div className="rounded-lg border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-        Wochengage nicht hinterlegt — Hochrechnung nicht verfügbar
+        {t('estimate.noRate')}
       </div>
     );
   }
@@ -97,26 +99,26 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
       <div className="flex items-center gap-2 mb-3">
         <Lock className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Vergütungsübersicht (vertraulich)
+          {t('estimate.title')}
         </span>
         <span className="ml-auto text-[10px] text-muted-foreground italic">
-          Nur für Dich und Admins sichtbar
+          {t('estimate.adminOnly')}
         </span>
       </div>
 
       {/* Stats row */}
       <div className="flex gap-4 mb-3 text-xs">
         <div>
-          <div className="text-muted-foreground">Stunden gesamt</div>
+          <div className="text-muted-foreground">{t('estimate.totalHoursLabel')}</div>
           <div className="font-semibold">{minutesToHours(result.totalBilledMinutes)}</div>
         </div>
         <div>
-          <div className="text-muted-foreground">Stundensatz</div>
+          <div className="text-muted-foreground">{t('estimate.hourlyRateLabel')}</div>
           <div className="font-semibold">{centsToEuro(hc)}/h</div>
         </div>
         {weeklyOtMinutes > 0 && (
           <div>
-            <div className="text-muted-foreground">Wochen-ÜZ</div>
+            <div className="text-muted-foreground">{t('estimate.weeklyOtShort')}</div>
             <div className="font-semibold text-amber-600">{minutesToHours(weeklyOtMinutes)}</div>
           </div>
         )}
@@ -139,17 +141,17 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
 
             type Line = { label: string; cents: number; amber?: boolean };
             const lines: Line[] = [
-              { label: `${minutesToHours(d.billedMinutes)} × ${centsToEuro(hc)}/h`, cents: dayBase },
+              { label: t('estimate.baseHoursLine', { hours: minutesToHours(d.billedMinutes), rate: centsToEuro(hc) }), cents: dayBase },
             ];
-            if (band1S > 0) lines.push({ label: `+ ${minutesToHours(d.dailyOtBand1Minutes)} tägl. ÜZ ${ruleset.dailyOtBand1Pct}%`, cents: band1S });
-            if (band2S > 0) lines.push({ label: `+ ${minutesToHours(d.dailyOtBand2Minutes)} tägl. ÜZ ${ruleset.dailyOtBand2Pct}%`, cents: band2S });
-            if (nightS > 0) lines.push({ label: `+ ${minutesToHours(d.nightMinutes)} Nacht ${ruleset.nightPct}%`, cents: nightS });
-            if (satS   > 0) lines.push({ label: `+ Sa-Zuschlag ${ruleset.saturdayPct}%`, cents: satS });
-            if (sunS   > 0) lines.push({ label: `+ So-Zuschlag ${ruleset.sundayPct}%`, cents: sunS });
-            if (holS   > 0) lines.push({ label: `+ Feiertag ${ruleset.holidayPct}%`, cents: holS });
-            if (d.perDiemCents > 0) lines.push({ label: 'VMA', cents: d.perDiemCents });
+            if (band1S > 0) lines.push({ label: t('estimate.dailyOtLine', { hours: minutesToHours(d.dailyOtBand1Minutes), pct: ruleset.dailyOtBand1Pct }), cents: band1S });
+            if (band2S > 0) lines.push({ label: t('estimate.dailyOtLine', { hours: minutesToHours(d.dailyOtBand2Minutes), pct: ruleset.dailyOtBand2Pct }), cents: band2S });
+            if (nightS > 0) lines.push({ label: t('estimate.nightLine', { hours: minutesToHours(d.nightMinutes), pct: ruleset.nightPct }), cents: nightS });
+            if (satS   > 0) lines.push({ label: t('estimate.saturdayLine', { pct: ruleset.saturdayPct }), cents: satS });
+            if (sunS   > 0) lines.push({ label: t('estimate.sundayLine', { pct: ruleset.sundayPct }), cents: sunS });
+            if (holS   > 0) lines.push({ label: t('estimate.holidayLine', { pct: ruleset.holidayPct }), cents: holS });
+            if (d.perDiemCents > 0) lines.push({ label: t('estimate.perDiemLine'), cents: d.perDiemCents });
             if (d.restViolationMinutes > 0) lines.push({
-              label: `⚠ Ruhezeit ${minutesToHours(d.restViolationMinutes)}`,
+              label: t('estimate.restViolationLine', { hours: minutesToHours(d.restViolationMinutes) }),
               cents: d.restViolationCents,
               amber: true,
             });
@@ -163,9 +165,9 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
                     d.restViolationMinutes > 0 && 'text-amber-600',
                   )}>
                     {dayLabel}
-                    {d.isSaturday && <span className="ml-1 text-[10px] text-muted-foreground font-normal">Sa</span>}
-                    {d.isSunday   && <span className="ml-1 text-[10px] text-muted-foreground font-normal">So</span>}
-                    {d.isHoliday  && <span className="ml-1 text-[10px] text-amber-400 font-normal">Feiertag</span>}
+                    {d.isSaturday && <span className="ml-1 text-[10px] text-muted-foreground font-normal">{t('day.satShort')}</span>}
+                    {d.isSunday   && <span className="ml-1 text-[10px] text-muted-foreground font-normal">{t('day.sunShort')}</span>}
+                    {d.isHoliday  && <span className="ml-1 text-[10px] text-amber-400 font-normal">{t('day.holidayShort')}</span>}
                   </span>
                   <span className="font-semibold tabular-nums">{centsToEuro(d.dayTotalCents)}</span>
                 </div>
@@ -190,20 +192,20 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
         <div className="mb-3 text-xs">
           <div className="flex items-center justify-between py-0.5">
             <span className="text-muted-foreground">
-              Wochenüberstunden
+              {t('estimate.weeklyOtLabel')}
               <span className="ml-1 text-[10px] opacity-60">({minutesToHours(weeklyOtMinutes)})</span>
             </span>
             <span className="font-medium tabular-nums">{centsToEuro(weeklyOtCents)}</span>
           </div>
           {result.weeklyOtBand1Minutes > 0 && (
             <div className="flex items-center justify-between text-[10px] text-muted-foreground pl-3 mt-0.5">
-              <span>+ {minutesToHours(result.weeklyOtBand1Minutes)} Wochen-ÜZ {ruleset.weeklyOtBand1Pct}%</span>
+              <span>{t('estimate.weeklyOtLine', { hours: minutesToHours(result.weeklyOtBand1Minutes), pct: ruleset.weeklyOtBand1Pct })}</span>
               <span className="tabular-nums">{centsToEuro(result.weeklyOtBand1Cents)}</span>
             </div>
           )}
           {result.weeklyOtBand2Minutes > 0 && (
             <div className="flex items-center justify-between text-[10px] text-muted-foreground pl-3 mt-0.5">
-              <span>+ {minutesToHours(result.weeklyOtBand2Minutes)} Wochen-ÜZ {ruleset.weeklyOtBand2Pct}%</span>
+              <span>{t('estimate.weeklyOtLine', { hours: minutesToHours(result.weeklyOtBand2Minutes), pct: ruleset.weeklyOtBand2Pct })}</span>
               <span className="tabular-nums">{centsToEuro(result.weeklyOtBand2Cents)}</span>
             </div>
           )}
@@ -213,20 +215,20 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
       {/* Rest violation aggregate */}
       {result.restViolationCents > 0 && (
         <div className="mb-3 flex items-center justify-between text-xs text-amber-600">
-          <span>Ruhezeit-Vergütung (ArbZG § 5)</span>
+          <span>{t('estimate.restViolationTotal')}</span>
           <span className="font-medium tabular-nums">{centsToEuro(result.restViolationCents)}</span>
         </div>
       )}
 
       {/* Running total */}
       <div className="pt-2 border-t border-border flex items-center justify-between">
-        <span className="text-sm font-semibold">Summe eingetragene Tage</span>
+        <span className="text-sm font-semibold">{t('estimate.subtotal')}</span>
         <span className="text-sm font-bold tabular-nums text-primary">{centsToEuro(runningTotal)}</span>
       </div>
 
       {guaranteeApplies && (
         <div className="mt-1.5 text-[10px] text-muted-foreground">
-          Wochengage-Garantie greift: mind. {centsToEuro(timesheet.weekly_rate_cents)}/Woche
+          {t('estimate.guarantee', { amount: centsToEuro(timesheet.weekly_rate_cents) })}
         </div>
       )}
     </div>

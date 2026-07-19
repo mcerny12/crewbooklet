@@ -673,6 +673,7 @@
       "holidayLabel": "Feiertagszuschlag",
       "perDiemLabel": "Verpflegungsmehraufwand",
       "totalLabel": "Gesamt brutto",
+      "perDiemLine": "VMA",
       "baseHoursLine": "{hours} × {rate}/h",
       "dailyOtLine": "+ {hours} tägl. ÜZ {pct}%",
       "nightLine": "+ {hours} Nacht {pct}%",
