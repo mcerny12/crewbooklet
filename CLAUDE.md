@@ -113,7 +113,7 @@ Job types are **database-driven**, not purely static. `useJobTypesStore` holds `
 
 ### Invoice printing
 
-Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel. Uses `jspdf` / `pdf-lib`. Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
+Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel; the browser's native `window.print()` produces the PDF — there is no `jspdf` / `pdf-lib` dependency in the actual implementation. Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
 
 ### Aconto, storno, and revision invoices
 
@@ -195,15 +195,15 @@ CSS variables in `:root`:
 |---|---|---|
 | `<PageHeader>` | `components/ui/page-header.tsx` | Title, subtitle/count, search slot, filter slot, actions slot |
 | `<MobilePageHeader>` | `components/layout/mobile-page-header.tsx` | Mobile top bar (hamburger + title + optional right action); use alongside `<PageHeader>` in domain pages — `<PageHeader>` for desktop, `<MobilePageHeader>` for mobile |
-| `<FormSection>` | `components/ui/form-section.tsx` | Section card with styled header for detail pane groupings |
+| `<FormSection>` | `components/ui/form-section.tsx` | Section card with styled header for detail pane groupings — **currently unused** (`.section-card` CSS classes below are the pattern actually in use); kept as an available alternative, not a live dependency |
 | `<ProjectStatusBadge>` | `components/ui/status-badge.tsx` | Consistent project status pill |
 | `<InvoiceStatusBadge>` | `components/ui/status-badge.tsx` | Consistent invoice status pill |
 | `<AvailabilityBadge>` | `components/ui/status-badge.tsx` | Crew availability pill |
-| `<DetailTabs>` | `components/ui/detail-tabs.tsx` | Tab bar for detail panes (pass `tabs`, `activeTab`, `onTabChange`) |
+| `<DetailTabs>` | `components/ui/detail-tabs.tsx` | Tab bar for detail panes (pass `tabs`, `activeTab`, `onTabChange`) — **currently unused** (no live consumer) |
 | `<EntryMetadata>` | `components/ui/entry-metadata.tsx` | Created/updated timestamps at the bottom of detail panes |
 | `<MultiSelect>` | `components/ui/multi-select.tsx` | Badge-style multi-value dropdown for small fixed lists |
 | `<BottomDrawer>` | `components/ui/bottom-drawer.tsx` | Resizable mobile bottom sheet — draggable handle, vh-based height (20–85vh) |
-| `<ResizableBottomPane>` | `components/ui/resizable-bottom-pane.tsx` | Fixed-half-height bottom pane with close chevron; for split-panel layouts |
+| `<ResizableBottomPane>` | `components/ui/resizable-bottom-pane.tsx` | Fixed-half-height bottom pane with close chevron; for split-panel layouts — **currently unused** (no live consumer) |
 
 ### Form fields in detail panels
 
