@@ -599,6 +599,8 @@
     "noTimesheetsHint": "Erstellen Sie einen neuen Stundenzettel für eine Arbeitswoche.",
     "week": "Woche",
     "weekOf": "Woche vom",
+    "weekAbbr": "KW",
+    "general": "Allgemein",
     "status": {
       "draft": "Entwurf",
       "submitted": "Eingereicht",
@@ -625,7 +627,10 @@
       "perDiemEnabled": "Verpflegungsmehraufwand",
       "perDiemFullDay": "Volltagspauschale (€)",
       "perDiemPartialDay": "Teilttagspauschale (€)",
-      "notes": "Anmerkungen"
+      "notes": "Anmerkungen",
+      "personNamePlaceholder": "Max Mustermann",
+      "positionTitlePlaceholder": "Kameramann",
+      "departmentPlaceholder": "Kamera"
     },
     "day": {
       "day": "Tag",
@@ -649,7 +654,8 @@
       "sunday": "Sonntag",
       "satShort": "Sa",
       "sunShort": "So",
-      "holidayShort": "Feiertag"
+      "holidayShort": "Feiertag",
+      "restViolation": "Ruhezeit-Verstoß"
     },
     "perDiemType": {
       "auto": "Automatisch",
@@ -686,12 +692,40 @@
       "subtotal": "Summe eingetragene Tage",
       "guarantee": "Wochengage-Garantie greift: mind. {amount}/Woche"
     },
+    "customRules": {
+      "title": "Individuelle Regelungen (TV FFS-Abweichungen)",
+      "legend": "↑ = von TV FFS abweichend",
+      "dailyOtSectionTitle": "Überstunden täglich (§ 5.4.3.2)",
+      "otStartHour": "ÜZ ab Stunde",
+      "band1Pct": "Band 1 (%)",
+      "band2Pct": "Band 2 (%)",
+      "weeklyOtSectionTitle": "Überstunden wöchentlich (§ 5.4.3.3)",
+      "weeklyThresholdH": "Schwelle (h)",
+      "band1EndH": "Band 1 Ende (h)",
+      "surchargesSectionTitle": "Zuschläge (§ 5.5 / § 5.6)",
+      "night": "Nacht",
+      "saturday": "Samstag",
+      "sunday": "Sonntag",
+      "holiday": "Feiertag",
+      "nightPctTitle": "Nachtzuschlag (%)",
+      "saturdayPctTitle": "Samstagszuschlag (%)",
+      "sundayPctTitle": "Sonntagszuschlag (%)",
+      "holidayPctTitle": "Feiertagszuschlag (%)",
+      "perDiemSectionTitle": "Verpflegung & Einsatzort (§ 12.2)",
+      "homeBase": "Heimatort"
+    },
     "pdf": {
       "pageTitle": "Stundenzettel",
       "weeklyHours": "Wochenstunden",
       "totalHours": "Gesamtstunden",
       "signature": "Unterschrift",
-      "date": "Datum"
+      "date": "Datum",
+      "position": "Position",
+      "netHours": "Netto Std.",
+      "sum": "Summe",
+      "totalTravelTime": "Anrechenbare Fahrtzeit gesamt: {minutes} min",
+      "signatureContractor": "Datum, Unterschrift Auftragnehmer",
+      "signatureClient": "Datum, Unterschrift Auftraggeber"
     },
     "projectTab": {
       "title": "Stundenzettel",

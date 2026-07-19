@@ -1,9 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useCallback, useMemo } from 'react';
 import { parseISO, format, addDays } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -44,6 +44,8 @@ function centsToEuro(cents: number): string {
 export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading }: Props) {
   const t = useTranslations('timesheets');
   const tPD = useTranslations('timesheets.perDiemType');
+  const locale = useLocale();
+  const dateLocale = locale === 'de' ? de : enUS;
 
   const monday = parseISO(timesheet.week_start);
 
@@ -53,7 +55,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = format(addDays(monday, i), 'yyyy-MM-dd');
-    const label = format(addDays(monday, i), 'EEEE d. MMM', { locale: de });
+    const label = format(addDays(monday, i), 'EEEE d. MMM', { locale: dateLocale });
     return { date, label };
   });
 
@@ -105,7 +107,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
       <table className="w-full text-xs border-collapse min-w-245">
         <thead>
           <tr className="bg-muted/60">
-            <th className="px-3 py-2 text-left font-semibold text-muted-foreground w-36">Tag</th>
+            <th className="px-3 py-2 text-left font-semibold text-muted-foreground w-36">{t('day.day')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.workStart')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.workEnd')}</th>
             <th className="px-2 py-2 text-center font-semibold text-muted-foreground">{t('day.break')}</th>
@@ -116,7 +118,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
             {timesheet.per_diem_enabled && (
               <th className="px-2 py-2 text-left font-semibold text-muted-foreground">{t('day.perDiem')}</th>
             )}
-            <th className="px-2 py-2 text-right font-semibold text-muted-foreground w-24">Verdienst</th>
+            <th className="px-2 py-2 text-right font-semibold text-muted-foreground w-24">{t('day.earnings')}</th>
           </tr>
         </thead>
         <tbody>
@@ -255,7 +257,7 @@ export function TimesheetWeekGrid({ timesheet, entries, onEntryChange, isLoading
                     )}>
                       {centsToEuro(dr.dayTotalCents)}
                       {dr.restViolationMinutes > 0 && (
-                        <span className="ml-1 text-[10px] text-amber-500" title="Ruhezeit-Verstoß">⚠</span>
+                        <span className="ml-1 text-[10px] text-amber-500" title={t('day.restViolation')}>⚠</span>
                       )}
                     </span>
                   ) : null}

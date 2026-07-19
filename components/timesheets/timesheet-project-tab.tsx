@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { format, parseISO, endOfWeek } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
 import { Clock, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
@@ -16,11 +16,11 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-700',
 };
 
-function weekRange(weekStart: string): string {
+function weekRange(weekStart: string, dateLocale: typeof de): string {
   try {
     const monday = parseISO(weekStart);
     const sunday = endOfWeek(monday, { weekStartsOn: 1 });
-    return `${format(monday, 'd. MMM', { locale: de })} – ${format(sunday, 'd. MMM', { locale: de })}`;
+    return `${format(monday, 'd. MMM', { locale: dateLocale })} – ${format(sunday, 'd. MMM', { locale: dateLocale })}`;
   } catch {
     return weekStart;
   }
@@ -32,6 +32,9 @@ interface Props {
 
 export function TimesheetProjectTab({ projectId }: Props) {
   const t = useTranslations('timesheets');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+  const dateLocale = locale === 'de' ? de : enUS;
   const loadTimesheetsByProject = useTimesheetsStore(s => s.loadTimesheetsByProject);
   const [sheets, setSheets] = useState<Timesheet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +53,7 @@ export function TimesheetProjectTab({ projectId }: Props) {
   if (isLoading) {
     return (
       <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
-        Lädt…
+        {tCommon('loading')}
       </div>
     );
   }
@@ -74,7 +77,7 @@ export function TimesheetProjectTab({ projectId }: Props) {
           {/* Week info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{weekRange(ts.week_start)}</span>
+              <span className="text-sm font-medium">{weekRange(ts.week_start, dateLocale)}</span>
               <span className={cn(
                 'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase',
                 STATUS_COLORS[ts.status],

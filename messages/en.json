@@ -599,6 +599,8 @@
     "noTimesheetsHint": "Create a new timesheet for a working week.",
     "week": "Week",
     "weekOf": "Week of",
+    "weekAbbr": "Wk",
+    "general": "General",
     "status": {
       "draft": "Draft",
       "submitted": "Submitted",
@@ -625,7 +627,10 @@
       "perDiemEnabled": "Per diem",
       "perDiemFullDay": "Full day rate (€)",
       "perDiemPartialDay": "Partial day rate (€)",
-      "notes": "Notes"
+      "notes": "Notes",
+      "personNamePlaceholder": "John Doe",
+      "positionTitlePlaceholder": "Cameraman",
+      "departmentPlaceholder": "Camera"
     },
     "day": {
       "day": "Day",
@@ -649,7 +654,8 @@
       "sunday": "Sunday",
       "satShort": "Sat",
       "sunShort": "Sun",
-      "holidayShort": "Holiday"
+      "holidayShort": "Holiday",
+      "restViolation": "Rest period violation"
     },
     "perDiemType": {
       "auto": "Automatic",
@@ -686,12 +692,40 @@
       "subtotal": "Sum of entered days",
       "guarantee": "Weekly rate guarantee applies: min. {amount}/week"
     },
+    "customRules": {
+      "title": "Custom rules (TV FFS deviations)",
+      "legend": "↑ = deviates from TV FFS",
+      "dailyOtSectionTitle": "Daily overtime (§ 5.4.3.2)",
+      "otStartHour": "OT from hour",
+      "band1Pct": "Band 1 (%)",
+      "band2Pct": "Band 2 (%)",
+      "weeklyOtSectionTitle": "Weekly overtime (§ 5.4.3.3)",
+      "weeklyThresholdH": "Threshold (h)",
+      "band1EndH": "Band 1 end (h)",
+      "surchargesSectionTitle": "Surcharges (§ 5.5 / § 5.6)",
+      "night": "Night",
+      "saturday": "Saturday",
+      "sunday": "Sunday",
+      "holiday": "Holiday",
+      "nightPctTitle": "Night surcharge (%)",
+      "saturdayPctTitle": "Saturday surcharge (%)",
+      "sundayPctTitle": "Sunday surcharge (%)",
+      "holidayPctTitle": "Holiday surcharge (%)",
+      "perDiemSectionTitle": "Per diem & place of work (§ 12.2)",
+      "homeBase": "Home base"
+    },
     "pdf": {
       "pageTitle": "Timesheet",
       "weeklyHours": "Weekly hours",
       "totalHours": "Total hours",
       "signature": "Signature",
-      "date": "Date"
+      "date": "Date",
+      "position": "Position",
+      "netHours": "Net hrs.",
+      "sum": "Total",
+      "totalTravelTime": "Total qualifying travel time: {minutes} min",
+      "signatureContractor": "Date, signature (contractor)",
+      "signatureClient": "Date, signature (client)"
     },
     "projectTab": {
       "title": "Timesheets",

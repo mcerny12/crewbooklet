@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { parseISO, format, addDays } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
 import { Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { calculateWeek } from '@/lib/timesheets/calculation';
@@ -38,6 +38,8 @@ interface Props {
 
 export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
   const t = useTranslations('timesheets');
+  const locale = useLocale();
+  const dateLocale = locale === 'de' ? de : enUS;
   const computed = useMemo((): { result: WeekResult; ruleset: Ruleset } | null => {
     if (timesheet.weekly_rate_cents === 0) return null;
 
@@ -128,7 +130,7 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
       {workedDays.length > 0 && (
         <div className="divide-y divide-border/40 mb-3">
           {workedDays.map(d => {
-            const dayLabel = format(parseISO(d.date), 'EEE d. MMM', { locale: de });
+            const dayLabel = format(parseISO(d.date), 'EEE d. MMM', { locale: dateLocale });
 
             // Compute each pay component (mirrors calculateDay logic exactly)
             const dayBase = Math.round((d.billedMinutes / 60) * hc);

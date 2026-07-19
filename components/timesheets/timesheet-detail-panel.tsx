@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
 import { X, Printer, Trash2, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,10 +30,10 @@ interface Props {
   onDeleted: () => void;
 }
 
-function formatWeekHeader(weekStart: string): string {
+function formatWeekHeader(weekStart: string, dateLocale: typeof de, weekAbbr: string): string {
   try {
     const monday = parseISO(weekStart);
-    return format(monday, "'KW' w — d. MMMM yyyy", { locale: de });
+    return `${weekAbbr} ${format(monday, 'w', { locale: dateLocale })} — ${format(monday, 'd. MMMM yyyy', { locale: dateLocale })}`;
   } catch {
     return weekStart;
   }
@@ -79,6 +79,9 @@ function CustomRulesPanel({
   onPerDiemFullChange,
   onPerDiemPartialChange,
 }: CustomRulesPanelProps) {
+  const t = useTranslations('timesheets.customRules');
+  const tFields = useTranslations('timesheets.fields');
+
   function setNum(key: NumericKey, raw: string, toInt = false) {
     const val = toInt ? parseInt(raw, 10) : parseFloat(raw.replace(',', '.'));
     if (!isNaN(val)) onRulesChange({ ...rules, [key]: val });
@@ -106,21 +109,21 @@ function CustomRulesPanel({
     <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-3">
       <div className="flex items-center gap-1.5 text-xs text-primary font-semibold mb-1">
         <Info className="h-3.5 w-3.5" />
-        Individuelle Regelungen (TV FFS-Abweichungen)
+        {t('title')}
         <span className="ml-auto text-[10px] font-normal text-muted-foreground">
-          ↑ = von TV FFS abweichend
+          {t('legend')}
         </span>
       </div>
 
       {/* OT daily */}
       <div>
         <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          Überstunden täglich (§ 5.4.3.2)
+          {t('dailyOtSectionTitle')}
         </div>
         <div className="grid grid-cols-3 gap-2 text-xs">
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              ÜZ ab Stunde {!isDefault('dailyOtStartH') && overriddenBadge}
+              {t('otStartHour')} {!isDefault('dailyOtStartH') && overriddenBadge}
             </span>
             <Input
               type="number" min="1" max="24" step="1"
@@ -131,7 +134,7 @@ function CustomRulesPanel({
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Band 1 (%) {!isDefault('dailyOtBand1Pct') && overriddenBadge}
+              {t('band1Pct')} {!isDefault('dailyOtBand1Pct') && overriddenBadge}
             </span>
             <Input
               type="number" min="0" max="500" step="5"
@@ -142,7 +145,7 @@ function CustomRulesPanel({
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Band 2 (%) {!isDefault('dailyOtBand2Pct') && overriddenBadge}
+              {t('band2Pct')} {!isDefault('dailyOtBand2Pct') && overriddenBadge}
             </span>
             <Input
               type="number" min="0" max="500" step="5"
@@ -157,12 +160,12 @@ function CustomRulesPanel({
       {/* OT weekly */}
       <div>
         <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          Überstunden wöchentlich (§ 5.4.3.3)
+          {t('weeklyOtSectionTitle')}
         </div>
         <div className="grid grid-cols-4 gap-2 text-xs">
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Schwelle (h) {!isDefault('weeklyOtThresholdH') && overriddenBadge}
+              {t('weeklyThresholdH')} {!isDefault('weeklyOtThresholdH') && overriddenBadge}
             </span>
             <Input
               type="number" min="1" step="1"
@@ -173,7 +176,7 @@ function CustomRulesPanel({
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Band 1 Ende (h) {!isDefault('weeklyOtBand1EndH') && overriddenBadge}
+              {t('band1EndH')} {!isDefault('weeklyOtBand1EndH') && overriddenBadge}
             </span>
             <Input
               type="number" min="1" step="1"
@@ -184,7 +187,7 @@ function CustomRulesPanel({
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Band 1 (%) {!isDefault('weeklyOtBand1Pct') && overriddenBadge}
+              {t('band1Pct')} {!isDefault('weeklyOtBand1Pct') && overriddenBadge}
             </span>
             <Input
               type="number" min="0" max="500" step="5"
@@ -195,7 +198,7 @@ function CustomRulesPanel({
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Band 2 (%) {!isDefault('weeklyOtBand2Pct') && overriddenBadge}
+              {t('band2Pct')} {!isDefault('weeklyOtBand2Pct') && overriddenBadge}
             </span>
             <Input
               type="number" min="0" max="500" step="5"
@@ -210,7 +213,7 @@ function CustomRulesPanel({
       {/* Surcharges */}
       <div>
         <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          Zuschläge (§ 5.5 / § 5.6)
+          {t('surchargesSectionTitle')}
         </div>
         <div className="grid grid-cols-4 gap-2 text-xs">
           {/* Night */}
@@ -222,7 +225,7 @@ function CustomRulesPanel({
                 onChange={e => setBool('nightEnabled', e.target.checked)}
                 className="h-3.5 w-3.5 accent-primary"
               />
-              Nacht {!isDefault('nightEnabled') && overriddenBadge}
+              {t('night')} {!isDefault('nightEnabled') && overriddenBadge}
             </label>
             <Input
               type="number" min="0" max="500" step="5"
@@ -230,7 +233,7 @@ function CustomRulesPanel({
               onChange={e => setNum('nightPct', e.target.value)}
               disabled={!val('nightEnabled')}
               className={cn(fieldCn, !isDefault('nightPct') && 'border-primary/50')}
-              title="Nachtzuschlag (%)"
+              title={t('nightPctTitle')}
             />
           </div>
           {/* Saturday */}
@@ -242,7 +245,7 @@ function CustomRulesPanel({
                 onChange={e => setBool('saturdayEnabled', e.target.checked)}
                 className="h-3.5 w-3.5 accent-primary"
               />
-              Samstag {!isDefault('saturdayEnabled') && overriddenBadge}
+              {t('saturday')} {!isDefault('saturdayEnabled') && overriddenBadge}
             </label>
             <Input
               type="number" min="0" max="500" step="5"
@@ -250,7 +253,7 @@ function CustomRulesPanel({
               onChange={e => setNum('saturdayPct', e.target.value)}
               disabled={!val('saturdayEnabled')}
               className={cn(fieldCn, !isDefault('saturdayPct') && 'border-primary/50')}
-              title="Samstagszuschlag (%)"
+              title={t('saturdayPctTitle')}
             />
           </div>
           {/* Sunday */}
@@ -262,7 +265,7 @@ function CustomRulesPanel({
                 onChange={e => setBool('sundayEnabled', e.target.checked)}
                 className="h-3.5 w-3.5 accent-primary"
               />
-              Sonntag {!isDefault('sundayEnabled') && overriddenBadge}
+              {t('sunday')} {!isDefault('sundayEnabled') && overriddenBadge}
             </label>
             <Input
               type="number" min="0" max="500" step="5"
@@ -270,7 +273,7 @@ function CustomRulesPanel({
               onChange={e => setNum('sundayPct', e.target.value)}
               disabled={!val('sundayEnabled')}
               className={cn(fieldCn, !isDefault('sundayPct') && 'border-primary/50')}
-              title="Sonntagszuschlag (%)"
+              title={t('sundayPctTitle')}
             />
           </div>
           {/* Holiday */}
@@ -282,7 +285,7 @@ function CustomRulesPanel({
                 onChange={e => setBool('holidayEnabled', e.target.checked)}
                 className="h-3.5 w-3.5 accent-primary"
               />
-              Feiertag {!isDefault('holidayEnabled') && overriddenBadge}
+              {t('holiday')} {!isDefault('holidayEnabled') && overriddenBadge}
             </label>
             <Input
               type="number" min="0" max="500" step="5"
@@ -290,7 +293,7 @@ function CustomRulesPanel({
               onChange={e => setNum('holidayPct', e.target.value)}
               disabled={!val('holidayEnabled')}
               className={cn(fieldCn, !isDefault('holidayPct') && 'border-primary/50')}
-              title="Feiertagszuschlag (%)"
+              title={t('holidayPctTitle')}
             />
           </div>
         </div>
@@ -299,11 +302,11 @@ function CustomRulesPanel({
       {/* Per diem amounts + home base */}
       <div>
         <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-          Verpflegung & Einsatzort (§ 12.2)
+          {t('perDiemSectionTitle')}
         </div>
         <div className="grid grid-cols-3 gap-2 text-xs">
           <label className="flex flex-col gap-0.5">
-            <span className="text-muted-foreground">Vollpauschale (€)</span>
+            <span className="text-muted-foreground">{tFields('perDiemFullDay')}</span>
             <Input
               type="text" inputMode="decimal"
               defaultValue={(perDiemFullCents / 100).toFixed(2)}
@@ -315,7 +318,7 @@ function CustomRulesPanel({
             />
           </label>
           <label className="flex flex-col gap-0.5">
-            <span className="text-muted-foreground">Teilpauschale (€)</span>
+            <span className="text-muted-foreground">{tFields('perDiemPartialDay')}</span>
             <Input
               type="text" inputMode="decimal"
               defaultValue={(perDiemPartialCents / 100).toFixed(2)}
@@ -328,7 +331,7 @@ function CustomRulesPanel({
           </label>
           <label className="flex flex-col gap-0.5">
             <span className="text-muted-foreground">
-              Heimatort {rules.homeBase !== undefined && overriddenBadge}
+              {t('homeBase')} {rules.homeBase !== undefined && overriddenBadge}
             </span>
             <Input
               type="text"
@@ -352,6 +355,8 @@ function CustomRulesPanel({
 export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
   const t = useTranslations('timesheets');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
+  const dateLocale = locale === 'de' ? de : enUS;
 
   const entries = useTimesheetsStore(s => s.entries);
   const isLoadingEntries = useTimesheetsStore(s => s.isLoadingEntries);
@@ -450,7 +455,7 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-5 py-3 border-b bg-muted/30">
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold">{formatWeekHeader(timesheet.week_start)}</h2>
+          <h2 className="text-sm font-semibold">{formatWeekHeader(timesheet.week_start, dateLocale, t('weekAbbr'))}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             {timesheet.person_name || '—'}
             {timesheet.position_title ? ` · ${timesheet.position_title}` : ''}
@@ -475,7 +480,7 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
 
         {/* Basic info fields */}
         <div className="section-card">
-          <div className="section-card-header">Allgemein</div>
+          <div className="section-card-header">{t('general')}</div>
           <div className="section-card-body space-y-3 detail-form-fields">
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
@@ -595,7 +600,7 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
 
         {/* Week grid */}
         <div className="section-card">
-          <div className="section-card-header">Wochenstunden</div>
+          <div className="section-card-header">{t('pdf.weeklyHours')}</div>
           <div className="section-card-body p-0">
             <TimesheetWeekGrid
               timesheet={timesheet}

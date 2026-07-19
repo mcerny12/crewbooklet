@@ -8,12 +8,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { format, parseISO, addDays } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
 import { SupabaseService } from '@/lib/services/supabase-service';
 import type { Timesheet, TimesheetEntry } from '@/lib/timesheets/types';
-
-const DAY_LABELS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
 function parseHHMM(t: string | null): string {
   if (!t) return '—';
@@ -38,6 +37,10 @@ function formatMinutes(min: number): string {
 
 export default function TimesheetPrintPage() {
   const { id } = useParams<{ id: string }>();
+  const t = useTranslations('timesheets');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+  const dateLocale = locale === 'de' ? de : enUS;
   const [timesheet, setTimesheet] = useState<Timesheet | null>(null);
   const [entries, setEntries] = useState<TimesheetEntry[]>([]);
 
@@ -54,24 +57,28 @@ export default function TimesheetPrintPage() {
 
   useEffect(() => {
     if (timesheet) {
-      document.title = `Stundenzettel – ${timesheet.person_name}`;
+      document.title = `${t('pdf.pageTitle')} – ${timesheet.person_name}`;
       // Trigger print dialog automatically after render
       const timer = setTimeout(() => window.print(), 500);
       return () => clearTimeout(timer);
     }
-  }, [timesheet]);
+  }, [timesheet, t]);
 
   if (!timesheet) {
-    return <div className="p-8 text-sm text-gray-500">Lädt…</div>;
+    return <div className="p-8 text-sm text-gray-500">{tCommon('loading')}</div>;
   }
 
   const monday = parseISO(timesheet.week_start);
   const weekEnd = addDays(monday, 6);
+  const dayLabels = [
+    t('day.monday'), t('day.tuesday'), t('day.wednesday'), t('day.thursday'),
+    t('day.friday'), t('day.saturday'), t('day.sunday'),
+  ];
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = format(addDays(monday, i), 'yyyy-MM-dd');
     const entry = entries.find(e => e.entry_date === date);
-    return { date, label: DAY_LABELS[i], dayOfMonth: format(addDays(monday, i), 'dd.MM.'), entry };
+    return { date, label: dayLabels[i], dayOfMonth: format(addDays(monday, i), 'dd.MM.'), entry };
   });
 
   const totalMinutes = days.reduce((s, d) => s + (d.entry ? rawMinutes(d.entry) : 0), 0);
@@ -84,28 +91,28 @@ export default function TimesheetPrintPage() {
     <div className="print-page" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#000', maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
       {/* Header */}
       <div style={{ marginBottom: '20px', borderBottom: '2px solid #000', paddingBottom: '10px' }}>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>STUNDENZETTEL</h1>
+        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>{t('pdf.pageTitle')}</h1>
         <div style={{ marginTop: '6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
           <div>
-            <span style={{ color: '#666' }}>Name: </span>
+            <span style={{ color: '#666' }}>{t('fields.personName')}: </span>
             <strong>{timesheet.person_name || '—'}</strong>
           </div>
           <div>
-            <span style={{ color: '#666' }}>Woche: </span>
+            <span style={{ color: '#666' }}>{t('week')}: </span>
             <strong>
-              {format(monday, 'd. MMM', { locale: de })} – {format(weekEnd, 'd. MMM yyyy', { locale: de })}
-              {' '}(KW {format(monday, 'w', { locale: de })})
+              {format(monday, 'd. MMM', { locale: dateLocale })} – {format(weekEnd, 'd. MMM yyyy', { locale: dateLocale })}
+              {' '}({t('weekAbbr')} {format(monday, 'w', { locale: dateLocale })})
             </strong>
           </div>
           {timesheet.position_title && (
             <div>
-              <span style={{ color: '#666' }}>Position: </span>
+              <span style={{ color: '#666' }}>{t('pdf.position')}: </span>
               {timesheet.position_title}
             </div>
           )}
           {timesheet.department && (
             <div>
-              <span style={{ color: '#666' }}>Abteilung: </span>
+              <span style={{ color: '#666' }}>{t('fields.department')}: </span>
               {timesheet.department}
             </div>
           )}
@@ -116,15 +123,15 @@ export default function TimesheetPrintPage() {
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
         <thead>
           <tr style={{ backgroundColor: '#f0f0f0' }}>
-            <th style={thStyle}>Tag</th>
-            <th style={thStyle}>Datum</th>
-            <th style={thStyle}>Beginn</th>
-            <th style={thStyle}>Ende</th>
-            <th style={thStyle}>Pause (min)</th>
-            <th style={thStyle}>Anfahrt (min)</th>
-            <th style={thStyle}>Rückfahrt (min)</th>
-            <th style={thStyle}>Netto Std.</th>
-            <th style={{ ...thStyle, minWidth: '100px' }}>Einsatzort</th>
+            <th style={thStyle}>{t('day.day')}</th>
+            <th style={thStyle}>{t('pdf.date')}</th>
+            <th style={thStyle}>{t('day.workStart')}</th>
+            <th style={thStyle}>{t('day.workEnd')}</th>
+            <th style={thStyle}>{t('day.break')}</th>
+            <th style={thStyle}>{t('day.travelTo')}</th>
+            <th style={thStyle}>{t('day.travelBack')}</th>
+            <th style={thStyle}>{t('pdf.netHours')}</th>
+            <th style={{ ...thStyle, minWidth: '100px' }}>{t('day.placeOfWork')}</th>
           </tr>
         </thead>
         <tbody>
@@ -150,7 +157,7 @@ export default function TimesheetPrintPage() {
         </tbody>
         <tfoot>
           <tr style={{ backgroundColor: '#e8e8e8', fontWeight: 'bold' }}>
-            <td colSpan={7} style={{ ...tdStyle, textAlign: 'right' }}>Summe:</td>
+            <td colSpan={7} style={{ ...tdStyle, textAlign: 'right' }}>{t('pdf.sum')}:</td>
             <td style={{ ...tdStyle, textAlign: 'center' }}>{formatMinutes(totalMinutes)}</td>
             <td style={tdStyle}></td>
           </tr>
@@ -160,7 +167,7 @@ export default function TimesheetPrintPage() {
       {/* Travel summary (if any) */}
       {totalTravelMinutes > 0 && (
         <div style={{ marginBottom: '12px', fontSize: '10px', color: '#555' }}>
-          Anrechenbare Fahrtzeit gesamt: {formatMinutes(totalTravelMinutes)} min
+          {t('pdf.totalTravelTime', { minutes: formatMinutes(totalTravelMinutes) })}
         </div>
       )}
 
@@ -168,12 +175,12 @@ export default function TimesheetPrintPage() {
       <div style={{ marginTop: '40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
         <div>
           <div style={{ borderTop: '1px solid #000', paddingTop: '4px', color: '#666' }}>
-            Datum, Unterschrift Auftragnehmer
+            {t('pdf.signatureContractor')}
           </div>
         </div>
         <div>
           <div style={{ borderTop: '1px solid #000', paddingTop: '4px', color: '#666' }}>
-            Datum, Unterschrift Auftraggeber
+            {t('pdf.signatureClient')}
           </div>
         </div>
       </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { format, parseISO, startOfWeek, endOfWeek } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de, enUS } from 'date-fns/locale';
 import type { Timesheet, TimesheetStatus } from '@/lib/timesheets/types';
 
 const STATUS_COLORS: Record<TimesheetStatus, string> = {
@@ -18,20 +18,20 @@ interface Props {
   isSelected?: boolean;
 }
 
-function formatWeekRange(weekStart: string): string {
+function formatWeekRange(weekStart: string, dateLocale: typeof de): string {
   try {
     const monday = parseISO(weekStart);
     const sunday = endOfWeek(monday, { weekStartsOn: 1 });
-    return `${format(monday, 'd. MMM', { locale: de })} – ${format(sunday, 'd. MMM yyyy', { locale: de })}`;
+    return `${format(monday, 'd. MMM', { locale: dateLocale })} – ${format(sunday, 'd. MMM yyyy', { locale: dateLocale })}`;
   } catch {
     return weekStart;
   }
 }
 
-function weekNumber(weekStart: string): string {
+function weekNumber(weekStart: string, dateLocale: typeof de): string {
   try {
     const d = parseISO(weekStart);
-    return format(startOfWeek(d, { weekStartsOn: 1 }), 'w', { locale: de });
+    return format(startOfWeek(d, { weekStartsOn: 1 }), 'w', { locale: dateLocale });
   } catch {
     return '';
   }
@@ -39,6 +39,8 @@ function weekNumber(weekStart: string): string {
 
 export function CompactTimesheetListItem({ timesheet, onSelect, isSelected }: Props) {
   const t = useTranslations('timesheets');
+  const locale = useLocale();
+  const dateLocale = locale === 'de' ? de : enUS;
 
   return (
     <div
@@ -52,15 +54,15 @@ export function CompactTimesheetListItem({ timesheet, onSelect, isSelected }: Pr
     >
       {/* Week number badge */}
       <div className="shrink-0 flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-muted text-center">
-        <span className="text-[10px] text-muted-foreground leading-none">KW</span>
-        <span className="text-base font-bold leading-tight">{weekNumber(timesheet.week_start)}</span>
+        <span className="text-[10px] text-muted-foreground leading-none">{t('weekAbbr')}</span>
+        <span className="text-base font-bold leading-tight">{weekNumber(timesheet.week_start, dateLocale)}</span>
       </div>
 
       {/* Main info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className={cn('text-sm font-semibold truncate', isSelected && 'text-primary')}>
-            {formatWeekRange(timesheet.week_start)}
+            {formatWeekRange(timesheet.week_start, dateLocale)}
           </span>
         </div>
         <div className="text-xs text-muted-foreground truncate mt-0.5">

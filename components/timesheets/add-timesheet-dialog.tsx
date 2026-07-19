@@ -118,7 +118,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
             <Input
               value={personName}
               onChange={e => setPersonName(e.target.value)}
-              placeholder="Max Mustermann"
+              placeholder={t('fields.personNamePlaceholder')}
             />
           </div>
 
@@ -128,7 +128,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
               <Input
                 value={positionTitle}
                 onChange={e => setPositionTitle(e.target.value)}
-                placeholder="Kameramann"
+                placeholder={t('fields.positionTitlePlaceholder')}
               />
             </div>
             <div className="space-y-1.5">
@@ -136,7 +136,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
               <Input
                 value={department}
                 onChange={e => setDepartment(e.target.value)}
-                placeholder="Kamera"
+                placeholder={t('fields.departmentPlaceholder')}
               />
             </div>
           </div>
