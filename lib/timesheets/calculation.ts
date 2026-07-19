@@ -18,7 +18,8 @@
 //   7. dailyOtBand1/2  = minutes of surchargeEligibleMinutes beyond dailyOtStartH (Mon–Fri only)
 //   8. perDiemCents    = resolved from perDiemType.
 //      § 12.2 TV FFS: auto → partial when totalWorkMinutes ≥ 480 (actual hours, not billing floor).
-//      Per diems are suppressed when placeOfWork matches homeBase (local booking).
+//      Per diems are suppressed when placeOfWork matches homeBase (local booking); an unset
+//      placeOfWork defaults to homeBase, not "away" — it must never earn a per diem by omission.
 //
 // Weekly OT:
 //   weeklyCountMinutes (built from each day's surchargeEligibleMinutes, i.e. travel excluded):
@@ -54,6 +55,9 @@ import { hourlyRateCents } from './ruleset';
 
 const MINUTES_PER_HOUR = 60;
 const MIN_REST_MINUTES = 11 * 60; // ArbZG § 5 / TV FFS § 5.8
+// § 5.2.4 / § 5.3.1 TV FFS: every started work day is billed at a minimum of
+// 8 hours, regardless of dailyOtStartH (the separate daily-OT premium threshold).
+const DAILY_MINIMUM_BILLING_HOURS = 8;
 
 /** Parse 'HH:MM' → total minutes since 00:00. Returns null if null input. */
 function parseTime(t: string | null): number | null {
@@ -160,13 +164,17 @@ export function calculateDay(
 
   const totalWorkMinutes = rawWorkMinutes + travelMinutes;
 
-  // Daily minimum = dailyOtStartH (TV FFS default: 10h) when the flag is on.
-  // The weekly rate is built around 5 × dailyOtStartH hours, so each called day
-  // is billed for at least that many hours regardless of actual time worked.
+  // Daily minimum billing floor = 8h (§ 5.2.4 / § 5.3.1 TV FFS: "Jeder angefangene
+  // Arbeitstag ... wird mit mindestens 8 Stunden berechnet"), when the flag is on.
+  // This is a DIFFERENT number from dailyOtStartH (§ 5.4.3.2, default 10h) — that's
+  // only the threshold above which the daily-OT Zuschlag kicks in, not the minimum
+  // a called day is billed for. Conflating the two previously over-billed (and thus
+  // over-paid, once the weekly floor was exceeded) any day between the 8h floor and
+  // a customized dailyOtStartH override.
   // A day's own dailyMinimumOverride (if set) takes precedence over the
   // timesheet-level ruleset.dailyMinimum8h default.
   const useDailyMinimum = day.dailyMinimumOverride ?? ruleset.dailyMinimum8h;
-  const dailyMinimumMinutes = ruleset.dailyOtStartH * MINUTES_PER_HOUR;
+  const dailyMinimumMinutes = DAILY_MINIMUM_BILLING_HOURS * MINUTES_PER_HOUR;
   const billedMinutes = isWorked
     ? (useDailyMinimum ? Math.max(totalWorkMinutes, dailyMinimumMinutes) : totalWorkMinutes)
     : 0;
@@ -203,13 +211,14 @@ export function calculateDay(
 
   // Per diem (§ 12.2 TV FFS):
   // - Suppressed when the place of work matches the home base (local booking, Bug #2).
+  // - An unset place of work defaults to the home base rather than "away" —
+  //   otherwise every day with placeOfWork left blank silently earned a per
+  //   diem it shouldn't have (Bug #7).
   // - Auto threshold uses totalWorkMinutes (actual hours), NOT billedMinutes (Bug #3).
   let perDiemCents = 0;
   if (ruleset.perDiemEnabled && isWorked) {
-    const isLocalWork = !!(
-      day.placeOfWork &&
-      day.placeOfWork.trim().toLowerCase() === ruleset.homeBase.trim().toLowerCase()
-    );
+    const effectivePlaceOfWork = day.placeOfWork?.trim() || ruleset.homeBase;
+    const isLocalWork = effectivePlaceOfWork.toLowerCase() === ruleset.homeBase.trim().toLowerCase();
     if (!isLocalWork) {
       const resolved = resolvePerDiem(day.perDiemType, totalWorkMinutes);
       if (resolved === 'full') perDiemCents = ruleset.perDiemFullDayCents;
