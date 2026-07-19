@@ -657,7 +657,9 @@
       "sunShort": "So",
       "holidayShort": "Feiertag",
       "restViolation": "Ruhezeit-Verstoß",
-      "dailyMin": "Tagesmin."
+      "dailyMin": "Tagesmin.",
+      "moreSettings": "Weitere Einstellungen",
+      "clearDay": "Tag leeren"
     },
     "perDiemType": {
       "auto": "Automatisch",

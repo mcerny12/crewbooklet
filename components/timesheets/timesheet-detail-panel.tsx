@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { format, parseISO } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
-import { X, Printer, Trash2, Info, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Printer, Trash2, Info, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,6 +64,20 @@ const TV_FFS_DEFAULTS = {
 type NumericKey = keyof Omit<CustomRulesOverride, 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled' | 'homeBase'>;
 type BoolKey = 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled';
 
+// Remembers whether the panel was left expanded or collapsed, across timesheets
+// and sessions — a pure UI preference, not per-timesheet state.
+const CUSTOM_RULES_EXPANDED_KEY = 'cb_timesheet_custom_rules_expanded';
+
+function loadCustomRulesExpanded(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_RULES_EXPANDED_KEY);
+    return raw === null ? true : raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
 interface CustomRulesPanelProps {
   rules: CustomRulesOverride;
   perDiemFullCents: number;
@@ -83,7 +97,19 @@ function CustomRulesPanel({
 }: CustomRulesPanelProps) {
   const t = useTranslations('timesheets.customRules');
   const tFields = useTranslations('timesheets.fields');
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(loadCustomRulesExpanded);
+
+  function toggleExpanded() {
+    setIsExpanded(v => {
+      const next = !v;
+      try {
+        window.localStorage.setItem(CUSTOM_RULES_EXPANDED_KEY, String(next));
+      } catch {
+        // ignore — worst case the preference just isn't remembered
+      }
+      return next;
+    });
+  }
 
   // Local state gives instant feedback instead of waiting on the parent's
   // debounced (1000ms + network) save to round-trip back down as a prop.
@@ -146,7 +172,7 @@ function CustomRulesPanel({
     <div className="rounded-md border border-primary/20 bg-primary/5 p-2 space-y-2">
       <button
         type="button"
-        onClick={() => setIsExpanded(v => !v)}
+        onClick={toggleExpanded}
         className="flex w-full items-center gap-1.5 text-xs text-primary font-semibold"
       >
         <Info className="h-3.5 w-3.5 shrink-0" />
@@ -517,7 +543,14 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
   return (
     <div className="flex h-full flex-col bg-card">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 px-5 py-3 border-b bg-muted/30">
+      <div className="shrink-0 flex items-center gap-4 px-5 py-3 border-b bg-card">
+        <button
+          onClick={onClose}
+          aria-label={tCommon('back')}
+          className="flex items-center gap-1 group text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0 group-hover:text-primary transition-colors" />
+        </button>
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-semibold">{formatWeekHeader(timesheet.week_start, dateLocale, t('weekAbbr'))}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -532,9 +565,6 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
           </Button>
           <Button variant="ghost" size="sm" onClick={handleDelete} className="h-8 text-destructive hover:text-destructive">
             <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>

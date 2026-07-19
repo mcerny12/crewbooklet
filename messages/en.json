@@ -657,7 +657,9 @@
       "sunShort": "Sun",
       "holidayShort": "Holiday",
       "restViolation": "Rest period violation",
-      "dailyMin": "Daily min."
+      "dailyMin": "Daily min.",
+      "moreSettings": "More settings",
+      "clearDay": "Clear day"
     },
     "perDiemType": {
       "auto": "Automatic",

@@ -9,6 +9,7 @@ import {
   LogOut, Film, PanelLeftClose, PanelLeftOpen, Menu, X, MessageSquareWarning,
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
 import { useFeedback } from '@/components/feedback/feedback-provider';
 import { useSidebar } from './sidebar-context';
 import {
@@ -46,7 +47,16 @@ function NavItem({
   const link = (
     <Link
       href={item.href}
-      onClick={onNavigate}
+      onClick={() => {
+        onNavigate();
+        // Clicking Timesheets while already viewing one should return to the
+        // list, matching the other domain pages' "click the nav item to
+        // reset" expectation — Next.js won't remount the page since the
+        // route doesn't change, so this has to be done explicitly.
+        if (item.href === '/timesheets') {
+          useTimesheetsStore.getState().selectTimesheet(null);
+        }
+      }}
       aria-current={active ? 'page' : undefined}
       aria-label={collapsed ? label : undefined}
       title={collapsed ? label : undefined}
