@@ -659,6 +659,11 @@
     },
     "estimate": {
       "title": "Pay estimate (confidential)",
+      "adminOnly": "Visible only to you and admins",
+      "noRate": "No weekly rate set — estimate unavailable",
+      "totalHoursLabel": "Total hours",
+      "hourlyRateLabel": "Hourly rate",
+      "weeklyOtShort": "Weekly OT",
       "basePayLabel": "Weekly rate",
       "dailyOtLabel": "Daily overtime",
       "weeklyOtLabel": "Weekly overtime",
@@ -668,7 +673,18 @@
       "holidayLabel": "Holiday surcharge",
       "perDiemLabel": "Per diem",
       "totalLabel": "Total gross",
-      "adminOnly": "Visible only to you and admins"
+      "perDiemLine": "PD",
+      "baseHoursLine": "{hours} × {rate}/h",
+      "dailyOtLine": "+ {hours} daily OT {pct}%",
+      "nightLine": "+ {hours} night {pct}%",
+      "saturdayLine": "+ Sat surcharge {pct}%",
+      "sundayLine": "+ Sun surcharge {pct}%",
+      "holidayLine": "+ Holiday {pct}%",
+      "restViolationLine": "⚠ Rest period {hours}",
+      "weeklyOtLine": "+ {hours} weekly OT {pct}%",
+      "restViolationTotal": "Rest period compensation (ArbZG § 5)",
+      "subtotal": "Sum of entered days",
+      "guarantee": "Weekly rate guarantee applies: min. {amount}/week"
     },
     "pdf": {
       "pageTitle": "Timesheet",

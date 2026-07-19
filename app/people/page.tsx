@@ -69,7 +69,7 @@ export default function PeoplePage() {
       if (person) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedPerson(person);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+         
         setPersonActiveTab(tab);
       }
     }

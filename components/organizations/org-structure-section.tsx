@@ -41,9 +41,9 @@ export function OrgStructureSection({ organization }: OrgStructureSectionProps) 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPendingSubMode(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setSelectedParentId(organization.parent_organization_id ?? null);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     setError(null);
   }, [organization.id, organization.org_role, organization.parent_organization_id]);
 

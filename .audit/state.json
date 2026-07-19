@@ -1,0 +1,749 @@
+{
+  "last_audit_commit": "ec168f8d3ed0adb11c6b2da1cdf28f00c503f34f",
+  "last_audit_date": "2026-07-19",
+  "file_hashes": {
+    "app/admin/page.tsx": {
+      "hash": "96d90a30047920556d2c47d3675bee8e7b5f0a0f",
+      "verdict": "clean"
+    },
+    "app/api/admin/users/route.ts": {
+      "hash": "65ed5a0e638644122f2f733ec35649d21eea3274",
+      "verdict": "clean"
+    },
+    "app/api/calendar/[token]/route.ts": {
+      "hash": "66179eb90bf236fe783c58e57c5526add1d5a146",
+      "verdict": "clean"
+    },
+    "app/calendar/page.tsx": {
+      "hash": "3ebf6b6953d10c292cb758e052c7c4b24de638df",
+      "verdict": "clean"
+    },
+    "app/calendar/print/page.tsx": {
+      "hash": "8073d698e15feaa5bb7f2250fee27ed50bf69a5c",
+      "verdict": "clean"
+    },
+    "app/forgot-password/page.tsx": {
+      "hash": "c4a984750c862cd0cff159efb353306d141b6441",
+      "verdict": "clean"
+    },
+    "app/invoices/[id]/print/page.tsx": {
+      "hash": "e49d13bcc8840ca07b60ea9fcdaa4eda3b54416d",
+      "verdict": "clean"
+    },
+    "app/invoices/page.tsx": {
+      "hash": "c6abd3c070738f3e04a485720dcaf68e773ac5a2",
+      "verdict": "clean"
+    },
+    "app/layout.tsx": {
+      "hash": "22dbc54ba575be0e6b3fc112f4dd4b3c5f859f44",
+      "verdict": "clean"
+    },
+    "app/login/page.tsx": {
+      "hash": "9c522dd61afada62bf6843a69042fa4f34b94d9c",
+      "verdict": "clean"
+    },
+    "app/organizations/page.tsx": {
+      "hash": "033ba7f0ad6ca992fa33f54d8faabec36ba4ed4f",
+      "verdict": "clean"
+    },
+    "app/page.tsx": {
+      "hash": "a2f2d624c7380383a03b69c5fe07fa910a29ee0a",
+      "verdict": "clean"
+    },
+    "app/people/page.tsx": {
+      "hash": "192402a856d0cbade4ac4a5b1b2de556ac5793fe",
+      "verdict": "clean"
+    },
+    "app/projects/page.tsx": {
+      "hash": "d4c79346e35b3c372d6d455184cf00da664f1199",
+      "verdict": "clean"
+    },
+    "app/reset-password/page.tsx": {
+      "hash": "17223c794607f757afdf1c2d7c5756f053d88798",
+      "verdict": "clean"
+    },
+    "app/search/page.tsx": {
+      "hash": "4c82f22bfcaaf6d1ab4272382953adc6be3a2632",
+      "verdict": "clean"
+    },
+    "app/settings/page.tsx": {
+      "hash": "b7e482c06e7e79bee627e082efdc99d4bf9960a0",
+      "verdict": "clean"
+    },
+    "app/signup/page.tsx": {
+      "hash": "9a99981581829c708c4719516c9eeb026ac49feb",
+      "verdict": "clean"
+    },
+    "app/timesheets/[id]/print/page.tsx": {
+      "hash": "2fd00d73fd5a742bb6ab31819ed7390ba8197390",
+      "verdict": "clean"
+    },
+    "app/timesheets/page.tsx": {
+      "hash": "c3c33fbc940a3ae2f6ceafdd3395416912a34d02",
+      "verdict": "clean"
+    },
+    "components.json": {
+      "hash": "f87021eeb7770c4a25e5df6c424a5db068a49cf6",
+      "verdict": "clean"
+    },
+    "components/calendar/calendar-main.tsx": {
+      "hash": "33fda92ef55a24a94458d06586e322236dc15a86",
+      "verdict": "clean"
+    },
+    "components/calendar/calendar-mobile-view.tsx": {
+      "hash": "c1e13739237b4013e71f954a0702a2422e98d64f",
+      "verdict": "clean"
+    },
+    "components/calendar/calendar-sidebar.tsx": {
+      "hash": "77d11c9327756bb0c5a856d4f210e046d433e088",
+      "verdict": "clean"
+    },
+    "components/calendar/event-dialog.tsx": {
+      "hash": "a8afa51cab98fac285217cf09654f19c3093cba1",
+      "verdict": "clean"
+    },
+    "components/calendar/print-dialog.tsx": {
+      "hash": "5004788aa1c3d0cf8503e6532933280c9d950314",
+      "verdict": "clean"
+    },
+    "components/dashboard/recent-projects.tsx": {
+      "hash": "631d917ba8c54f5c741b5d27a28a2692c03e12c1",
+      "verdict": "clean"
+    },
+    "components/dashboard/stat-card.tsx": {
+      "hash": "287d0890412bc5ee801ced092241ee463b01c1d5",
+      "verdict": "clean"
+    },
+    "components/dashboard/upcoming-events.tsx": {
+      "hash": "a55f996d1a91a5d1e3a6aa8e24376bb9c6e402f6",
+      "verdict": "clean"
+    },
+    "components/detail/compact-entity-row.tsx": {
+      "hash": "ab81221d0dc976665b1c38e03434364abe4d5554",
+      "verdict": "clean"
+    },
+    "components/detail/desktop-detail-snap-canvas.tsx": {
+      "hash": "802304605eaef8341ee6a72506e8891ef756540b",
+      "verdict": "clean"
+    },
+    "components/detail/detail-frame-carousel.tsx": {
+      "hash": "5de85483107bf7ee767d97a9981801b600b32a91",
+      "verdict": "clean"
+    },
+    "components/detail/detail-frame-slide.tsx": {
+      "hash": "4b8b3ec22ca0f0d390f5cc253a2abfb32d4b786d",
+      "verdict": "clean"
+    },
+    "components/detail/detail-frame.tsx": {
+      "hash": "9f8f43e31850d93ee4032e75916a4e15b24a2ad5",
+      "verdict": "clean"
+    },
+    "components/detail/detail-slide.tsx": {
+      "hash": "93a6f496dbdb9ede6828c7bdf931d35cab3b6d65",
+      "verdict": "clean"
+    },
+    "components/detail/index.ts": {
+      "hash": "46d22535c6a23a538902d7edc099c4e027dc0e0d",
+      "verdict": "clean"
+    },
+    "components/feedback/element-inspector.ts": {
+      "hash": "14dd8c181842e823abe2b373a128b66c31176605",
+      "verdict": "clean"
+    },
+    "components/feedback/export-feedback.ts": {
+      "hash": "7cce5114356996bbfcb3141df9dce247d9c60f0e",
+      "verdict": "clean"
+    },
+    "components/feedback/feedback-dialog.tsx": {
+      "hash": "b83d2e9ee1fa294875338748fe6f57d99510de2c",
+      "verdict": "clean"
+    },
+    "components/feedback/feedback-overlay.tsx": {
+      "hash": "8d129b0865a70121883418869af8853d43f314b2",
+      "verdict": "clean"
+    },
+    "components/feedback/feedback-provider.tsx": {
+      "hash": "521cf8bdd2ccb7a7d21c2f5979a610673e8293d3",
+      "verdict": "clean"
+    },
+    "components/invoices/add-invoice-dialog.tsx": {
+      "hash": "0bb749bb309d6106b628cbecd4af6171afbbfdf8",
+      "verdict": "clean"
+    },
+    "components/invoices/compact-invoice-list-item.tsx": {
+      "hash": "93a54c8487fa0dfb9e810bad7d03e93caf3998cb",
+      "verdict": "clean"
+    },
+    "components/invoices/invoice-detail-panel.tsx": {
+      "hash": "ef102b6b128ed660ea58aa9ad0008efe01b1488d",
+      "verdict": "clean"
+    },
+    "components/invoices/storno-modal.tsx": {
+      "hash": "b29734152c5340e15be18b65c7c36464debda9f4",
+      "verdict": "clean"
+    },
+    "components/layout/main-layout.tsx": {
+      "hash": "a5d6900cb38335fdfa19b518fc3f4d1bcf97ce6b",
+      "verdict": "clean"
+    },
+    "components/layout/mobile-page-header.tsx": {
+      "hash": "e75fd974b5f97d4a1233458ab86ee9d181fa6fcc",
+      "verdict": "clean"
+    },
+    "components/layout/nav-config.ts": {
+      "hash": "5d77aebb7a9073189de4d64a13d1e6bb04c27ed6",
+      "verdict": "clean"
+    },
+    "components/layout/sidebar-context.tsx": {
+      "hash": "fa91d777f9018365fd18e7edcfdf64115d77c714",
+      "verdict": "clean"
+    },
+    "components/layout/sidebar.tsx": {
+      "hash": "c4f2ef6835553d45a70c0bbf548b6b4f7ebc5770",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-app-header.tsx": {
+      "hash": "5572cedb07bf563b83d3e481cfc5b5da21df904b",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-dashboard-section.tsx": {
+      "hash": "140a66c08277475fab46d2791883d27e64ad476f",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-desktop-only-placeholder.tsx": {
+      "hash": "5b57eafacd9ebdd9e1666e9132d6eb5a208c90b6",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-empty-state.tsx": {
+      "hash": "d3c4623b923c873c1035b94086b9180a7552b572",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-entity-detail-layout.tsx": {
+      "hash": "7fc2cb5190450c7387e4b5a3098882069753d309",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-field.tsx": {
+      "hash": "ed064a3f2d8d68f83688444a77d7e2fe6b7d0aa5",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-section-card.tsx": {
+      "hash": "160676e5f220f8eedaf18e76bd6f97db626fa15f",
+      "verdict": "clean"
+    },
+    "components/mobile/mobile-swipe-tabs.tsx": {
+      "hash": "2f0c26bcb9c29e3dbb188f23bd5461b10ade7791",
+      "verdict": "clean"
+    },
+    "components/organizations/add-organization-dialog.tsx": {
+      "hash": "96aa60252ddf55e68bb6e8e29032e6fb97850078",
+      "verdict": "clean"
+    },
+    "components/organizations/compact-organization-list-item.tsx": {
+      "hash": "0f1527cde11b3faa390f78815c2b1465574f9349",
+      "verdict": "clean"
+    },
+    "components/organizations/org-logo.tsx": {
+      "hash": "be37278c5e5ad6404dd3b440396e89c7f7d72dc8",
+      "verdict": "clean"
+    },
+    "components/organizations/org-mobile-detail.tsx": {
+      "hash": "9723db1934f84dd50c02c11bf82db30f856d7da0",
+      "verdict": "clean"
+    },
+    "components/organizations/org-structure-section.tsx": {
+      "hash": "3d023274659edf3da383f9f0811652aba39cae6b",
+      "verdict": "clean"
+    },
+    "components/organizations/organization-detail-drawer.tsx": {
+      "hash": "c17a2478e8cb9bde6cc21a03d2b83f4196d0e943",
+      "verdict": "clean"
+    },
+    "components/people/add-person-dialog.tsx": {
+      "hash": "10436e2260ae9ffc0d063a9692c247de53fe3eac",
+      "verdict": "clean"
+    },
+    "components/people/compact-person-list-item.tsx": {
+      "hash": "4651dc74eeac91635f77741af6730cbf5bde7001",
+      "verdict": "clean"
+    },
+    "components/people/person-detail-drawer.tsx": {
+      "hash": "f8380c42dfc46c8905fa9bbf886aca24e7ae0fb3",
+      "verdict": "clean"
+    },
+    "components/people/person-mobile-detail.tsx": {
+      "hash": "6899b94f3283d1ac17cd118b4be0e917f5aff573",
+      "verdict": "clean"
+    },
+    "components/projects/add-crew-dialog.tsx": {
+      "hash": "2b258d23e139437934d0ec984254e449f0ca12da",
+      "verdict": "clean"
+    },
+    "components/projects/add-org-to-project-dialog.tsx": {
+      "hash": "8f0210132d043e19ffc72626fcb74c394cee473b",
+      "verdict": "clean"
+    },
+    "components/projects/add-project-dialog.tsx": {
+      "hash": "1adc5537a1fcd54aff999c3a26d3e6d0ee9443ea",
+      "verdict": "clean"
+    },
+    "components/projects/compact-project-list-item.tsx": {
+      "hash": "a1473b7b88429319b05fb86c2bc2657fe59db628",
+      "verdict": "clean"
+    },
+    "components/projects/project-detail-panel.tsx": {
+      "hash": "e690567fbb944c8d0c7ff04dbae5855a129017a3",
+      "verdict": "clean"
+    },
+    "components/projects/project-mobile-detail.tsx": {
+      "hash": "51d2c46ab2b12473775f669afef2b97e443885b7",
+      "verdict": "clean"
+    },
+    "components/providers/auth-provider.tsx": {
+      "hash": "fe4d75361b6665826fd7d5990cd95c66cbafc91c",
+      "verdict": "clean"
+    },
+    "components/settings/admin-job-types-section.tsx": {
+      "hash": "d2ae746e8217e5070e496a6ffc76b991916401d6",
+      "verdict": "clean"
+    },
+    "components/settings/admin-users-section.tsx": {
+      "hash": "2053e5c921a4160fba9b7ac92378f752d761fa41",
+      "verdict": "clean"
+    },
+    "components/settings/general-section.tsx": {
+      "hash": "d9072dd34775cdca1a96f7ec9667a68c421d58e0",
+      "verdict": "clean"
+    },
+    "components/settings/settings-shell.tsx": {
+      "hash": "bfa6b8dabd6158eb17443939b9b97eb55adefd04",
+      "verdict": "clean"
+    },
+    "components/timesheets/add-timesheet-dialog.tsx": {
+      "hash": "8825481fe94c98cc05e0e0f4e80b0f94114b76ea",
+      "verdict": "clean"
+    },
+    "components/timesheets/compact-timesheet-list-item.tsx": {
+      "hash": "3cae7b79e715c9b602f98ff5e4fd70443223632e",
+      "verdict": "clean"
+    },
+    "components/timesheets/timesheet-detail-panel.tsx": {
+      "hash": "062845d9111a6f31a4f0fa2e3112522ef833ad21",
+      "verdict": "clean"
+    },
+    "components/timesheets/timesheet-estimate-panel.tsx": {
+      "hash": "938c765fb2bcaeb6645139e1803c09c826f9d7bb",
+      "verdict": "clean"
+    },
+    "components/timesheets/timesheet-project-tab.tsx": {
+      "hash": "ea33c2a197ad2fd705a28828b2f0e3ef0a173677",
+      "verdict": "clean"
+    },
+    "components/timesheets/timesheet-week-grid.tsx": {
+      "hash": "43013d1dd28ec2ea2243dd7e1306153e2ba27d2f",
+      "verdict": "clean"
+    },
+    "components/ui/badge.tsx": {
+      "hash": "beb56ed1cb1aa8ed90d5bbf3c33028ea3786061d",
+      "verdict": "clean"
+    },
+    "components/ui/bottom-drawer.tsx": {
+      "hash": "705dcffd6e45d31ad22d873406f35204c501c48f",
+      "verdict": "clean"
+    },
+    "components/ui/button.tsx": {
+      "hash": "b5ea4abd1e2028496b915b733ad5485951cbad6a",
+      "verdict": "clean"
+    },
+    "components/ui/card.tsx": {
+      "hash": "681ad980f27a34dd3d4ba08c7614ce1f7c006143",
+      "verdict": "clean"
+    },
+    "components/ui/checkbox.tsx": {
+      "hash": "a3ec184106ba37378f68e7c8ad0a47b13f82727c",
+      "verdict": "clean"
+    },
+    "components/ui/date-range-picker.tsx": {
+      "hash": "980d985c05b00d14a1070e9703cf05d15d174619",
+      "verdict": "clean"
+    },
+    "components/ui/detail-tabs.tsx": {
+      "hash": "b90645f0b88cd7943fbfb53cfbe3e31931840068",
+      "verdict": "findings"
+    },
+    "components/ui/dialog.tsx": {
+      "hash": "80d7ad60483a9c56cfe75504a230b67ec4661c06",
+      "verdict": "clean"
+    },
+    "components/ui/dropdown-menu.tsx": {
+      "hash": "bffc327629cd0e0ccc4309366a6b6d395ca55f53",
+      "verdict": "clean"
+    },
+    "components/ui/entry-metadata.tsx": {
+      "hash": "3e7770c670d5fb2a51729f8fbf67749d12911541",
+      "verdict": "clean"
+    },
+    "components/ui/form-section.tsx": {
+      "hash": "d265d0f13abf97ee6b3d89a5fd8b744b757980a3",
+      "verdict": "findings"
+    },
+    "components/ui/form.tsx": {
+      "hash": "b438928c737e17dee24202f65637c61428d33608",
+      "verdict": "clean"
+    },
+    "components/ui/input.tsx": {
+      "hash": "89169058d054c972608ac3115cc655f267eedaa9",
+      "verdict": "clean"
+    },
+    "components/ui/label.tsx": {
+      "hash": "1ac80f701ebfe9dc02d632c08cafade732e46625",
+      "verdict": "clean"
+    },
+    "components/ui/multi-search-select.tsx": {
+      "hash": "17d41299a85fe25e932b4a85346f3db60098b3f4",
+      "verdict": "clean"
+    },
+    "components/ui/multi-select.tsx": {
+      "hash": "e4e299071536882dbb5642313c06b780fc5be3d9",
+      "verdict": "clean"
+    },
+    "components/ui/page-header.tsx": {
+      "hash": "42b33709b17b536c8a921fba56298ea1ed7e2738",
+      "verdict": "clean"
+    },
+    "components/ui/popover.tsx": {
+      "hash": "41b07a883f3938ee16cb61142d153f416508a17a",
+      "verdict": "clean"
+    },
+    "components/ui/resizable-bottom-pane.tsx": {
+      "hash": "bf81406402bbd9c910aa2c5a866fe1a9b7d6ad0c",
+      "verdict": "findings"
+    },
+    "components/ui/searchable-select.tsx": {
+      "hash": "45ed6b7a18efbc78246adaa80f1353078583873a",
+      "verdict": "clean"
+    },
+    "components/ui/select.tsx": {
+      "hash": "bc628de27b1372c1b8db2f23057a115c2df6e642",
+      "verdict": "clean"
+    },
+    "components/ui/status-badge.tsx": {
+      "hash": "6f552ea44d03291df6aff50ee05b5763cae45e34",
+      "verdict": "clean"
+    },
+    "components/ui/tabs.tsx": {
+      "hash": "7f73dcda316d3e3b34ef0f9c6b77fa47f7be503e",
+      "verdict": "clean"
+    },
+    "components/ui/textarea.tsx": {
+      "hash": "7f21b5e78a4c1c23bf41b6be206f3f81dc84fe99",
+      "verdict": "clean"
+    },
+    "components/ui/tooltip.tsx": {
+      "hash": "556781539703b736b7a9b1ce73eedc0d28b02100",
+      "verdict": "clean"
+    },
+    "eslint.config.mjs": {
+      "hash": "05e726d1b4201bc8c7716d2b058279676582e8c0",
+      "verdict": "clean"
+    },
+    "i18n/request.ts": {
+      "hash": "07ca33429f8a180bc7a79120575568a4b9c5a4b9",
+      "verdict": "clean"
+    },
+    "i18n/routing.ts": {
+      "hash": "ef04a1ad7efb5fb6d83a2fa1534bc6e001ec3655",
+      "verdict": "clean"
+    },
+    "lib/hooks/use-media-query.ts": {
+      "hash": "d1af5fad4a2e86b89daa0b6512af0936f78d0fb4",
+      "verdict": "clean"
+    },
+    "lib/hooks/use-permissions.ts": {
+      "hash": "21ff777462f98fa4a63a61ef0867cf238a9f7b0d",
+      "verdict": "clean"
+    },
+    "lib/hooks/use-user-settings.ts": {
+      "hash": "099ed03cfbe3366a323ca113fcc66076393c22e0",
+      "verdict": "clean"
+    },
+    "lib/i18n/document-language.ts": {
+      "hash": "747730b5735d3676e3e8e9fc2ba5e0d09d1c17e5",
+      "verdict": "clean"
+    },
+    "lib/i18n/locale-cookie.ts": {
+      "hash": "66c670bfdc0679fba5163e79c9e56b5af2983751",
+      "verdict": "clean"
+    },
+    "lib/invoice/totals.ts": {
+      "hash": "7d1fb7b17096fb1bb5b04855a0f0a60b593f186d",
+      "verdict": "clean"
+    },
+    "lib/services/supabase-service.ts": {
+      "hash": "6fe06fb0a11cef12bee96245da3795a30791840e",
+      "verdict": "clean"
+    },
+    "lib/stores/auth-store.ts": {
+      "hash": "1433e16a34d239e9b74fadfbcb66b3d668a0c359",
+      "verdict": "clean"
+    },
+    "lib/stores/calendar-store.ts": {
+      "hash": "7b89c87e937723a7547d620b1041219edf27ad1c",
+      "verdict": "clean"
+    },
+    "lib/stores/invoice-store.ts": {
+      "hash": "5f067f2142e2e9d8c218eb5c864a952997c9634c",
+      "verdict": "clean"
+    },
+    "lib/stores/job-types-store.ts": {
+      "hash": "0273ac8fa4b18bfa3bb4bb8b4f262039311541df",
+      "verdict": "clean"
+    },
+    "lib/stores/organizations-store.ts": {
+      "hash": "cff72cc95ad780f8e72b8ea3127df74f67194ec2",
+      "verdict": "clean"
+    },
+    "lib/stores/people-store.ts": {
+      "hash": "78a99da3945313c982b66362394142149d23f5e9",
+      "verdict": "clean"
+    },
+    "lib/stores/project-assignments-store.ts": {
+      "hash": "d1954e1ab2c13b867d6d1676d4de2d270290002e",
+      "verdict": "clean"
+    },
+    "lib/stores/projects-store.ts": {
+      "hash": "2b5a51d716be97e3d9e6f8323bc911c639b49032",
+      "verdict": "clean"
+    },
+    "lib/stores/timesheets-store.ts": {
+      "hash": "04b622508e54d3d34b0deaada3fb587b9a1f4424",
+      "verdict": "clean"
+    },
+    "lib/supabase/admin.ts": {
+      "hash": "4cfed3746944363b2b3cef60fdf4626228c00a34",
+      "verdict": "clean"
+    },
+    "lib/supabase/client.ts": {
+      "hash": "5af21d782886756a37711daf62fefc534d8f0bc4",
+      "verdict": "clean"
+    },
+    "lib/supabase/server.ts": {
+      "hash": "07fe0be938096072988198df01f50f4b114dab6e",
+      "verdict": "clean"
+    },
+    "lib/timesheets/calculation.test.ts": {
+      "hash": "d59e3c8032e99be5c8337063b0e656c2652481d2",
+      "verdict": "clean"
+    },
+    "lib/timesheets/calculation.ts": {
+      "hash": "8dc7164219a44fb23d0956fff182a82aaa142fb1",
+      "verdict": "clean"
+    },
+    "lib/timesheets/holidays.ts": {
+      "hash": "b76c7013496a0d410219bdca84b5cfc147865b0c",
+      "verdict": "clean"
+    },
+    "lib/timesheets/location.ts": {
+      "hash": "4e597c04b89e8805bf733745509f9aebfce0414d",
+      "verdict": "clean"
+    },
+    "lib/timesheets/ruleset.ts": {
+      "hash": "ae1ae2b6c356d300f28e9f8aace8121dddc88d08",
+      "verdict": "clean"
+    },
+    "lib/timesheets/types.ts": {
+      "hash": "ef8d703cdee61f3c9ff943f86ec87ff1292d5d0a",
+      "verdict": "clean"
+    },
+    "lib/types/models.ts": {
+      "hash": "a0058c262802453307378db8aa4585901e8284d2",
+      "verdict": "clean"
+    },
+    "lib/utils.ts": {
+      "hash": "bd0c391ddd1088e9067844c48835bf4abcd61783",
+      "verdict": "clean"
+    },
+    "messages/de.json": {
+      "hash": "1a1afa1edabe4b6fb3c5d852d0ce9e78f48aa47e",
+      "verdict": "clean"
+    },
+    "messages/en.json": {
+      "hash": "f8913f20fe9beafdeb4f2bd2c3a7f0f60b502d53",
+      "verdict": "clean"
+    },
+    "next.config.ts": {
+      "hash": "c9f686d25241b2037faf8915232316d37750c367",
+      "verdict": "clean"
+    },
+    "package-lock.json": {
+      "hash": "ad8e29f2272fa264271bcbb0153c86fe57a746af",
+      "verdict": "clean"
+    },
+    "package.json": {
+      "hash": "92534d36808e85687983d77d8d5ccceb82ddcf84",
+      "verdict": "clean"
+    },
+    "postcss.config.mjs": {
+      "hash": "61e36849cf7cfa9f1f71b4a3964a4953e3e243d3",
+      "verdict": "clean"
+    },
+    "proxy.ts": {
+      "hash": "2dae34796ef4b2bd785f4c60062554ddef50f876",
+      "verdict": "clean"
+    },
+    "scripts/audit-broken-revision-invoices.mjs": {
+      "hash": "ca02f168bbfbdc57d076c1bb14234ab57f4a5686",
+      "verdict": "clean"
+    },
+    "scripts/audit-i18n-hardcoded-strings.mjs": {
+      "hash": "d0e16d6acf37b46594ec572aad836cfe0cda8fab",
+      "verdict": "clean"
+    },
+    "scripts/check-invoice-user.mjs": {
+      "hash": "bf777a122a19906662c3511857f3ed4f33976be1",
+      "verdict": "clean"
+    },
+    "scripts/inspect-revision-items.mjs": {
+      "hash": "f80c7fd1bd034fa1eafe6e3fd5d27835c5afc13e",
+      "verdict": "clean"
+    },
+    "scripts/probe-hetero-insert.mjs": {
+      "hash": "aad84e4f02d4f8cb53d94be76a18fa01c0379cc6",
+      "verdict": "clean"
+    },
+    "scripts/repair-broken-revision-invoices.mjs": {
+      "hash": "1584586617bc5ed3d25e46c20aa2e598031bc2a4",
+      "verdict": "clean"
+    },
+    "supabase/migrations/20260516193848_remote_schema.sql": {
+      "hash": "07cd34098096019c7fe51755faf46b6f4efd75e0",
+      "verdict": "clean"
+    },
+    "supabase/migrations/20260517071611_invoice_document_language.sql": {
+      "hash": "f1fc1d33b8a8863e4763db953041745ad54f5254",
+      "verdict": "clean"
+    },
+    "supabase/migrations/20260517160657_schema_cleanup_unused_fields.sql": {
+      "hash": "20e75fcdd1d3318729cb920ed0cb24cc7a53b0e7",
+      "verdict": "clean"
+    },
+    "supabase/migrations/20260517220648_user_settings.sql": {
+      "hash": "c04e5e82cf2539b47a2ad557248e13deffa7fb3c",
+      "verdict": "clean"
+    },
+    "supabase/migrations/20260717120000_timesheets.sql": {
+      "hash": "a5c54d1ced9c04ed796b0f4ae6e43cb5532ffdbe",
+      "verdict": "clean"
+    },
+    "supabase/migrations/20260717180436_org_hierarchy.sql": {
+      "hash": "66c39d13642b1b76ddbed4a72e0da592f56edde7",
+      "verdict": "clean"
+    },
+    "tsconfig.json": {
+      "hash": "3a13f90a773b0facb675bf5b1a8239c8f33d36f5",
+      "verdict": "clean"
+    },
+    "vercel.json": {
+      "hash": "3de552404fcd07c58e2520b24a8ef699911ffb02",
+      "verdict": "clean"
+    }
+  },
+  "context7_cache": {},
+  "open_findings": [],
+  "resolved_findings": [
+    {
+      "id": "FIXED-01",
+      "resolution": "Fixed in commit 3886069: TimesheetEstimatePanel hardcoded all UI strings in German instead of calling useTranslations, unlike every sibling timesheets component. This left en.json missing 15 keys added alongside de.json in 07c37a8, breaking tsc/next build, and meant English-locale users saw German text. Wired the component to next-intl and added the missing English translations."
+    },
+    {
+      "id": "LINT-01",
+      "resolution": "Fixed in commit 65207b7: removed 9 stale/unused eslint-disable directives via `npm run lint -- --fix`. No behavior change."
+    },
+    {
+      "id": "DEAD-01",
+      "resolution": "Deleted components/i18n/language-switcher.tsx (zero imports). Corrected CLAUDE.md i18n section, which pointed to it as living in the sidebar footer — the switcher actually lives inline in components/settings/general-section.tsx."
+    },
+    {
+      "id": "DEAD-02",
+      "resolution": "Deleted components/mobile/index.ts barrel (zero consumers). Corrected CLAUDE.md mobile section, which described a barrel-import pattern no file actually used."
+    },
+    {
+      "id": "DEAD-03",
+      "resolution": "Deleted components/people/person-list-item.tsx (zero imports, superseded by compact-person-list-item.tsx)."
+    },
+    {
+      "id": "DEAD-04",
+      "resolution": "Deleted components/organizations/organization-list-item.tsx (zero imports, superseded by compact-organization-list-item.tsx)."
+    },
+    {
+      "id": "DEAD-05",
+      "resolution": "Deleted components/projects/project-list-item.tsx (zero imports, superseded by compact-project-list-item.tsx)."
+    },
+    {
+      "id": "DEAD-06",
+      "resolution": "Deleted components/projects/project-detail-drawer.tsx (only consumer was DEAD-05, deleted in the same commit)."
+    },
+    {
+      "id": "DEAD-07",
+      "resolution": "Deleted components/people/person-detail-dialog.tsx (legacy dialog view, zero imports)."
+    },
+    {
+      "id": "DEAD-08",
+      "resolution": "Deleted components/organizations/organization-detail-dialog.tsx (legacy dialog view, zero imports)."
+    },
+    {
+      "id": "DEAD-09",
+      "resolution": "Deleted components/projects/project-detail-dialog.tsx (legacy dialog view, zero imports)."
+    },
+    {
+      "id": "DEAD-10",
+      "resolution": "Deleted components/ui/date-picker.tsx (unused shadcn scaffold primitive)."
+    },
+    {
+      "id": "DEAD-11",
+      "resolution": "Deleted components/ui/table.tsx (unused shadcn scaffold primitive; original zero-usage grep had false-positive noise from the word \"table\" — re-verified against actual import statements before deleting)."
+    },
+    {
+      "id": "DEAD-12",
+      "resolution": "Deleted components/ui/separator.tsx. Its only importers were the three dialog files (DEAD-07/08/09) deleted in the same commit, so it is genuinely dead once those land."
+    },
+    {
+      "id": "DEAD-13",
+      "resolution": "Trimmed 17 confirmed-unused exports (GenderDisplay, LanguageDisplay, JobCategoryColors/Icons, getJobCategory, formatAddress, isAddressEmpty, OrganizationCategoryColors/Icons, getOrganizationCategory, ProjectStatusColors/Icons, AssignmentStatusColors, CrewDepartmentIcons/Colors, getDepartmentFromJob, UserRoleDisplay, InvoiceStatusColors) from lib/types/models.ts. Re-verified after DEAD-01–12 landed, since 3 of these (JobCategoryColors, isAddressEmpty, ProjectStatusColors) had misleading grep hits from files deleted in that same run. Kept JobCategory enum and JOB_CATEGORY_TO_DEPARTMENT — both are live, consumed by lib/stores/job-types-store.ts."
+    },
+    {
+      "id": "DRIFT-01",
+      "resolution": "Annotated CLAUDE.md’s design-system table: <FormSection> is currently unused (kept as an available alternative, file not deleted)."
+    },
+    {
+      "id": "DRIFT-02",
+      "resolution": "Annotated CLAUDE.md’s design-system table: <DetailTabs> is currently unused (its only consumer, DEAD-06, was deleted this run)."
+    },
+    {
+      "id": "DRIFT-03",
+      "resolution": "Annotated CLAUDE.md’s design-system table: <ResizableBottomPane> is currently unused (file not deleted)."
+    },
+    {
+      "id": "ROBUST-01",
+      "resolution": "Fixed components/mobile/mobile-swipe-tabs.tsx to import { Tabs as TabsPrimitive } from \"radix-ui\" instead of the undeclared transitive @radix-ui/react-tabs, matching tabs.tsx/dialog.tsx."
+    },
+    {
+      "id": "DEP-01",
+      "resolution": "Removed 6 of the 7 flagged packages (@radix-ui/react-dialog, @hookform/resolvers, cmdk, jspdf, pdf-lib, react-hook-form) plus the newly-discovered dead components/ui/form.tsx (only consumer of react-hook-form, itself zero-consumer). CORRECTION to the original finding: @radix-ui/react-popover was misidentified as unused — it is imported directly by components/ui/searchable-select.tsx (12 live consumers), multi-search-select.tsx, popover.tsx, and project-detail-panel.tsx. Left installed; removing it would have broken the build. Also corrected CLAUDE.md’s invoice-printing section, which incorrectly claimed jspdf/pdf-lib power PDF generation (actual mechanism is window.print())."
+    }
+  ],
+  "wontfix": [],
+  "baseline": {
+    "typecheck": "pass",
+    "lint": {
+      "errors": 0,
+      "warnings": 89
+    },
+    "build": "pass",
+    "test": {
+      "files": 1,
+      "passed": 85,
+      "failed": 0
+    },
+    "checked_at": "2026-07-19T11:36:00.000Z"
+  }
+}

@@ -44,12 +44,6 @@ export enum Gender {
   Other = "other"
 }
 
-export const GenderDisplay: Record<Gender, string> = {
-  [Gender.Male]: "Male",
-  [Gender.Female]: "Female",
-  [Gender.Other]: "Other"
-};
-
 export enum Language {
   EN = "EN",
   DE = "DE",
@@ -57,14 +51,6 @@ export enum Language {
   ES = "ES",
   IT = "IT"
 }
-
-export const LanguageDisplay: Record<Language, string> = {
-  [Language.EN]: "English",
-  [Language.DE]: "German",
-  [Language.FR]: "French",
-  [Language.ES]: "Spanish",
-  [Language.IT]: "Italian"
-};
 
 export enum JobType {
   // Production Department
@@ -160,95 +146,6 @@ export enum JobCategory {
   Other = "Other"
 }
 
-export const JobCategoryColors: Record<JobCategory, string> = {
-  [JobCategory.Production]: "green",
-  [JobCategory.Direction]: "red",
-  [JobCategory.Camera]: "blue",
-  [JobCategory.Sound]: "purple",
-  [JobCategory.Lighting]: "yellow",
-  [JobCategory.Grip]: "orange",
-  [JobCategory.ArtDepartment]: "brown",
-  [JobCategory.Makeup]: "pink",
-  [JobCategory.Wardrobe]: "indigo",
-  [JobCategory.PostProduction]: "cyan",
-  [JobCategory.Other]: "gray"
-};
-
-export const JobCategoryIcons: Record<JobCategory, string> = {
-  [JobCategory.Production]: "Users",
-  [JobCategory.Direction]: "Megaphone",
-  [JobCategory.Camera]: "Camera",
-  [JobCategory.Sound]: "Waveform",
-  [JobCategory.Lighting]: "Lightbulb",
-  [JobCategory.Grip]: "Wrench",
-  [JobCategory.ArtDepartment]: "Palette",
-  [JobCategory.Makeup]: "Paintbrush",
-  [JobCategory.Wardrobe]: "Shirt",
-  [JobCategory.PostProduction]: "Monitor",
-  [JobCategory.Other]: "User"
-};
-
-// Helper function to get job category
-export function getJobCategory(job: JobType): JobCategory {
-  const productionJobs = [
-    JobType.ExecutiveProducer, JobType.Producer, JobType.LineProducer,
-    JobType.ProductionCoordinator, JobType.ProductionAssistant,
-    JobType.ProductionManager, JobType.LocationManager, JobType.LocationScout
-  ];
-
-  const directionJobs = [
-    JobType.Director, JobType.FirstAD, JobType.SecondAD,
-    JobType.ThirdAD, JobType.ScriptSupervisor
-  ];
-
-  const cameraJobs = [
-    JobType.Photographer, JobType.PhotographersAssistant, JobType.DigitalOperator,
-    JobType.FirstAC, JobType.SecondAC, JobType.DIT,
-    JobType.CameraOperator, JobType.SteadicamOperator
-  ];
-
-  const soundJobs = [
-    JobType.VTR, JobType.SoundMixer, JobType.BoomOperator, JobType.SoundAssistant
-  ];
-
-  const lightingJobs = [
-    JobType.Gaffer, JobType.Electrician, JobType.BestBoy, JobType.LightingTechnician
-  ];
-
-  const gripJobs = [JobType.Grip, JobType.KeyGrip, JobType.DollyGrip];
-
-  const artJobs = [
-    JobType.ProductionDesigner, JobType.ArtDirector,
-    JobType.SetDecorator, JobType.PropMaster
-  ];
-
-  const makeupJobs = [
-    JobType.MakeupArtist, JobType.HairStylist, JobType.SpecialEffectsMakeup
-  ];
-
-  const wardrobeJobs = [
-    JobType.CostumeDesigner, JobType.WardrobeStylist, JobType.WardrobeAssistant
-  ];
-
-  const postProductionJobs = [
-    JobType.Editor, JobType.AssistantEditor, JobType.Colorist,
-    JobType.VFXSupervisor, JobType.VFXArtist, JobType.MotionGraphicsDesigner
-  ];
-
-  if (productionJobs.includes(job)) return JobCategory.Production;
-  if (directionJobs.includes(job)) return JobCategory.Direction;
-  if (cameraJobs.includes(job)) return JobCategory.Camera;
-  if (soundJobs.includes(job)) return JobCategory.Sound;
-  if (lightingJobs.includes(job)) return JobCategory.Lighting;
-  if (gripJobs.includes(job)) return JobCategory.Grip;
-  if (artJobs.includes(job)) return JobCategory.ArtDepartment;
-  if (makeupJobs.includes(job)) return JobCategory.Makeup;
-  if (wardrobeJobs.includes(job)) return JobCategory.Wardrobe;
-  if (postProductionJobs.includes(job)) return JobCategory.PostProduction;
-
-  return JobCategory.Other;
-}
-
 export interface Address {
   name?: string | null;
   street1?: string | null;
@@ -256,18 +153,6 @@ export interface Address {
   zip?: string | null;
   city?: string | null;
   country?: string | null;
-}
-
-export function formatAddress(address: Address): string {
-  return [address.street1, address.street2, address.zip, address.city, address.country]
-    .filter(Boolean)
-    .join(", ");
-}
-
-export function isAddressEmpty(address: Address | null | undefined): boolean {
-  if (!address) return true;
-  return ![address.street1, address.street2, address.zip, address.city, address.country]
-    .some(val => val && val.trim().length > 0);
 }
 
 // MARK: - Organization Role (hierarchy)
@@ -354,72 +239,6 @@ export enum OrganizationCategory {
   Other = "Other"
 }
 
-export const OrganizationCategoryColors: Record<OrganizationCategory, string> = {
-  [OrganizationCategory.Agency]: "blue",
-  [OrganizationCategory.Production]: "green",
-  [OrganizationCategory.Equipment]: "orange",
-  [OrganizationCategory.PostProduction]: "purple",
-  [OrganizationCategory.Services]: "teal",
-  [OrganizationCategory.Distribution]: "red",
-  [OrganizationCategory.Music]: "pink",
-  [OrganizationCategory.Other]: "gray"
-};
-
-export const OrganizationCategoryIcons: Record<OrganizationCategory, string> = {
-  [OrganizationCategory.Agency]: "Users",
-  [OrganizationCategory.Production]: "Video",
-  [OrganizationCategory.Equipment]: "Wrench",
-  [OrganizationCategory.PostProduction]: "Monitor",
-  [OrganizationCategory.Services]: "Hand",
-  [OrganizationCategory.Distribution]: "Tv",
-  [OrganizationCategory.Music]: "Music",
-  [OrganizationCategory.Other]: "Building"
-};
-
-export function getOrganizationCategory(jobType: OrganizationJobType): OrganizationCategory {
-  const agencyTypes = [
-    OrganizationJobType.Agency,
-    OrganizationJobType.CastingAgency,
-    OrganizationJobType.TalentAgency
-  ];
-
-  const productionTypes = [
-    OrganizationJobType.FilmProduction,
-    OrganizationJobType.PhotoProduction
-  ];
-
-  const postProductionTypes = [
-    OrganizationJobType.PostProduction,
-    OrganizationJobType.EditingSuite,
-    OrganizationJobType.ColorGrading,
-    OrganizationJobType.VFXStudio,
-    OrganizationJobType.AnimationStudio,
-    OrganizationJobType.SoundStudio
-  ];
-
-  const serviceTypes = [
-    OrganizationJobType.LocationService,
-    OrganizationJobType.CateringService,
-    OrganizationJobType.TransportService
-  ];
-
-  const distributionTypes = [
-    OrganizationJobType.Broadcaster,
-    OrganizationJobType.StreamingPlatform,
-    OrganizationJobType.DistributionCompany
-  ];
-
-  if (agencyTypes.includes(jobType)) return OrganizationCategory.Agency;
-  if (productionTypes.includes(jobType)) return OrganizationCategory.Production;
-  if (jobType === OrganizationJobType.EquipmentRental) return OrganizationCategory.Equipment;
-  if (postProductionTypes.includes(jobType)) return OrganizationCategory.PostProduction;
-  if (serviceTypes.includes(jobType)) return OrganizationCategory.Services;
-  if (distributionTypes.includes(jobType)) return OrganizationCategory.Distribution;
-  if (jobType === OrganizationJobType.MusicLabel) return OrganizationCategory.Music;
-
-  return OrganizationCategory.Other;
-}
-
 // MARK: - Project Model
 export interface Project {
   id: string;
@@ -458,24 +277,6 @@ export enum ProjectStatus {
   Hold = "HOLD"
 }
 
-export const ProjectStatusColors: Record<ProjectStatus, string> = {
-  [ProjectStatus.Inquiry]: "blue",
-  [ProjectStatus.Budget]: "orange",
-  [ProjectStatus.Production]: "green",
-  [ProjectStatus.Completed]: "mint",
-  [ProjectStatus.Cancelled]: "red",
-  [ProjectStatus.Hold]: "purple"
-};
-
-export const ProjectStatusIcons: Record<ProjectStatus, string> = {
-  [ProjectStatus.Inquiry]: "HelpCircle",
-  [ProjectStatus.Budget]: "DollarSign",
-  [ProjectStatus.Production]: "PlayCircle",
-  [ProjectStatus.Completed]: "CheckCircle",
-  [ProjectStatus.Cancelled]: "XCircle",
-  [ProjectStatus.Hold]: "PauseCircle"
-};
-
 // MARK: - Project Assignment Model
 export interface ProjectAssignment {
   id: string;
@@ -506,18 +307,6 @@ export enum AssignmentStatus {
   KeineRueckmeldung = "No Response"
 }
 
-export const AssignmentStatusColors: Record<AssignmentStatus, string> = {
-  [AssignmentStatus.Anfragen]: "blue",
-  [AssignmentStatus.Angefragt]: "orange",
-  [AssignmentStatus.Verfuegbar]: "green",
-  [AssignmentStatus.NichtVerfuegbar]: "gray",
-  [AssignmentStatus.ErsteOption]: "yellow",
-  [AssignmentStatus.ZweiteOption]: "orange",
-  [AssignmentStatus.Gebucht]: "green",
-  [AssignmentStatus.Abgesagt]: "red",
-  [AssignmentStatus.KeineRueckmeldung]: "gray"
-};
-
 // MARK: - Department and Role Definitions
 export enum CrewDepartment {
   Camera = "Camera",
@@ -541,50 +330,6 @@ export enum CrewDepartment {
   Other = "Other"
 }
 
-export const CrewDepartmentIcons: Record<CrewDepartment, string> = {
-  [CrewDepartment.Camera]: "Camera",
-  [CrewDepartment.Sound]: "Waveform",
-  [CrewDepartment.Lighting]: "Lightbulb",
-  [CrewDepartment.Grip]: "Wrench",
-  [CrewDepartment.Production]: "Users",
-  [CrewDepartment.Direction]: "Megaphone",
-  [CrewDepartment.Script]: "FileText",
-  [CrewDepartment.Continuity]: "Clipboard",
-  [CrewDepartment.Makeup]: "Paintbrush",
-  [CrewDepartment.Costume]: "Shirt",
-  [CrewDepartment.SetDecoration]: "Sofa",
-  [CrewDepartment.PostProduction]: "Tv",
-  [CrewDepartment.VFX]: "Sparkles",
-  [CrewDepartment.Talent]: "Drama",
-  [CrewDepartment.Catering]: "Utensils",
-  [CrewDepartment.Transportation]: "Car",
-  [CrewDepartment.Security]: "Shield",
-  [CrewDepartment.Location]: "MapPin",
-  [CrewDepartment.Other]: "User"
-};
-
-export const CrewDepartmentColors: Record<CrewDepartment, string> = {
-  [CrewDepartment.Camera]: "blue",
-  [CrewDepartment.Sound]: "purple",
-  [CrewDepartment.Lighting]: "yellow",
-  [CrewDepartment.Grip]: "orange",
-  [CrewDepartment.Production]: "green",
-  [CrewDepartment.Direction]: "red",
-  [CrewDepartment.Script]: "indigo",
-  [CrewDepartment.Continuity]: "teal",
-  [CrewDepartment.Makeup]: "pink",
-  [CrewDepartment.Costume]: "brown",
-  [CrewDepartment.SetDecoration]: "cyan",
-  [CrewDepartment.PostProduction]: "purple",
-  [CrewDepartment.VFX]: "mint",
-  [CrewDepartment.Talent]: "pink",
-  [CrewDepartment.Catering]: "orange",
-  [CrewDepartment.Transportation]: "cyan",
-  [CrewDepartment.Security]: "red",
-  [CrewDepartment.Location]: "green",
-  [CrewDepartment.Other]: "gray"
-};
-
 // MARK: - Job → Department auto-mapping
 export const JOB_CATEGORY_TO_DEPARTMENT: Record<JobCategory, CrewDepartment> = {
   [JobCategory.Production]:    CrewDepartment.Production,
@@ -600,22 +345,12 @@ export const JOB_CATEGORY_TO_DEPARTMENT: Record<JobCategory, CrewDepartment> = {
   [JobCategory.Other]:         CrewDepartment.Other,
 };
 
-export function getDepartmentFromJob(job: JobType): CrewDepartment {
-  return JOB_CATEGORY_TO_DEPARTMENT[getJobCategory(job)];
-}
-
 // MARK: - User Role System
 export enum UserRole {
   Admin = "admin",
   User = "user",
   Viewer = "viewer"
 }
-
-export const UserRoleDisplay: Record<UserRole, string> = {
-  [UserRole.Admin]: "Administrator",
-  [UserRole.User]: "User",
-  [UserRole.Viewer]: "Viewer"
-};
 
 export interface UserSession {
   userId: string;
@@ -787,16 +522,6 @@ export enum InvoiceStatus {
   Corrected = "corrected",
   RevisionDraft = "revision_draft"
 }
-
-export const InvoiceStatusColors: Record<InvoiceStatus, string> = {
-  [InvoiceStatus.Draft]: "gray",
-  [InvoiceStatus.Sent]: "blue",
-  [InvoiceStatus.Paid]: "green",
-  [InvoiceStatus.Overdue]: "red",
-  [InvoiceStatus.Cancelled]: "orange",
-  [InvoiceStatus.Corrected]: "orange",
-  [InvoiceStatus.RevisionDraft]: "gray"
-};
 
 export enum InvoiceDocumentType {
   Invoice = "invoice",

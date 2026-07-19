@@ -33,7 +33,7 @@ npx supabase migration list                 # confirm local == remote
 
 Do **not** run SQL directly in the Supabase Dashboard once a migration is needed — it bypasses tracking and creates drift. If a remote change has already happened manually, use `npx supabase db pull` to capture it as a baseline migration before adding new files on top.
 
-Historical pre-CLI migration files live in `_legacy-migrations/` for reference only — they were applied via Dashboard before the CLI workflow was adopted and are now baked into the first `supabase/migrations/` file. **Do not re-run them.**
+Pre-CLI migrations were applied via Dashboard before the CLI workflow was adopted and are now baked into the first `supabase/migrations/` file — there is no separate `_legacy-migrations/` directory in the repo. **Do not re-run them.**
 
 ### Environment variables (`.env.local`)
 
@@ -113,7 +113,7 @@ Job types are **database-driven**, not purely static. `useJobTypesStore` holds `
 
 ### Invoice printing
 
-Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel. Uses `jspdf` / `pdf-lib`. Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
+Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel; the browser's native `window.print()` produces the PDF — there is no `jspdf` / `pdf-lib` dependency in the actual implementation. Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
 
 ### Aconto, storno, and revision invoices
 
@@ -133,7 +133,7 @@ The app ships in German (default) and English via [`next-intl`](https://next-int
 
 - **Config:** [`i18n/routing.ts`](i18n/routing.ts) (locale list, cookie name, default) + [`i18n/request.ts`](i18n/request.ts) (reads the cookie server-side, loads `messages/<locale>.json`).
 - **Provider:** [`app/layout.tsx`](app/layout.tsx) is now an async server component that fetches the locale and wraps everything in `<NextIntlClientProvider>`. All client components below can `useTranslations(...)` directly.
-- **Switcher:** [`components/i18n/language-switcher.tsx`](components/i18n/language-switcher.tsx). Sits in the sidebar footer above feedback / sign-out. Writes both the `cb_locale` cookie (read by `next-intl` at render time) **and** `user_settings.app_language` in the DB (via `useUserSettings()`) so the preference persists across devices. Triggers `window.location.reload()` to refresh server-rendered messages.
+- **Switcher:** lives inline in [`components/settings/general-section.tsx`](components/settings/general-section.tsx) (Settings → General), not in the sidebar. Writes both the `cb_locale` cookie (read by `next-intl` at render time) **and** `user_settings.app_language` in the DB (via `useUserSettings()`) so the preference persists across devices. Triggers `window.location.reload()` to refresh server-rendered messages.
 - **Translation files:** [`messages/de.json`](messages/de.json) and [`messages/en.json`](messages/en.json). Keys are organised by domain (`common`, `navigation`, `auth`, `dashboard`, `people`, `projects`, `organizations`, `invoices`, `invoicePdf`, `calendar`, `admin`, `search`, plus enum dictionaries `assignmentStatus`, `departments`, `gender`, `languages`, `roles`). Both files must keep the same key shape.
 - **Status badges** in [`components/ui/status-badge.tsx`](components/ui/status-badge.tsx) translate their *labels* but keep the colour classes keyed on the raw enum value, so colours never change across locales.
 
@@ -195,15 +195,15 @@ CSS variables in `:root`:
 |---|---|---|
 | `<PageHeader>` | `components/ui/page-header.tsx` | Title, subtitle/count, search slot, filter slot, actions slot |
 | `<MobilePageHeader>` | `components/layout/mobile-page-header.tsx` | Mobile top bar (hamburger + title + optional right action); use alongside `<PageHeader>` in domain pages — `<PageHeader>` for desktop, `<MobilePageHeader>` for mobile |
-| `<FormSection>` | `components/ui/form-section.tsx` | Section card with styled header for detail pane groupings |
+| `<FormSection>` | `components/ui/form-section.tsx` | Section card with styled header for detail pane groupings — **currently unused** (`.section-card` CSS classes below are the pattern actually in use); kept as an available alternative, not a live dependency |
 | `<ProjectStatusBadge>` | `components/ui/status-badge.tsx` | Consistent project status pill |
 | `<InvoiceStatusBadge>` | `components/ui/status-badge.tsx` | Consistent invoice status pill |
 | `<AvailabilityBadge>` | `components/ui/status-badge.tsx` | Crew availability pill |
-| `<DetailTabs>` | `components/ui/detail-tabs.tsx` | Tab bar for detail panes (pass `tabs`, `activeTab`, `onTabChange`) |
+| `<DetailTabs>` | `components/ui/detail-tabs.tsx` | Tab bar for detail panes (pass `tabs`, `activeTab`, `onTabChange`) — **currently unused** (no live consumer) |
 | `<EntryMetadata>` | `components/ui/entry-metadata.tsx` | Created/updated timestamps at the bottom of detail panes |
 | `<MultiSelect>` | `components/ui/multi-select.tsx` | Badge-style multi-value dropdown for small fixed lists |
 | `<BottomDrawer>` | `components/ui/bottom-drawer.tsx` | Resizable mobile bottom sheet — draggable handle, vh-based height (20–85vh) |
-| `<ResizableBottomPane>` | `components/ui/resizable-bottom-pane.tsx` | Fixed-half-height bottom pane with close chevron; for split-panel layouts |
+| `<ResizableBottomPane>` | `components/ui/resizable-bottom-pane.tsx` | Fixed-half-height bottom pane with close chevron; for split-panel layouts — **currently unused** (no live consumer) |
 
 ### Form fields in detail panels
 
@@ -302,7 +302,7 @@ The sidebar has a three-state responsive model managed by `SidebarProvider` / `u
 
 ### Mobile component system
 
-Full-screen mobile detail views (`*-mobile-detail.tsx`) are built from the `components/mobile/` barrel (`@/components/mobile`):
+Full-screen mobile detail views (`*-mobile-detail.tsx`) are built from individual files under `components/mobile/` (imported directly, e.g. `@/components/mobile/mobile-entity-detail-layout` — there is no barrel re-export):
 
 | Component | Purpose |
 |---|---|
