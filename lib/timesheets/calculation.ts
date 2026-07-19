@@ -9,26 +9,35 @@
 //   2. travelMinutes   = (travelToMinutes + travelBackMinutes) if travelQualifies, else 0
 //   3. totalWorkMinutes = rawWorkMinutes + travelMinutes
 //   4. billedMinutes   = max(totalWorkMinutes, 480) if dailyMinimum8h, else totalWorkMinutes
-//   5. nightMinutes    = overlap of work window with 22:00–06:00
-//   6. dailyOtBand1/2  = minutes beyond dailyOtStartH and dailyOtBand1 (Mon–Fri only)
-//   7. perDiemCents    = resolved from perDiemType.
+//   5. surchargeEligibleMinutes = billedMinutes - travelMinutes.
+//      § 12.4 TV FFS: qualifying travel is paid like working time (counts toward
+//      billedMinutes, the daily minimum, and base pay) but "ohne jegliche Zuschläge" —
+//      it must never itself receive, or count toward crossing the threshold for,
+//      any surcharge (daily/weekly OT, night, Sat/Sun/holiday).
+//   6. nightMinutes    = overlap of work window with 22:00–06:00 (travel excluded by construction)
+//   7. dailyOtBand1/2  = minutes of surchargeEligibleMinutes beyond dailyOtStartH (Mon–Fri only)
+//   8. perDiemCents    = resolved from perDiemType.
 //      § 12.2 TV FFS: auto → partial when totalWorkMinutes ≥ 480 (actual hours, not billing floor).
 //      Per diems are suppressed when placeOfWork matches homeBase (local booking).
 //
 // Weekly OT:
-//   weeklyCountMinutes:
-//     - Sat/Sun/Holiday: contribute all billedMinutes to the weekly counter
-//     - Mon–Fri: contribute min(billedMinutes, dailyOtStartH×60) to weekly counter
+//   weeklyCountMinutes (built from each day's surchargeEligibleMinutes, i.e. travel excluded):
+//     - Sat/Sun/Holiday: contribute all of it to the weekly counter
+//     - Mon–Fri: contribute min(it, dailyOtStartH×60) to weekly counter
 //       (hours beyond dailyOtStartH are already covered by daily OT, not weekly)
 //   weeklyOtMinutes = max(0, weeklyCountMinutes - weeklyOtThresholdH×60)
 //   Split into band1 (up to weeklyOtBand1EndH×60) and band2 (above).
 //
 // Rest-period violations (ArbZG § 5 / TV FFS § 5.8):
-//   Minimum 11h rest between consecutive worked calendar days.
+//   Minimum 11h rest between consecutive worked calendar days. Since qualifying
+//   travel counts as Arbeitszeit (§ 5.2.2 / § 12.4), a day's travel-back extends
+//   its effective end and the next day's travel-to pulls its effective start
+//   forward — travel can turn an apparently-compliant gap into a violation.
 //   Violation compensation = shortfall minutes × hourlyCents / 60.
 //
 // Surcharges:
-//   All surcharges are ADDITIVE on top of the base hourly rate (C1 answer).
+//   All surcharges are ADDITIVE on top of the base hourly rate (C1 answer),
+//   and computed on surchargeEligibleMinutes, never on travel minutes.
 //   formula per component: Math.round((minutes/60) × hourlyRateCents × pct/100)
 //
 // dayTotalCents (per-day display):
@@ -159,6 +168,12 @@ export function calculateDay(
     ? (useDailyMinimum ? Math.max(totalWorkMinutes, dailyMinimumMinutes) : totalWorkMinutes)
     : 0;
 
+  // § 12.4 TV FFS: qualifying travel is paid like working time ("wie Arbeitszeit")
+  // but "ohne jegliche Zuschläge" — without any surcharges whatsoever. So travel
+  // minutes count toward billedMinutes (base pay, daily minimum) but must be
+  // excluded from every surcharge-rate and threshold calculation below.
+  const surchargeEligibleMinutes = billedMinutes - travelMinutes;
+
   // Night minutes (22:00–06:00) — only from the raw work window, not travel
   let nightMins = 0;
   if (isWorked && startMin !== null && endMin !== null) {
@@ -176,8 +191,8 @@ export function calculateDay(
   let dailyOtBand2Minutes = 0;
 
   if (isWorked && !isWeekend && !isHoliday) {
-    if (billedMinutes > dailyOtThresholdMin) {
-      const overDailyOt = billedMinutes - dailyOtThresholdMin;
+    if (surchargeEligibleMinutes > dailyOtThresholdMin) {
+      const overDailyOt = surchargeEligibleMinutes - dailyOtThresholdMin;
       dailyOtBand1Minutes = Math.min(overDailyOt, dailyOtBand1DurationMin);
       dailyOtBand2Minutes = Math.max(0, overDailyOt - dailyOtBand1DurationMin);
     }
@@ -213,13 +228,13 @@ export function calculateDay(
       ? surchargeCents(nightMins, hourlyCents, ruleset.nightPct)
       : 0;
     const daySat = isSaturday && ruleset.saturdayEnabled
-      ? surchargeCents(billedMinutes, hourlyCents, ruleset.saturdayPct)
+      ? surchargeCents(surchargeEligibleMinutes, hourlyCents, ruleset.saturdayPct)
       : 0;
     const daySun = isSunday && ruleset.sundayEnabled
-      ? surchargeCents(billedMinutes, hourlyCents, ruleset.sundayPct)
+      ? surchargeCents(surchargeEligibleMinutes, hourlyCents, ruleset.sundayPct)
       : 0;
     const dayHol = isHoliday && ruleset.holidayEnabled
-      ? surchargeCents(billedMinutes, hourlyCents, ruleset.holidayPct)
+      ? surchargeCents(surchargeEligibleMinutes, hourlyCents, ruleset.holidayPct)
       : 0;
     dayTotalCents = dayBase + dayOtSurcharge + dayNight + daySat + daySun + dayHol + perDiemCents;
   }
@@ -259,12 +274,15 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
 
   for (const dr of dayResults) {
     if (!dr.isWorked) continue;
+    // § 12.4 TV FFS: qualifying travel is excluded from every surcharge/threshold
+    // calculation, including whether a week crosses into weekly OT territory.
+    const surchargeEligible = dr.billedMinutes - dr.travelMinutes;
     const isWeekend = dr.isSaturday || dr.isSunday;
     const isHoliday = dr.isHoliday;
     if (isWeekend || isHoliday) {
-      weeklyCountMinutes += dr.billedMinutes;
+      weeklyCountMinutes += surchargeEligible;
     } else {
-      weeklyCountMinutes += Math.min(dr.billedMinutes, dailyOtThresholdMin);
+      weeklyCountMinutes += Math.min(surchargeEligible, dailyOtThresholdMin);
     }
   }
 
@@ -281,10 +299,11 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
   const totalDailyOtBand2 = dayResults.reduce((s, d) => s + d.dailyOtBand2Minutes, 0);
   const totalPerDiem = dayResults.reduce((s, d) => s + d.perDiemCents, 0);
 
-  // Day-type surcharge totals (multiply all billedMinutes on that day type)
-  const satMinutes = dayResults.filter((d) => d.isSaturday && d.isWorked).reduce((s, d) => s + d.billedMinutes, 0);
-  const sunMinutes = dayResults.filter((d) => d.isSunday && d.isWorked).reduce((s, d) => s + d.billedMinutes, 0);
-  const holMinutes = dayResults.filter((d) => d.isHoliday && d.isWorked).reduce((s, d) => s + d.billedMinutes, 0);
+  // Day-type surcharge totals (billedMinutes minus travel — § 12.4 excludes
+  // qualifying travel from every surcharge, including Sat/Sun/holiday rates)
+  const satMinutes = dayResults.filter((d) => d.isSaturday && d.isWorked).reduce((s, d) => s + (d.billedMinutes - d.travelMinutes), 0);
+  const sunMinutes = dayResults.filter((d) => d.isSunday && d.isWorked).reduce((s, d) => s + (d.billedMinutes - d.travelMinutes), 0);
+  const holMinutes = dayResults.filter((d) => d.isHoliday && d.isWorked).reduce((s, d) => s + (d.billedMinutes - d.travelMinutes), 0);
 
   // Base pay:
   //   standard/full_tarif: weekly rate is guaranteed (covers up to 50h)
@@ -344,10 +363,20 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
     if (startAMin === null || endAMin === null || startBMin === null) continue;
 
     // Adjust end for overnight work (work_end < work_start means past midnight)
-    const actualEndAMin = endAMin < startAMin ? endAMin + 24 * MINUTES_PER_HOUR : endAMin;
+    const rawEndAMin = endAMin < startAMin ? endAMin + 24 * MINUTES_PER_HOUR : endAMin;
+
+    // § 5.2.2 / § 12.4 TV FFS: qualifying travel counts as Arbeitszeit, so it
+    // extends the end of day A's working time (travel back) and pulls forward
+    // the start of day B's working time (travel to) for rest-period purposes —
+    // travel eating into the rest window can turn an apparently-compliant gap
+    // into a real violation.
+    const travelBackA = dayA.travelQualifies ? dayA.travelBackMinutes : 0;
+    const travelToB = dayB.travelQualifies ? dayB.travelToMinutes : 0;
+    const actualEndAMin = rawEndAMin + travelBackA;
+    const effectiveStartBMin = startBMin - travelToB;
 
     // Gap from end of day A to start of day B (next calendar day)
-    const gapMinutes = 24 * MINUTES_PER_HOUR - actualEndAMin + startBMin;
+    const gapMinutes = 24 * MINUTES_PER_HOUR - actualEndAMin + effectiveStartBMin;
 
     if (gapMinutes < MIN_REST_MINUTES) {
       const shortfall = MIN_REST_MINUTES - gapMinutes;

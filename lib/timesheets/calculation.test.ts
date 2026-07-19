@@ -230,8 +230,12 @@ describe('calculateDay — travel', () => {
     expect(r.billedMinutes).toBe(600); // floor to 10h
   });
 
-  it('qualifying travel can push into daily OT', () => {
-    // 08:00–18:00 = 10 h + 90 min travel = 11.5 h → 90 min daily OT
+  it('§ 12.4 TV FFS: qualifying travel is billed but never triggers daily OT surcharge', () => {
+    // 08:00–18:00 = 10 h raw work (exactly at the dailyOtStartH threshold) + 90 min
+    // qualifying travel = 11.5 h billed. The 90 min over the threshold is entirely
+    // travel, so it must be paid at base rate with zero OT surcharge — travel is
+    // "wie Arbeitszeit... jedoch ohne jegliche Zuschläge" (§ 12.4), not exempt from
+    // billing but exempt from every surcharge.
     const r = calculateDay(
       day('2026-07-13', '08:00', '18:00', {
         travelToMinutes: 60,
@@ -241,8 +245,26 @@ describe('calculateDay — travel', () => {
       BASE_RULESET
     );
     expect(r.totalWorkMinutes).toBe(690);
-    expect(r.dailyOtBand1Minutes).toBe(60);
-    expect(r.dailyOtBand2Minutes).toBe(30);
+    expect(r.billedMinutes).toBe(690); // travel is still billed at base rate
+    expect(r.dailyOtBand1Minutes).toBe(0);
+    expect(r.dailyOtBand2Minutes).toBe(0);
+  });
+
+  it('§ 12.4 TV FFS: raw work beyond the threshold still gets daily OT even with travel on top', () => {
+    // 08:00–20:00 = 12 h raw work (2h over the 10h threshold) + 30 min qualifying
+    // travel = 12.5 h billed. Only the 2h of real overtime work gets the OT
+    // surcharge (1h band1 + 1h band2); the 30 min of travel gets none.
+    const r = calculateDay(
+      day('2026-07-13', '08:00', '20:00', {
+        travelToMinutes: 30,
+        travelQualifies: true,
+      }),
+      BASE_RULESET
+    );
+    expect(r.rawWorkMinutes).toBe(720); // 12h
+    expect(r.billedMinutes).toBe(750);  // 12.5h (includes the 30min travel)
+    expect(r.dailyOtBand1Minutes).toBe(60);  // hour 11
+    expect(r.dailyOtBand2Minutes).toBe(60);  // hour 12
   });
 });
 
@@ -494,6 +516,102 @@ describe('calculateWeek — weekly OT via Saturday', () => {
   it('no rest violation for Mon–Sat (≥11h rest each night)', () => {
     // 18:00 to 08:00 next day = 14h → no violation
     const r = calculateWeek(week, BASE_RULESET);
+    expect(r.restViolationCents).toBe(0);
+  });
+});
+
+// ─── § 12.4 TV FFS: qualifying travel is excluded from day-type surcharges ──
+
+describe('calculateWeek — § 12.4 travel excluded from Saturday surcharge', () => {
+  const week: DayInput[] = [
+    day('2026-07-13', null, null),
+    day('2026-07-14', null, null),
+    day('2026-07-15', null, null),
+    day('2026-07-16', null, null),
+    day('2026-07-17', null, null),
+    // Sat: 8h raw work + 2h qualifying travel = 10h billed (exactly the floor)
+    day('2026-07-18', '08:00', '16:00', {
+      travelToMinutes: 60,
+      travelBackMinutes: 60,
+      travelQualifies: true,
+    }),
+    day('2026-07-19', null, null),
+  ];
+
+  it('Saturday surcharge applies only to the 8h raw work, not the 2h travel', () => {
+    const r = calculateWeek(week, BASE_RULESET);
+    // 8h × €40/h × 25% = €80 (NOT 10h × €40 × 25% = €100, which would
+    // incorrectly surcharge the travel time)
+    expect(r.saturdaySurchargeCents).toBe(8000);
+  });
+
+  it('weeklyCountMinutes excludes the travel portion too', () => {
+    const r = calculateWeek(week, BASE_RULESET);
+    expect(r.weeklyCountMinutes).toBe(480); // 8h, not 10h
+  });
+
+  it('billedMinutes (base pay) still includes the travel time', () => {
+    const r = calculateWeek(week, BASE_RULESET);
+    expect(r.days[5].billedMinutes).toBe(600); // 10h — travel is still paid
+  });
+});
+
+// ─── § 5.2.2 / § 12.4 TV FFS: travel extends the rest-period window ────────
+
+describe('calculateWeek — travel time counts toward rest-period violations', () => {
+  it('travel_back shrinks an apparently-compliant rest gap into a violation', () => {
+    // Raw times alone: Mon ends 20:00, Tue starts 08:00 → 12h gap, compliant.
+    // But Mon has 90min of qualifying travel_back, which is Arbeitszeit per
+    // § 5.2.2/§ 12.4, extending Mon's effective end to 21:30 → real gap is
+    // only 10.5h, a genuine rest-period violation.
+    const r = calculateWeek(
+      [
+        day('2026-07-13', '08:00', '20:00', {
+          travelBackMinutes: 90,
+          travelQualifies: true,
+        }),
+        day('2026-07-14', '08:00', '18:00'),
+        ...Array.from({ length: 5 }, (_, i) => day(`2026-07-${15 + i}`, null, null)),
+      ],
+      BASE_RULESET
+    );
+    expect(r.restViolationCents).toBeGreaterThan(0);
+    expect(r.days[0].restViolationMinutes).toBe(30); // 11h - 10.5h shortfall
+  });
+
+  it('travel_to on the next day also shrinks the rest gap', () => {
+    // Mon ends 20:00, Tue's raw start is 08:00 (12h gap, compliant), but Tue
+    // has 90min of qualifying travel_to beforehand, pulling Tue's effective
+    // start back to 06:30 → real gap is only 10.5h.
+    const r = calculateWeek(
+      [
+        day('2026-07-13', '08:00', '20:00'),
+        day('2026-07-14', '08:00', '18:00', {
+          travelToMinutes: 90,
+          travelQualifies: true,
+        }),
+        ...Array.from({ length: 5 }, (_, i) => day(`2026-07-${15 + i}`, null, null)),
+      ],
+      BASE_RULESET
+    );
+    expect(r.restViolationCents).toBeGreaterThan(0);
+    expect(r.days[0].restViolationMinutes).toBe(30);
+  });
+
+  it('non-qualifying travel does not affect the rest gap', () => {
+    // Same 90min travel_back as the first test, but travelQualifies=false —
+    // must NOT be treated as Arbeitszeit for rest-period purposes.
+    const r = calculateWeek(
+      [
+        day('2026-07-13', '08:00', '20:00', {
+          travelBackMinutes: 90,
+          travelQualifies: false,
+        }),
+        day('2026-07-14', '08:00', '18:00'),
+        ...Array.from({ length: 5 }, (_, i) => day(`2026-07-${15 + i}`, null, null)),
+      ],
+      BASE_RULESET
+    );
     expect(r.restViolationCents).toBe(0);
   });
 });
