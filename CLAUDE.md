@@ -133,7 +133,7 @@ The app ships in German (default) and English via [`next-intl`](https://next-int
 
 - **Config:** [`i18n/routing.ts`](i18n/routing.ts) (locale list, cookie name, default) + [`i18n/request.ts`](i18n/request.ts) (reads the cookie server-side, loads `messages/<locale>.json`).
 - **Provider:** [`app/layout.tsx`](app/layout.tsx) is now an async server component that fetches the locale and wraps everything in `<NextIntlClientProvider>`. All client components below can `useTranslations(...)` directly.
-- **Switcher:** [`components/i18n/language-switcher.tsx`](components/i18n/language-switcher.tsx). Sits in the sidebar footer above feedback / sign-out. Writes both the `cb_locale` cookie (read by `next-intl` at render time) **and** `user_settings.app_language` in the DB (via `useUserSettings()`) so the preference persists across devices. Triggers `window.location.reload()` to refresh server-rendered messages.
+- **Switcher:** lives inline in [`components/settings/general-section.tsx`](components/settings/general-section.tsx) (Settings → General), not in the sidebar. Writes both the `cb_locale` cookie (read by `next-intl` at render time) **and** `user_settings.app_language` in the DB (via `useUserSettings()`) so the preference persists across devices. Triggers `window.location.reload()` to refresh server-rendered messages.
 - **Translation files:** [`messages/de.json`](messages/de.json) and [`messages/en.json`](messages/en.json). Keys are organised by domain (`common`, `navigation`, `auth`, `dashboard`, `people`, `projects`, `organizations`, `invoices`, `invoicePdf`, `calendar`, `admin`, `search`, plus enum dictionaries `assignmentStatus`, `departments`, `gender`, `languages`, `roles`). Both files must keep the same key shape.
 - **Status badges** in [`components/ui/status-badge.tsx`](components/ui/status-badge.tsx) translate their *labels* but keep the colour classes keyed on the raw enum value, so colours never change across locales.
 
@@ -302,7 +302,7 @@ The sidebar has a three-state responsive model managed by `SidebarProvider` / `u
 
 ### Mobile component system
 
-Full-screen mobile detail views (`*-mobile-detail.tsx`) are built from the `components/mobile/` barrel (`@/components/mobile`):
+Full-screen mobile detail views (`*-mobile-detail.tsx`) are built from individual files under `components/mobile/` (imported directly, e.g. `@/components/mobile/mobile-entity-detail-layout` — there is no barrel re-export):
 
 | Component | Purpose |
 |---|---|
