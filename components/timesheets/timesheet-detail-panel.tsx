@@ -21,8 +21,11 @@ import { TimesheetWeekGrid } from './timesheet-week-grid';
 import { TimesheetEstimatePanel } from './timesheet-estimate-panel';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
+import { usePermissions } from '@/lib/hooks/use-permissions';
 import { HOME_BASE_DEFAULT } from '@/lib/timesheets/ruleset';
-import type { Timesheet, TimesheetEntry, CustomRulesOverride } from '@/lib/timesheets/types';
+import type { Timesheet, TimesheetEntry, TimesheetStatus, CustomRulesOverride } from '@/lib/timesheets/types';
+
+const ALL_STATUSES: TimesheetStatus[] = ['draft', 'submitted', 'approved'];
 
 const DEBOUNCE_MS = 1000;
 
@@ -426,6 +429,7 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const dateLocale = locale === 'de' ? de : enUS;
+  const { isAdmin } = usePermissions();
 
   const entries = useTimesheetsStore(s => s.entries);
   const isLoadingEntries = useTimesheetsStore(s => s.isLoadingEntries);
@@ -562,14 +566,33 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
         <div className="section-card">
           <div className="section-card-header">{t('general')}</div>
           <div className="section-card-body space-y-3 detail-form-fields">
-            <div className="space-y-1">
-              <Label className="text-xs">{t('fields.project')}</Label>
-              <SearchableSelect
-                options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
-                value={timesheet.project_id}
-                onChange={v => updateTimesheet(timesheet.id, { project_id: v })}
-                placeholder={`${tCommon('search')}…`}
-              />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">{t('fields.project')}</Label>
+                <SearchableSelect
+                  options={projects.map(p => ({ id: p.id, label: p.name, sublabel: p.project_number }))}
+                  value={timesheet.project_id}
+                  onChange={v => updateTimesheet(timesheet.id, { project_id: v })}
+                  placeholder={`${tCommon('search')}…`}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">{t('fields.status')}</Label>
+                <Select
+                  value={timesheet.status}
+                  disabled={!isAdmin && timesheet.status === 'approved'}
+                  onValueChange={v => updateTimesheet(timesheet.id, { status: v as TimesheetStatus })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ALL_STATUSES.map(s => (
+                      <SelectItem key={s} value={s} disabled={!isAdmin && s === 'approved'}>
+                        {t(`status.${s}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">

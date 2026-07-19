@@ -154,7 +154,6 @@ export default function TimesheetsPage() {
       <div className="flex h-full flex-col">
         <PageHeader
           title={t('title')}
-          subtitle={timesheets.length > 0 ? `${timesheets.length}` : undefined}
           search={
             !selectedTimesheet ? (
               <div className="relative">

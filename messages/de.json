@@ -618,6 +618,7 @@
     "fields": {
       "weekStart": "Wochenbeginn (Montag)",
       "project": "Projekt",
+      "status": "Status",
       "personName": "Name",
       "positionTitle": "Position/Funktion",
       "department": "Abteilung",
