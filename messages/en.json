@@ -725,24 +725,7 @@
       "homeBase": "Home base"
     },
     "pdf": {
-      "pageTitle": "Timesheet",
-      "weeklyHours": "Weekly hours",
-      "totalHours": "Total hours",
-      "signature": "Signature",
-      "date": "Date",
-      "position": "Position",
-      "accountingUseOnly": "Accounting use only",
-      "coding": "Coding",
-      "euro": "Euro",
-      "workedHeader": "worked",
-      "inLabel": "in",
-      "outLabel": "out",
-      "stdGesamt": "Total hrs.",
-      "overtimeCol": "Overtime",
-      "premiumsCol": "Overtime & Night premiums",
-      "totalPayableHours": "Total hours to be paid",
-      "signatureEmployee": "Signature",
-      "signatureHod": "H.O.D."
+      "weeklyHours": "Weekly hours"
     },
     "projectTab": {
       "title": "Timesheets",

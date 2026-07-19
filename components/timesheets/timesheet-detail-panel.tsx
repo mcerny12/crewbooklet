@@ -524,7 +524,7 @@ export function TimesheetDetailPanel({ timesheet, onClose, onDeleted }: Props) {
   }
 
   function handlePrint() {
-    window.open(`/timesheets/${timesheet.id}/print`, '_blank');
+    window.open(`/api/timesheets/${timesheet.id}/pdf`, '_blank');
   }
 
   // Merge local entries over store entries for display

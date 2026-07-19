@@ -47,15 +47,21 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
   const hc = result.hourlyRateCents;
 
   const workedDays = result.days.filter(d => d.isWorked);
-  const perDaySum = workedDays.reduce((s, d) => s + d.dayTotalCents, 0);
   const weeklyOtCents = result.weeklyOtBand1Cents + result.weeklyOtBand2Cents;
   const weeklyOtMinutes = result.weeklyOtBand1Minutes + result.weeklyOtBand2Minutes;
-  const runningTotal = perDaySum + weeklyOtCents + result.restViolationCents;
+  // The itemized lines below (per-day + weekly OT + rest violation) are a
+  // breakdown for transparency; the headline figure must always come from
+  // calculateWeek's totalGrossCents — the one authoritative total also used
+  // by the timesheets list and print page. Re-deriving a second sum here
+  // previously drifted from it (e.g. it never reflected the guaranteed-rate
+  // floor for short weeks).
+  const total = result.totalGrossCents;
 
+  const actualHoursPayCents = Math.round((result.totalBilledMinutes / 60) * hc);
   const guaranteeApplies =
     timesheet.daily_minimum_8h &&
     timesheet.weekly_rate_cents > 0 &&
-    runningTotal < timesheet.weekly_rate_cents;
+    actualHoursPayCents < timesheet.weekly_rate_cents;
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -189,10 +195,10 @@ export function TimesheetEstimatePanel({ timesheet, entries }: Props) {
         </div>
       )}
 
-      {/* Running total */}
+      {/* Total */}
       <div className="pt-2 border-t border-border flex items-center justify-between">
         <span className="text-sm font-semibold">{t('estimate.subtotal')}</span>
-        <span className="text-sm font-bold tabular-nums text-primary">{centsToEuro(runningTotal)}</span>
+        <span className="text-sm font-bold tabular-nums text-primary">{centsToEuro(total)}</span>
       </div>
 
       {guaranteeApplies && (

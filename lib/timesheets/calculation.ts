@@ -43,8 +43,11 @@
 // dayTotalCents (per-day display):
 //   For each worked day: billedMinutes × hourlyCents + day-level surcharges + perDiemCents.
 //   This shows the full per-day contribution including the OT hour's base + surcharge.
-//   Note: in standard (fixed weekly rate) mode the sum of dayTotalCents may differ from
-//   totalGrossCents for short or long weeks; totalGrossCents remains the authoritative total.
+//   Note: in standard (fixed weekly rate) mode, the sum of dayTotalCents still undershoots
+//   totalGrossCents for SHORT weeks (it has no guaranteed-floor top-up — that only exists
+//   at the week level); for weeks at or beyond the 50h baseline the two agree exactly, since
+//   basePayCents there is max(weeklyRateCents, actualHoursPayCents). totalGrossCents remains
+//   the one authoritative total — UI must read it directly rather than re-deriving its own.
 
 import type { DayInput, Ruleset, DayResult, WeekResult } from './types';
 import { hourlyRateCents } from './ruleset';
@@ -306,15 +309,18 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
   const holMinutes = dayResults.filter((d) => d.isHoliday && d.isWorked).reduce((s, d) => s + (d.billedMinutes - d.travelMinutes), 0);
 
   // Base pay:
-  //   standard/full_tarif: weekly rate is guaranteed (covers up to 50h)
-  //   custom no-8h-min: bill actual hours at hourly rate
-  let basePayCents: number;
-  if (ruleset.dailyMinimum8h) {
-    basePayCents = ruleset.weeklyRateCents;
-  } else {
-    // Actual hours only (custom mode)
-    basePayCents = Math.round((totalBilledMinutes / MINUTES_PER_HOUR) * hourlyCents);
-  }
+  //   standard/full_tarif: weekly rate is a guaranteed FLOOR, not a cap — it
+  //     covers up to 5 × dailyOtStartH (50h) of billed time. A week whose
+  //     actual billed hours are worth more than that (daily-OT hours, a
+  //     6th/7th day worked, etc.) is paid for those actual hours instead.
+  //     The dailyOt*/weeklyOt* Zuschlag surcharges below are premiums
+  //     layered on top of whichever applies — disabling a Zuschlag toggle
+  //     zeroes only the premium, never the base pay for the hours worked.
+  //   custom no-8h-min: no floor, always bill actual hours at hourly rate.
+  const actualHoursPayCents = Math.round((totalBilledMinutes / MINUTES_PER_HOUR) * hourlyCents);
+  const basePayCents = ruleset.dailyMinimum8h
+    ? Math.max(ruleset.weeklyRateCents, actualHoursPayCents)
+    : actualHoursPayCents;
 
   const dailyOtBand1Cents = surchargeCents(totalDailyOtBand1, hourlyCents, ruleset.dailyOtBand1Pct);
   const dailyOtBand2Cents = surchargeCents(totalDailyOtBand2, hourlyCents, ruleset.dailyOtBand2Pct);

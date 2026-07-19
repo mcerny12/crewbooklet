@@ -725,24 +725,7 @@
       "homeBase": "Heimatort"
     },
     "pdf": {
-      "pageTitle": "Stundenzettel",
-      "weeklyHours": "Wochenstunden",
-      "totalHours": "Gesamtstunden",
-      "signature": "Unterschrift",
-      "date": "Datum",
-      "position": "Position",
-      "accountingUseOnly": "Nur für Buchhaltung",
-      "coding": "Kontierung",
-      "euro": "Euro",
-      "workedHeader": "gearbeitet",
-      "inLabel": "von",
-      "outLabel": "bis",
-      "stdGesamt": "Std. gesamt",
-      "overtimeCol": "Überstunden",
-      "premiumsCol": "Überstunden-/Nachtzuschläge",
-      "totalPayableHours": "Gesamt zu bezahlende Stunden",
-      "signatureEmployee": "Unterschrift",
-      "signatureHod": "Abteilungsleiter"
+      "weeklyHours": "Wochenstunden"
     },
     "projectTab": {
       "title": "Stundenzettel",

@@ -471,6 +471,16 @@ describe('calculateWeek — daily OT + weekly OT', () => {
     const r = calculateWeek(week, BASE_RULESET);
     expect(r.dailyOtBand2Cents).toBe(10000);
   });
+
+  it('base pay rises to actual-hours value once daily OT pushes the week past 50h — the flat rate is a floor, not a cap', () => {
+    // 60h billed total (5 × 12h) is worth more than the €2000 flat rate at
+    // €40/h, so basePayCents must reflect the actual hours, not just the
+    // flat guarantee — otherwise the 10 daily-OT hours' base pay (as
+    // opposed to just their 25%/50% Zuschlag) would silently vanish.
+    const r = calculateWeek(week, BASE_RULESET);
+    expect(r.basePayCents).toBe(240000); // 60h × €40
+    expect(r.totalGrossCents).toBe(240000 + 5000 + 10000); // base + band1 + band2
+  });
 });
 
 // ─── calculateWeek — weekly OT via Saturday ───────────────────────────────
@@ -533,6 +543,26 @@ describe('calculateWeek — weekly OT via Saturday', () => {
     expect(r.weeklyOtBand2Minutes).toBe(300);
     // Saturday's own flat surcharge (§ 5.6.4) is unaffected — separate mechanism.
     expect(r.saturdaySurchargeCents).toBe(10000);
+  });
+
+  it('with all surcharges enabled, base pay reflects the actual 60h worked (not just the flat rate)', () => {
+    const r = calculateWeek(week, BASE_RULESET);
+    expect(r.basePayCents).toBe(240000); // 60h × €40, exceeds the €2000 flat rate
+    expect(r.totalGrossCents).toBe(240000 + 5000 + 10000 + 10000); // base + weekly OT band1/2 + Saturday
+  });
+
+  it('disabling BOTH weeklyOtEnabled and saturdayEnabled still pays the 6th day at 100% base rate — a Zuschlag toggle controls only the premium, never the underlying pay for hours worked', () => {
+    // This is the exact real-world bug report: a 6-day, 60h week with both
+    // premiums switched off in custom mode was paying out only the flat
+    // €2000 rate, as if the Saturday had been worked for free. It must
+    // instead pay for the 10 extra hours at the plain hourly rate.
+    const ruleset = { ...BASE_RULESET, weeklyOtEnabled: false, saturdayEnabled: false };
+    const r = calculateWeek(week, ruleset);
+    expect(r.weeklyOtBand1Cents).toBe(0);
+    expect(r.weeklyOtBand2Cents).toBe(0);
+    expect(r.saturdaySurchargeCents).toBe(0);
+    expect(r.basePayCents).toBe(240000); // €2000 flat rate + 10h × €40 = €2400
+    expect(r.totalGrossCents).toBe(240000);
   });
 });
 
