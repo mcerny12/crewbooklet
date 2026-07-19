@@ -8,7 +8,7 @@
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFRef, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import { addDays, format, parseISO } from 'date-fns';
 import {
   HEADER_FIELDS,
@@ -65,6 +65,34 @@ function minutesLabel(m: number | null | undefined): string {
   return m ? String(m) : '';
 }
 
+/**
+ * template.pdf carries the original vendor's document metadata (Title:
+ * "MASQUE_Timesheet_Template.xlsx", Author, Creator, an XMP stream
+ * duplicating all of it, etc.) — none of it describes the file this app
+ * actually generates, and browsers surface it (e.g. as the PDF tab/print
+ * title). Overwrite the Info dictionary and drop the XMP stream entirely so
+ * only the app-supplied title survives.
+ */
+function scrubTemplateMetadata(doc: PDFDocument, title: string, createdAt: Date) {
+  doc.setTitle(title);
+  doc.setAuthor('');
+  doc.setSubject('');
+  doc.setKeywords([]);
+  doc.setCreator('CrewBooklet');
+  doc.setProducer('CrewBooklet');
+  doc.setCreationDate(createdAt);
+  doc.setModificationDate(new Date());
+
+  // Removing just the catalog's /Metadata key leaves the old XMP stream's
+  // bytes (which duplicate the vendor's title/author) as an orphaned object
+  // that pdf-lib still serializes into the output. Delete it from the
+  // context too so it's dropped from the file entirely, not merely
+  // unreferenced.
+  const metaRef = doc.catalog.get(PDFName.of('Metadata'));
+  doc.catalog.delete(PDFName.of('Metadata'));
+  if (metaRef instanceof PDFRef) doc.context.delete(metaRef);
+}
+
 export interface GenerateTimesheetPdfInput {
   timesheet: Timesheet;
   entries: TimesheetEntry[];
@@ -79,6 +107,10 @@ export async function generateTimesheetPdf({
   const templateBytes = await readFile(TEMPLATE_PATH);
   const doc = await PDFDocument.load(templateBytes);
   const page = doc.getPages()[0];
+
+  const parsedCreatedAt = new Date(timesheet.created_at);
+  const title = `Stundenzettel – ${timesheet.person_name || 'Timesheet'} – ${timesheet.week_start}`;
+  scrubTemplateMetadata(doc, title, isNaN(parsedCreatedAt.getTime()) ? new Date() : parsedCreatedAt);
 
   const regularFont = await doc.embedFont(StandardFonts.Helvetica);
   const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
