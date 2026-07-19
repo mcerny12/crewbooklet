@@ -318,8 +318,12 @@ export function calculateWeek(days: DayInput[], ruleset: Ruleset): WeekResult {
 
   const dailyOtBand1Cents = surchargeCents(totalDailyOtBand1, hourlyCents, ruleset.dailyOtBand1Pct);
   const dailyOtBand2Cents = surchargeCents(totalDailyOtBand2, hourlyCents, ruleset.dailyOtBand2Pct);
-  const weeklyOtBand1Cents = surchargeCents(weeklyOtBand1Minutes, hourlyCents, ruleset.weeklyOtBand1Pct);
-  const weeklyOtBand2Cents = surchargeCents(weeklyOtBand2Minutes, hourlyCents, ruleset.weeklyOtBand2Pct);
+  const weeklyOtBand1Cents = ruleset.weeklyOtEnabled
+    ? surchargeCents(weeklyOtBand1Minutes, hourlyCents, ruleset.weeklyOtBand1Pct)
+    : 0;
+  const weeklyOtBand2Cents = ruleset.weeklyOtEnabled
+    ? surchargeCents(weeklyOtBand2Minutes, hourlyCents, ruleset.weeklyOtBand2Pct)
+    : 0;
 
   const nightSurchargeCents = ruleset.nightEnabled
     ? surchargeCents(totalNightMinutes, hourlyCents, ruleset.nightPct)

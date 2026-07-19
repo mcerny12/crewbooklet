@@ -47,6 +47,7 @@ const TV_FFS_DEFAULTS = {
   dailyOtStartH: 10,
   dailyOtBand1Pct: 25,
   dailyOtBand2Pct: 50,
+  weeklyOtEnabled: true,
   weeklyOtThresholdH: 50,
   weeklyOtBand1EndH: 55,
   weeklyOtBand1Pct: 25,
@@ -61,8 +62,8 @@ const TV_FFS_DEFAULTS = {
   holidayPct: 100,
 };
 
-type NumericKey = keyof Omit<CustomRulesOverride, 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled' | 'homeBase'>;
-type BoolKey = 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled';
+type NumericKey = keyof Omit<CustomRulesOverride, 'weeklyOtEnabled' | 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled' | 'homeBase'>;
+type BoolKey = 'weeklyOtEnabled' | 'nightEnabled' | 'saturdayEnabled' | 'sundayEnabled' | 'holidayEnabled';
 
 // Remembers whether the panel was left expanded or collapsed, across timesheets
 // and sessions — a pure UI preference, not per-timesheet state.
@@ -232,9 +233,15 @@ function CustomRulesPanel({
 
           {/* OT weekly */}
           <div>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-              {t('weeklyOtSectionTitle')}
-            </div>
+            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+              <input
+                type="checkbox"
+                checked={val('weeklyOtEnabled')}
+                onChange={e => setBool('weeklyOtEnabled', e.target.checked)}
+                className="h-3 w-3 accent-primary normal-case"
+              />
+              {t('weeklyOtSectionTitle')} {!isDefault('weeklyOtEnabled') && overriddenBadge}
+            </label>
             <div className="grid grid-cols-4 gap-1.5 text-xs">
               <label className="flex flex-col gap-0.5">
                 <span className="text-muted-foreground">
@@ -245,6 +252,7 @@ function CustomRulesPanel({
                   value={displayText('weeklyOtThresholdH')}
                   onChange={e => commitNum('weeklyOtThresholdH', e.target.value, true)}
                   onBlur={() => blurNum('weeklyOtThresholdH')}
+                  disabled={!val('weeklyOtEnabled')}
                   className={cn(fieldCn, !isDefault('weeklyOtThresholdH') && 'border-primary/50')}
                 />
               </label>
@@ -257,6 +265,7 @@ function CustomRulesPanel({
                   value={displayText('weeklyOtBand1EndH')}
                   onChange={e => commitNum('weeklyOtBand1EndH', e.target.value, true)}
                   onBlur={() => blurNum('weeklyOtBand1EndH')}
+                  disabled={!val('weeklyOtEnabled')}
                   className={cn(fieldCn, !isDefault('weeklyOtBand1EndH') && 'border-primary/50')}
                 />
               </label>
@@ -269,6 +278,7 @@ function CustomRulesPanel({
                   value={displayText('weeklyOtBand1Pct')}
                   onChange={e => commitNum('weeklyOtBand1Pct', e.target.value)}
                   onBlur={() => blurNum('weeklyOtBand1Pct')}
+                  disabled={!val('weeklyOtEnabled')}
                   className={cn(fieldCn, !isDefault('weeklyOtBand1Pct') && 'border-primary/50')}
                 />
               </label>
@@ -281,6 +291,7 @@ function CustomRulesPanel({
                   value={displayText('weeklyOtBand2Pct')}
                   onChange={e => commitNum('weeklyOtBand2Pct', e.target.value)}
                   onBlur={() => blurNum('weeklyOtBand2Pct')}
+                  disabled={!val('weeklyOtEnabled')}
                   className={cn(fieldCn, !isDefault('weeklyOtBand2Pct') && 'border-primary/50')}
                 />
               </label>

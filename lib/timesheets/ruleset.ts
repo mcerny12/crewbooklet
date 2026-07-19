@@ -16,6 +16,7 @@ const TV_FFS_DEFAULTS = {
   dailyOtBand2Pct: 50,    // hours 12+
 
   // § 5.4.3.3–3.4: weekly OT (Sat/Sun hours count toward this)
+  weeklyOtEnabled: true,
   weeklyOtThresholdH: 50,
   weeklyOtBand1EndH: 55,
   weeklyOtBand1Pct: 25,
@@ -59,6 +60,7 @@ export function buildRuleset(sheet: Timesheet, publicHolidays: Set<string>): Rul
     dailyOtBand1Pct: overrides.dailyOtBand1Pct ?? r.dailyOtBand1Pct,
     dailyOtBand2Pct: overrides.dailyOtBand2Pct ?? r.dailyOtBand2Pct,
 
+    weeklyOtEnabled: overrides.weeklyOtEnabled ?? r.weeklyOtEnabled,
     weeklyOtThresholdH: overrides.weeklyOtThresholdH ?? r.weeklyOtThresholdH,
     weeklyOtBand1EndH: overrides.weeklyOtBand1EndH ?? r.weeklyOtBand1EndH,
     weeklyOtBand1Pct: overrides.weeklyOtBand1Pct ?? r.weeklyOtBand1Pct,

@@ -17,6 +17,7 @@ const BASE_RULESET: Ruleset = {
   dailyOtStartH: 10,
   dailyOtBand1Pct: 25,
   dailyOtBand2Pct: 50,
+  weeklyOtEnabled: true,
   weeklyOtThresholdH: 50,
   weeklyOtBand1EndH: 55,
   weeklyOtBand1Pct: 25,
@@ -517,6 +518,21 @@ describe('calculateWeek — weekly OT via Saturday', () => {
     // 18:00 to 08:00 next day = 14h → no violation
     const r = calculateWeek(week, BASE_RULESET);
     expect(r.restViolationCents).toBe(0);
+  });
+
+  it('weeklyOtEnabled=false (custom mode) zeroes the weekly OT surcharge but leaves the Saturday surcharge and weekly-OT minute tracking untouched', () => {
+    // § 5.4.3.1/5.4.3.4 TV FFS treats 6th/7th-day work as weekly overtime in
+    // addition to (not instead of) the flat Saturday surcharge (§ 5.6.4) — two
+    // independent, stackable mechanisms. Disabling one must not disable the other.
+    const ruleset = { ...BASE_RULESET, weeklyOtEnabled: false };
+    const r = calculateWeek(week, ruleset);
+    expect(r.weeklyOtBand1Cents).toBe(0);
+    expect(r.weeklyOtBand2Cents).toBe(0);
+    // Minutes are still tracked (e.g. for display), only the surcharge cents are gated.
+    expect(r.weeklyOtBand1Minutes).toBe(300);
+    expect(r.weeklyOtBand2Minutes).toBe(300);
+    // Saturday's own flat surcharge (§ 5.6.4) is unaffected — separate mechanism.
+    expect(r.saturdaySurchargeCents).toBe(10000);
   });
 });
 

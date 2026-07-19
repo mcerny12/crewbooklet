@@ -15,6 +15,7 @@ export interface CustomRulesOverride {
   dailyOtStartH?: number;       // h/day before OT starts; TV FFS default: 10
   dailyOtBand1Pct?: number;     // surcharge for hours in band 1; TV FFS: 25
   dailyOtBand2Pct?: number;     // surcharge for hours in band 2; TV FFS: 50
+  weeklyOtEnabled?: boolean;    // weekly OT surcharge on/off; TV FFS default: true (§ 5.4.3.1/5.4.3.3)
   weeklyOtThresholdH?: number;  // weekly h before OT kicks in; TV FFS: 50
   weeklyOtBand1EndH?: number;   // weekly h where band 1 ends; TV FFS: 55
   weeklyOtBand1Pct?: number;    // weekly OT band 1 surcharge; TV FFS: 25
@@ -114,7 +115,11 @@ export interface Ruleset {
   dailyOtBand1Pct: number;  // surcharge for hours 11 (default: 25)
   dailyOtBand2Pct: number;  // surcharge for hours 12+ (default: 50)
 
-  // Weekly OT thresholds (§ 5.4.3.3)
+  // Weekly OT thresholds (§ 5.4.3.1/5.4.3.3 — separate from, and stacks with,
+  // the Saturday/Sunday/holiday day-type surcharges: TZ 5.4.3.4 explicitly
+  // treats 6th/7th-day work as weekly overtime *in addition to* TZ 5.6.4's
+  // flat Saturday surcharge)
+  weeklyOtEnabled: boolean;
   weeklyOtThresholdH: number; // hours after which weekly OT starts (default: 50)
   weeklyOtBand1EndH: number;  // hours where weekly band 1 ends (default: 55)
   weeklyOtBand1Pct: number;   // weekly OT band 1 surcharge (default: 25)
