@@ -44,12 +44,13 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // getUser() is the safe server-side check (validates JWT with Supabase)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() validates the JWT against the project's signing keys —
+  // locally, with no round-trip to the Auth server, now that the project
+  // uses asymmetric JWT signing keys. This is Supabase's recommended check
+  // for middleware/proxies (faster than getUser() on every request).
+  const { data, error } = await supabase.auth.getClaims();
 
-  if (!user) {
+  if (error || !data) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
@@ -58,7 +59,7 @@ export async function proxy(request: NextRequest) {
   // Admin-only routes — non-admins land on /settings, matching the
   // legacy /admin redirect's documented intent (see app/admin/page.tsx)
   if (ADMIN_PATHS.some((p) => pathname.startsWith(p))) {
-    const role = user.app_metadata?.role as string | undefined;
+    const role = data.claims.app_metadata?.role as string | undefined;
     if (role !== 'admin') {
       return NextResponse.redirect(new URL('/settings', request.url));
     }
