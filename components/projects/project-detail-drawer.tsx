@@ -50,7 +50,7 @@ export function ProjectDetailDrawer({ project, open, onOpenChange }: ProjectDeta
       lastProjectIdRef.current = project.id;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditedProject(project);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setOrgSearchQuery('');
     }
   }, [project]);
