@@ -13,7 +13,7 @@ npm run test        # Vitest — runs once and exits
 npm run test:watch  # Vitest — watch mode
 ```
 
-Vitest coverage is limited to the timesheets pay-calculation engine (`lib/timesheets/*.test.ts` — no config file, uses Vitest defaults). Nothing else in the app has tests. Validate changes elsewhere by running `npm run typecheck` and `npm run lint`; run `npm run test` whenever touching `lib/timesheets/`. To run a single test file: `npx vitest run lib/timesheets/calculation.test.ts`.
+Vitest coverage is limited to the timesheets pay-calculation engine and PDF export (`lib/timesheets/*.test.ts` / `lib/timesheets/print/*.test.ts` — no config file, uses Vitest defaults). Nothing else in the app has tests, and CI (`.github/workflows/ci.yml`) only runs lint/typecheck/build — `npm run test` is **not** part of CI, so run it locally whenever touching `lib/timesheets/`. Validate changes elsewhere with `npm run typecheck` and `npm run lint`. To run a single test file: `npx vitest run lib/timesheets/calculation.test.ts`.
 
 ### Database migrations
 
@@ -96,6 +96,8 @@ All pages are `'use client'`. Each domain page (`/people`, `/projects`, `/organi
 
 On desktop the detail pane renders inline (full content area). On mobile, `*-detail-drawer.tsx` files (people, orgs) and `*-detail-panel.tsx` files (projects, invoices) check `useIsMobile()` and delegate to the corresponding `*-mobile-detail.tsx` component, which uses `MobileEntityDetailLayout` for a full-screen overlay experience.
 
+People, projects, and organizations (not invoices, which still use a flat `.section-card` layout) build their desktop detail pane from the `components/detail/` slide system instead of one long scrolling column: `<DesktopDetailSnapCanvas>` wraps a horizontally snap-scrolling sequence of `<DetailSlide tabLabel="...">` panes (each slide holding one or more `<DetailFrame title="...">` cards), with a tab bar for jumping between slides. Import from the `components/detail` barrel (`@/components/detail`), not individual files.
+
 Add-dialogs (e.g., `AddPersonDialog`) use plain `useState` for form state — no `react-hook-form`.
 
 #### Cross-entity drill navigation
@@ -115,7 +117,7 @@ Job types are **database-driven**, not purely static. `useJobTypesStore` holds `
 
 ### Invoice printing
 
-Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel; the browser's native `window.print()` produces the PDF — there is no `jspdf` / `pdf-lib` dependency in the actual implementation. Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
+Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized page). Triggered via `window.open(...)` from the detail panel; the browser's native `window.print()` produces the PDF — invoices don't use `jspdf` / `pdf-lib` (that dependency exists only for timesheets, see below). Invoice total calculations (net, VAT, gross, aconto deductions) live in `lib/invoice/totals.ts` — use those helpers rather than re-deriving in components.
 
 ### Aconto, storno, and revision invoices
 
@@ -131,10 +133,11 @@ Invoice PDF is rendered at `/invoices/[id]/print` (a separate print-optimized pa
 
 - **Calculation engine** (`lib/timesheets/`) is pure, framework-free TypeScript — no Supabase/React imports — so it's independently unit-tested (`calculation.test.ts`, `week-result.test.ts`, run via `npm run test`). Don't reach into it from components; go through `calculateWeek` / the exported types in `lib/timesheets/types.ts`.
 - **`ruleset.ts`** builds a fully-resolved `Ruleset` from a `Timesheet` DB row. `calc_mode: 'full_tarif'` hard-codes the contract defaults (`TV_FFS_DEFAULTS`); `calc_mode: 'custom_tarif'` starts from the same defaults and layers the per-timesheet JSONB overrides in `timesheets.custom_rules` (`CustomRulesOverride`) — e.g. toggling `weeklyOtEnabled` off or changing surcharge percentages. Never hard-code a TV FFS number in a component — read it from the resolved `Ruleset`.
-- **`calculation.ts`** computes one `DayResult` per entry (daily OT bands, night/Saturday/Sunday/holiday surcharges, per-diem eligibility vs. `homeBase`, ArbZG § 5 / TV FFS § 5.8 rest-period violations) and `week-result.ts` aggregates a week into `WeekResult` (weekly OT bands stack on top of, and are separate from, the day-type surcharges — see the comment block in `types.ts`). All money is integer euro-cents; hourly rate is `weeklyRateCents / 50` (standard) or `/ 40` (reduced) per § 5.7.1.
+- **`calculation.ts`** computes one `DayResult` per entry (daily OT bands, night/Saturday/Sunday/holiday surcharges, per-diem eligibility vs. `homeBase`, ArbZG § 5 / TV FFS § 5.8 rest-period violations) and also aggregates a week into `WeekResult` via `calculateWeek` (weekly OT bands stack on top of, and are separate from, the day-type surcharges — see the comment block in `types.ts`). `week-result.ts` is a thin wrapper (`computeTimesheetWeekResult`) that builds the resolved `Ruleset` + holiday set + per-day inputs and calls `calculateWeek`. All money is integer euro-cents; hourly rate is `weeklyRateCents / 50` (standard) or `/ 40` (reduced) per § 5.7.1; base pay is proportional to actual billed minutes, not flat/capped, subject to the (overridable) 10h daily-minimum floor.
 - **`holidays.ts`** / **`location.ts`** resolve German public holidays and `Bundesland`-dependent rules per entry.
 - Each `TimesheetEntry` (one row per day) can override the timesheet-level `daily_minimum_8h` via `daily_minimum_override` (`null` = inherit).
-- UI: timesheets are clustered by project + week (`timesheet-project-cluster.tsx` / `timesheet-project-tab.tsx`), edited in a week grid (`timesheet-week-grid.tsx`) with per-day expandable settings, and a separate `timesheet-estimate-panel.tsx` projects pay before entries are finalized. Print output lives at `/timesheets/[id]/print`, following the same `window.print()` pattern as invoices.
+- UI: timesheets are clustered by project + week (`timesheet-project-cluster.tsx` / `timesheet-project-tab.tsx`), edited in a week grid (`timesheet-week-grid.tsx`) with per-day expandable settings, and a separate `timesheet-estimate-panel.tsx` projects pay before entries are finalized. `AddTimesheetDialog` offers "copy settings from" an existing sibling timesheet on the same project (rate, calc mode, per-diem, custom rules) — a one-time snapshot copy into form state, not a live link; deliberately doesn't use the unused `project_timesheet_defaults` DB table.
+- **PDF export** is *not* the `window.print()` pattern invoices use. `GET /api/timesheets/[id]/pdf` (`app/api/timesheets/[id]/pdf/route.ts`) calls `generateTimesheetPdf` (`lib/timesheets/print/generate-pdf.ts`), which uses `pdf-lib` to overlay computed values onto a stored template (`lib/timesheets/print/template.pdf`) at fixed pixel coordinates (`lib/timesheets/print/coordinates.ts`), producing a pixel-exact Stundenzettel; tested via `generate-pdf.test.ts`. `pdf-lib` in `package.json` exists solely for this — invoices don't use it.
 - Status flow: `draft` → `submitted` → `approved` (`TimesheetStatus`).
 
 ### Calendar ICS feed
@@ -218,6 +221,9 @@ CSS variables in `:root`:
 | `<MultiSelect>` | `components/ui/multi-select.tsx` | Badge-style multi-value dropdown for small fixed lists |
 | `<BottomDrawer>` | `components/ui/bottom-drawer.tsx` | Resizable mobile bottom sheet — draggable handle, vh-based height (20–85vh) |
 | `<ResizableBottomPane>` | `components/ui/resizable-bottom-pane.tsx` | Fixed-half-height bottom pane with close chevron; for split-panel layouts — **currently unused** (no live consumer) |
+| `<DesktopDetailSnapCanvas>` / `<DetailSlide>` / `<DetailFrame>` | `components/detail/` (barrel: `@/components/detail`) | Snap-scrolling slide system for desktop detail panes — see [Page pattern](#page-pattern) above. Also exports `<DetailFrameCarousel>` (currently unused) and `<CompactEntityRow>`. |
+
+The dashboard (`/`, `app/page.tsx`) is a stats/summary page built from `components/dashboard/` (`StatCard`, `UpcomingEvents`, `RecentProjects`) on desktop and `MobileDashboardSection` on mobile — not part of the master-detail page pattern above.
 
 ### Form fields in detail panels
 
