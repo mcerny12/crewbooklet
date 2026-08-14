@@ -9,8 +9,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { generateTimesheetPdf } from '@/lib/timesheets/print/generate-pdf';
-import type { Timesheet, TimesheetEntry } from '@/lib/timesheets/types';
+import { generateTimesheetPdf, getTimesheetTemplate } from '@/lib/timesheets/print/generate-pdf';
+import { isTimesheetTemplateId } from '@/lib/timesheets/print/templates';
+import { resolveTimesheetTemplate } from '@/lib/timesheets/types';
+import type { Timesheet, TimesheetEntry, TimesheetTemplateId } from '@/lib/timesheets/types';
 
 export async function GET(
   _request: NextRequest,
@@ -40,27 +42,53 @@ export async function GET(
     .eq('timesheet_id', id)
     .order('entry_date');
 
+  // The printed form belongs to the client, not the individual sheet: the
+  // project's client organization sets it and a single project may override.
+  // Every timesheet under that project therefore exports the same way with no
+  // per-sheet selection.
   let projectName: string | null = null;
+  let projectTemplate: TimesheetTemplateId | null = null;
+  let orgTemplate: TimesheetTemplateId | null = null;
+
   if (timesheet.project_id) {
     const { data: project } = await supabase
       .from('projects')
-      .select('name')
+      .select('name, timesheet_template, client_organization_id')
       .eq('id', timesheet.project_id)
       .single();
+
     projectName = project?.name ?? null;
+    if (isTimesheetTemplateId(project?.timesheet_template)) {
+      projectTemplate = project.timesheet_template;
+    }
+
+    if (project?.client_organization_id) {
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('timesheet_template')
+        .eq('id', project.client_organization_id)
+        .single();
+      if (isTimesheetTemplateId(org?.timesheet_template)) {
+        orgTemplate = org.timesheet_template;
+      }
+    }
   }
 
+  const template = resolveTimesheetTemplate(projectTemplate, orgTemplate);
+
+  const form = getTimesheetTemplate(template);
   const pdfBytes = await generateTimesheetPdf({
     timesheet: timesheet as Timesheet,
     entries: (entries ?? []) as TimesheetEntry[],
     projectName,
+    template,
   });
 
   return new NextResponse(Buffer.from(pdfBytes), {
     headers: {
       ...Object.fromEntries(responseHeaders),
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="stundenzettel-${timesheet.week_start}.pdf"`,
+      'Content-Disposition': `inline; filename="${form.fileStem}-${timesheet.week_start}.pdf"`,
     },
   });
 }

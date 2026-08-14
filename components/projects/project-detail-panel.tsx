@@ -35,6 +35,15 @@ import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { ProjectMobileDetail } from './project-mobile-detail';
 import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/detail';
 import { TimesheetProjectTab } from '@/components/timesheets/timesheet-project-tab';
+import {
+  TIMESHEET_TEMPLATE_IDS,
+  TIMESHEET_TEMPLATE_LABELS,
+  resolveTimesheetTemplate,
+  type TimesheetTemplateId,
+} from '@/lib/timesheets/types';
+
+/** Sentinel for the Select, which cannot carry a null value. */
+const INHERIT_TEMPLATE = '__inherit__';
 
 interface ProjectDetailPanelProps {
   project: Project;
@@ -864,6 +873,34 @@ export function ProjectDetailPanel({ project, onClose }: ProjectDetailPanelProps
 
           <DetailSlide ariaLabel="Project timesheets" tabLabel="Timesheets">
             <DetailFrame title="Timesheets" className="flex-1" data-cb-area="Timesheets">
+              <div className="mb-3 space-y-0.5 detail-form-fields">
+                <Label className="text-[10px] text-gray-500">Timesheet Template</Label>
+                <Select
+                  value={editedProject.timesheet_template ?? INHERIT_TEMPLATE}
+                  onValueChange={(v) =>
+                    updateField('timesheet_template', v === INHERIT_TEMPLATE ? null : (v as TimesheetTemplateId))
+                  }
+                >
+                  <SelectTrigger size="xs" className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={INHERIT_TEMPLATE}>
+                      {selectedOrg
+                        ? `Inherit from ${selectedOrg.name} — ${TIMESHEET_TEMPLATE_LABELS[resolveTimesheetTemplate(null, selectedOrg.timesheet_template)]}`
+                        : 'Inherit from client'}
+                    </SelectItem>
+                    {TIMESHEET_TEMPLATE_IDS.map((id) => (
+                      <SelectItem key={id} value={id}>{TIMESHEET_TEMPLATE_LABELS[id]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  {editedProject.timesheet_template
+                    ? 'Overrides the client default for every timesheet in this project.'
+                    : selectedOrg
+                      ? 'Following the client organization’s default.'
+                      : 'No client organization set — using the standard form.'}
+                </p>
+              </div>
               <TimesheetProjectTab projectId={project.id} />
             </DetailFrame>
           </DetailSlide>

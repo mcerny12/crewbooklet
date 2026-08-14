@@ -24,7 +24,13 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { useTimesheetsStore } from '@/lib/stores/timesheets-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useProjectsStore } from '@/lib/stores/projects-store';
-import type { CustomRulesOverride, Timesheet } from '@/lib/timesheets/types';
+import { useOrganizationsStore } from '@/lib/stores/organizations-store';
+import {
+  TIMESHEET_TEMPLATE_IDS,
+  TIMESHEET_TEMPLATE_LABELS,
+  resolveTimesheetTemplate,
+} from '@/lib/timesheets/types';
+import type { CustomRulesOverride, Timesheet, TimesheetTemplateId } from '@/lib/timesheets/types';
 
 interface Props {
   open: boolean;
@@ -50,10 +56,14 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
   const loadTimesheetsByProject = useTimesheetsStore(s => s.loadTimesheetsByProject);
   const projects = useProjectsStore(s => s.projects);
   const fetchProjects = useProjectsStore(s => s.fetchProjects);
+  const updateProject = useProjectsStore(s => s.updateProject);
+  const organizations = useOrganizationsStore(s => s.organizations);
+  const fetchOrganizations = useOrganizationsStore(s => s.fetchOrganizations);
 
   useEffect(() => {
     if (projects.length === 0) fetchProjects();
-  }, [projects.length, fetchProjects]);
+    if (organizations.length === 0) fetchOrganizations();
+  }, [projects.length, fetchProjects, organizations.length, fetchOrganizations]);
 
   const todayMonday = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
@@ -92,6 +102,24 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
     setCopyFromId(null);
   }, [projectId, loadTimesheetsByProject]);
 
+  // The printed form is a property of the project, never of one sheet — the
+  // picker below writes it to the project so every timesheet under it matches.
+  const selectedProject = projects.find(p => p.id === projectId) ?? null;
+  const clientOrg = selectedProject?.client_organization_id
+    ? organizations.find(o => o.id === selectedProject.client_organization_id) ?? null
+    : null;
+  const inheritedTemplate = resolveTimesheetTemplate(null, clientOrg?.timesheet_template);
+  const [template, setTemplate] = useState<TimesheetTemplateId | null>(null);
+
+  // Follow the project's own setting (or its client's) until the user overrides
+  // it in this dialog; re-syncs whenever a different project is picked.
+  const effectiveTemplate = template
+    ?? resolveTimesheetTemplate(selectedProject?.timesheet_template, clientOrg?.timesheet_template);
+
+  useEffect(() => {
+    setTemplate(null);
+  }, [projectId]);
+
   function handleCopyFrom(id: string | null) {
     setCopyFromId(id);
     const source = siblingTimesheets.find(ts => ts.id === id);
@@ -110,6 +138,20 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
     if (!session.userId) return;
     setIsSaving(true);
     try {
+      // Lock the chosen form onto the project before creating the sheet, so
+      // this and every later timesheet on the project export the same way.
+      // Only written when it actually differs from what the project already
+      // resolves to, to avoid pinning an override that merely mirrors the
+      // client's default.
+      if (projectId && selectedProject && template && template !== inheritedTemplate) {
+        if (selectedProject.timesheet_template !== template) {
+          await updateProject(projectId, { timesheet_template: template });
+        }
+      } else if (projectId && selectedProject && template === inheritedTemplate
+        && selectedProject.timesheet_template != null) {
+        await updateProject(projectId, { timesheet_template: null });
+      }
+
       const rateCents = Math.round(parseFloat(weeklyRate.replace(',', '.')) * 100) || 0;
       const created = await addTimesheet({
         user_id: session.userId,
@@ -147,6 +189,7 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
         setCustomRules(null);
         setSiblingTimesheets([]);
         setCopyFromId(null);
+        setTemplate(null);
       }
     } finally {
       setIsSaving(false);
@@ -179,6 +222,30 @@ export function AddTimesheetDialog({ open, onOpenChange, onCreated }: Props) {
               placeholder={`${tCommon('search')}…`}
             />
           </div>
+
+          {projectId && (
+            <div className="space-y-1.5">
+              <Label>{t('fields.pdfTemplate')}</Label>
+              <Select
+                value={effectiveTemplate}
+                onValueChange={v => setTemplate(v as TimesheetTemplateId)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMESHEET_TEMPLATE_IDS.map(id => (
+                    <SelectItem key={id} value={id}>{TIMESHEET_TEMPLATE_LABELS[id]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {siblingTimesheets.length > 0
+                  ? t('fields.pdfTemplateLockedWithSheets', { count: siblingTimesheets.length })
+                  : t('fields.pdfTemplateLocked')}
+              </p>
+            </div>
+          )}
 
           {siblingTimesheets.length > 0 && (
             <div className="space-y-1.5">

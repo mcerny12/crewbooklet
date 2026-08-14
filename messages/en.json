@@ -634,7 +634,10 @@
       "notes": "Notes",
       "personNamePlaceholder": "John Doe",
       "positionTitlePlaceholder": "Cameraman",
-      "departmentPlaceholder": "Camera"
+      "departmentPlaceholder": "Camera",
+      "pdfTemplate": "PDF template",
+      "pdfTemplateLocked": "Applies to every timesheet in this project.",
+      "pdfTemplateLockedWithSheets": "Applies to every timesheet in this project, including the {count} already created."
     },
     "day": {
       "day": "Day",

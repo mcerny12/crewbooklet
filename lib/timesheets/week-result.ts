@@ -7,14 +7,19 @@ import { parseISO, format, addDays } from 'date-fns';
 import { calculateWeek } from './calculation';
 import { buildRuleset } from './ruleset';
 import { getWeekHolidays } from './holidays';
-import type { Timesheet, TimesheetEntry, PerDiemType, Ruleset, WeekResult } from './types';
+import type { Timesheet, TimesheetEntry, PerDiemType, Ruleset, WeekResult, DayInput } from './types';
 
-export function computeTimesheetWeekResult(
+/**
+ * Maps a Timesheet + its entries onto the engine's 7-day input array and
+ * resolved ruleset. Split out from computeTimesheetWeekResult so the PDF
+ * export can reach the same day-level figures (worked minutes, which are
+ * rate-independent) without the weekly_rate_cents guard that only makes
+ * sense for pay display.
+ */
+export function buildWeekInputs(
   timesheet: Timesheet,
   entries: TimesheetEntry[]
-): { result: WeekResult; ruleset: Ruleset } | null {
-  if (timesheet.weekly_rate_cents === 0) return null;
-
+): { days: DayInput[]; ruleset: Ruleset } {
   const bundeslandCounts: Record<string, number> = {};
   for (const e of entries) {
     if (e.bundesland) bundeslandCounts[e.bundesland] = (bundeslandCounts[e.bundesland] ?? 0) + 1;
@@ -43,6 +48,16 @@ export function computeTimesheetWeekResult(
     };
   });
 
+  return { days, ruleset };
+}
+
+export function computeTimesheetWeekResult(
+  timesheet: Timesheet,
+  entries: TimesheetEntry[]
+): { result: WeekResult; ruleset: Ruleset } | null {
+  if (timesheet.weekly_rate_cents === 0) return null;
+
+  const { days, ruleset } = buildWeekInputs(timesheet, entries);
   return { result: calculateWeek(days, ruleset), ruleset };
 }
 

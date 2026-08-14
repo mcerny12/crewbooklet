@@ -6,6 +6,41 @@
 // ---------------------------------------------------------------------------
 
 export type TimesheetStatus = 'draft' | 'submitted' | 'approved';
+
+/**
+ * Printed timesheet form, chosen per project (projects.timesheet_template).
+ * Lives here rather than in print/templates.ts so client components can import
+ * it without pulling pdf-lib and node:path into the browser bundle.
+ */
+export type TimesheetTemplateId = 'default' | 'wbfilm';
+
+export const TIMESHEET_TEMPLATE_IDS: TimesheetTemplateId[] = ['default', 'wbfilm'];
+
+export const DEFAULT_TIMESHEET_TEMPLATE: TimesheetTemplateId = 'default';
+
+/** Form names as printed on the templates — product names, never translated. */
+export const TIMESHEET_TEMPLATE_LABELS: Record<TimesheetTemplateId, string> = {
+  default: 'Standard (Stundenzettel)',
+  wbfilm: 'Wiedemann & Berg (WBFilmTSVorlage)',
+};
+
+/**
+ * Which printed form a timesheet exports to. The form belongs to the client,
+ * so an organization sets the default for all its productions and a single
+ * project can still override it:
+ *
+ *   project override ?? client organization default ?? 'default'
+ *
+ * Both inputs are nullable — a project with no client, or a client with no
+ * preference, lands on the original Stundenzettel.
+ */
+export function resolveTimesheetTemplate(
+  projectTemplate: TimesheetTemplateId | null | undefined,
+  organizationTemplate: TimesheetTemplateId | null | undefined
+): TimesheetTemplateId {
+  return projectTemplate ?? organizationTemplate ?? DEFAULT_TIMESHEET_TEMPLATE;
+}
+
 export type CalcMode = 'full_tarif' | 'custom_tarif';
 export type RateType = 'standard' | 'reduced';
 export type PerDiemType = 'auto' | 'partial' | 'full' | 'none';

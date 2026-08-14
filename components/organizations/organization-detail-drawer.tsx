@@ -23,6 +23,16 @@ import { DetailFrame, DesktopDetailSnapCanvas, DetailSlide } from '@/components/
 import { AddPersonDialog } from '@/components/people/add-person-dialog';
 import { OrgStructureSection } from './org-structure-section';
 import { OrgRole } from '@/lib/types/models';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DEFAULT_TIMESHEET_TEMPLATE,
+  TIMESHEET_TEMPLATE_IDS,
+  TIMESHEET_TEMPLATE_LABELS,
+  type TimesheetTemplateId,
+} from '@/lib/timesheets/types';
+
+/** Sentinel for the Select, which cannot carry a null value. */
+const NO_TEMPLATE_PREFERENCE = '__none__';
 
 interface OrgDetailContentProps {
   organization: Organization;
@@ -177,6 +187,28 @@ function OrgDetailContent({ organization, onClose, onOpenProject, onOpenPerson }
             <div className="space-y-0.5">
               <Label className="text-[10px] text-gray-500">Business Type</Label>
               <MultiSearchSelect options={orgTypeOptions} selected={editedOrg.jobs || []} onChange={jobs => updateField('jobs', jobs as OrganizationJobType[])} placeholder="Search types…" maxSelections={3} />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[10px] text-gray-500">Timesheet Template</Label>
+              <Select
+                value={editedOrg.timesheet_template ?? NO_TEMPLATE_PREFERENCE}
+                onValueChange={v =>
+                  updateField('timesheet_template', v === NO_TEMPLATE_PREFERENCE ? null : (v as TimesheetTemplateId))
+                }
+              >
+                <SelectTrigger size="xs" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TEMPLATE_PREFERENCE}>
+                    {TIMESHEET_TEMPLATE_LABELS[DEFAULT_TIMESHEET_TEMPLATE]}
+                  </SelectItem>
+                  {TIMESHEET_TEMPLATE_IDS.filter(id => id !== DEFAULT_TIMESHEET_TEMPLATE).map(id => (
+                    <SelectItem key={id} value={id}>{TIMESHEET_TEMPLATE_LABELS[id]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Default form for this client’s projects. A project can override it.
+              </p>
             </div>
           </div>
           <div className="mt-3">

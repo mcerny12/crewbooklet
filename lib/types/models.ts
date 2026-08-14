@@ -4,6 +4,8 @@
  * Designed for Supabase PostgreSQL database
  */
 
+import type { TimesheetTemplateId } from '@/lib/timesheets/types';
+
 // MARK: - Enhanced Person Model (Crew Member)
 export interface Person {
   id: string;
@@ -202,6 +204,10 @@ export interface Organization {
   // Additional
   notes?: string | null;
   financial_details?: FinancialDetails | null;
+
+  // Default printed timesheet form for this client's projects.
+  // null = no preference; projects fall back to the standard form.
+  timesheet_template?: TimesheetTemplateId | null;
 }
 
 // MARK: - Organization Job Types
@@ -265,6 +271,10 @@ export interface Project {
   // Dates
   start_date?: string | null;
   end_date?: string | null;
+
+  // Printed timesheet form for this project's timesheets.
+  // null = inherit from the client organization.
+  timesheet_template?: TimesheetTemplateId | null;
 }
 
 // MARK: - Project Status Enum

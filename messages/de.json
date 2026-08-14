@@ -634,7 +634,10 @@
       "notes": "Anmerkungen",
       "personNamePlaceholder": "Max Mustermann",
       "positionTitlePlaceholder": "Kameramann",
-      "departmentPlaceholder": "Kamera"
+      "departmentPlaceholder": "Kamera",
+      "pdfTemplate": "PDF-Vorlage",
+      "pdfTemplateLocked": "Gilt für alle Stundenzettel dieses Projekts.",
+      "pdfTemplateLockedWithSheets": "Gilt für alle Stundenzettel dieses Projekts – auch für die {count} bereits vorhandenen."
     },
     "day": {
       "day": "Tag",
