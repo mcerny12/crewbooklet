@@ -96,7 +96,7 @@ export function TimesheetProjectTab({ projectId }: Props) {
             variant="ghost"
             size="icon"
             className="h-7 w-7 shrink-0"
-            onClick={() => window.open(`/timesheets/${ts.id}/print`, '_blank')}
+            onClick={() => window.open(`/api/timesheets/${ts.id}/pdf`, '_blank')}
             title={t('exportPdf')}
           >
             <Printer className="h-3.5 w-3.5" />
